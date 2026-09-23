@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mercurial: studies in liquid form</title>
+<style>
+  :root {
+    --accent: #cfe3ff;
+    --ink: #f2f4f8;
+    --dim: rgba(242,244,248,.45);
+    --ease: cubic-bezier(.16,1,.3,1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: #030305; }
+  body {
+    color: var(--ink);
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    cursor: none;
+    user-select: none; -webkit-user-select: none;
+    touch-action: none;
+  }
+  canvas#gl { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+
+  .ui { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+
+  header {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 2.2rem 2.6rem;
+  }
+  .brand .logo {
+    display: block; font-size: 1.05rem; font-weight: 600;
+    letter-spacing: .42em; text-transform: uppercase;
+  }
+  .brand .sub {
+    display: block; margin-top: .45rem;
+    font-size: .68rem; letter-spacing: .18em; color: var(--dim); text-transform: uppercase;
+  }
+  .right { display: flex; align-items: center; gap: 1.6rem; }
+  .stats { font-size: .66rem; letter-spacing: .12em; color: var(--dim); text-transform: uppercase; }
+  .stats b { color: var(--ink); font-weight: 400; font-variant-numeric: tabular-nums; }
+  .pill {
+    pointer-events: auto; cursor: none;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.14);
+    color: var(--ink);
+    font: inherit; font-size: .66rem; letter-spacing: .2em; text-transform: uppercase;
+    padding: .7rem 1.1rem; border-radius: 99px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    transition: background .4s, border-color .4s;
+    display: flex; align-items: center; gap: .7rem;
+  }
+  .pill:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); }
+  .bars { display: flex; gap: 2px; align-items: flex-end; height: 10px; }
+  .bars i { width: 2px; height: 3px; background: var(--ink); transition: height .3s; }
+  .sound-on .bars i { animation: eq .9s ease-in-out infinite alternate; }
+  .sound-on .bars i:nth-child(2) { animation-delay: -.3s; }
+  .sound-on .bars i:nth-child(3) { animation-delay: -.6s; }
+  .sound-on .bars i:nth-child(4) { animation-delay: -.15s; }
+  @keyframes eq { from { height: 2px; } to { height: 10px; } }
+
+  .title {
+    position: absolute; left: 2.6rem; bottom: 2.4rem;
+  }
+  .idx { font-size: .7rem; letter-spacing: .3em; color: var(--dim); margin-bottom: .6rem; }
+  .idx b { color: var(--accent); font-weight: 400; transition: color 1s; }
+  h1 {
+    position: relative; height: 1em;
+    /* Clip only vertically so letters slide in and out, never horizontally. */
+    clip-path: inset(-0.2em -100vw 0 -1em);
+    font-size: clamp(2.8rem, 7vw, 6.5rem);
+    font-weight: 200; letter-spacing: -.045em; line-height: 1;
+    padding-bottom: .12em; box-sizing: content-box;
+  }
+  h1 .word { position: absolute; left: 0; top: 0; white-space: nowrap; }
+  h1 .word span {
+    display: inline-block;
+    transition: transform 1.1s var(--ease), opacity .9s ease, filter 1s ease;
+    transition-delay: calc(var(--i) * 45ms);
+  }
+  h1 .word.enter span { transform: translateY(105%) rotate(6deg); opacity: 0; filter: blur(6px); }
+  h1 .word.leave span { transform: translateY(-105%) rotate(-4deg); opacity: 0; filter: blur(6px); transition-duration: .7s; }
+  .desc {
+    margin-top: 1rem; font-size: .95rem; line-height: 1.6; color: var(--dim);
+    max-width: 30ch; transition: opacity .6s ease, transform .8s var(--ease);
+  }
+  .desc.swap { opacity: 0; transform: translateY(8px); }
+
+  nav {
+    position: absolute; left: 50%; bottom: 2.6rem; transform: translateX(-50%);
+    display: flex; gap: .2rem; padding: .35rem;
+    border: 1px solid rgba(255,255,255,.12); border-radius: 99px;
+    background: rgba(10,10,14,.35);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    pointer-events: auto;
+  }
+  nav button {
+    position: relative; z-index: 1;
+    background: none; border: 0; color: var(--dim); cursor: none;
+    font: inherit; font-size: .66rem; letter-spacing: .22em; text-transform: uppercase;
+    padding: .75rem 1.15rem; border-radius: 99px;
+    transition: color .5s;
+  }
+  nav button.active { color: #07070a; }
+  nav button:not(.active):hover { color: var(--ink); }
+  nav .indicator {
+    position: absolute; z-index: 0; top: .35rem; bottom: .35rem; left: 0;
+    border-radius: 99px; background: var(--accent);
+    box-shadow: 0 0 30px color-mix(in srgb, var(--accent) 45%, transparent);
+    transition: transform .8s var(--ease), width .8s var(--ease), background 1s;
+  }
+
+  .controls {
+    position: absolute; right: 2.6rem; bottom: 2.6rem;
+    list-style: none; text-align: right;
+    font-size: .64rem; letter-spacing: .16em; text-transform: uppercase; color: var(--dim);
+    line-height: 2.1;
+  }
+  kbd {
+    font: inherit; color: var(--ink);
+    border: 1px solid rgba(255,255,255,.18); border-radius: 4px;
+    padding: .1rem .4rem; margin-left: .5rem;
+  }
+
+  #cursor {
+    position: fixed; left: 0; top: 0; z-index: 20; pointer-events: none;
+    width: 0; height: 0;
+  }
+  #cursor svg {
+    position: absolute; left: -24px; top: -24px; width: 48px; height: 48px;
+    overflow: visible; transform: rotate(-90deg);
+    transition: transform .5s var(--ease);
+  }
+  #cursor .ring { fill: none; stroke: rgba(255,255,255,.55); stroke-width: 1; transition: r .45s var(--ease), stroke .4s; }
+  #cursor .charge {
+    fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round;
+    stroke-dasharray: 126; stroke-dashoffset: 126;
+    filter: drop-shadow(0 0 6px var(--accent));
+  }
+  #cursor .dot { fill: #fff; }
+  #cursor.drag .ring { r: 8px; }
+  #cursor.ui .ring { r: 26px; stroke: rgba(255,255,255,.25); }
+  #cursor.charging svg { transform: rotate(-90deg) scale(1.25); }
+
+  #intro {
+    position: fixed; inset: 0; z-index: 30; background: #030305;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem;
+    transition: opacity 1.4s ease, visibility 0s 1.4s;
+  }
+  #intro.done { opacity: 0; visibility: hidden; }
+  #intro .big {
+    font-size: clamp(2rem, 6vw, 4.5rem); font-weight: 200; letter-spacing: .5em; text-transform: uppercase;
+    padding-left: .5em;
+  }
+  #intro .big span {
+    display: inline-block; opacity: 0; transform: translateY(40%); filter: blur(8px);
+    animation: rise 1.2s var(--ease) forwards; animation-delay: calc(var(--i) * 70ms + .1s);
+  }
+  #intro .small { font-size: .66rem; letter-spacing: .4em; color: var(--dim); text-transform: uppercase; opacity: 0; animation: rise 1s ease .9s forwards; }
+  @keyframes rise { to { opacity: 1; transform: none; filter: none; } }
+
+  #fallback[hidden] { display: none; }
+  #fallback {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 2rem; color: var(--dim); font-size: .9rem; line-height: 1.7;
+  }
+  @media (max-width: 820px) {
+    .controls, .stats { display: none; }
+    header { padding: 1.4rem; }
+    .title { left: 1.4rem; bottom: 6.5rem; }
+    h1 { font-size: clamp(2.4rem, 12vw, 4rem); }
+    nav { bottom: 1.4rem; }
+    nav button { padding: .7rem .75rem; letter-spacing: .12em; }
+  }
+  @media (hover: none) { #cursor { display: none; } body { cursor: auto; } }
+</style>
+</head>
+<body>
+
+<canvas id="gl"></canvas>
+
+<div class="ui">
+  <header>
+    <div class="brand">
+      <span class="logo">Mercurial</span>
+      <span class="sub">Studies in liquid form · Nº 04</span>
+    </div>
+    <div class="right">
+      <div class="stats mono"><b id="fps">60</b> fps · <b id="res">1.00</b>× · <b id="count">0</b> drops</div>
+      <button class="pill mono" id="sound" type="button"><span class="bars"><i></i><i></i><i></i><i></i></span><span id="soundLabel">Sound off</span></button>
+    </div>
+  </header>
+
+  <div class="title">
+    <div class="idx mono"><b id="idx">01</b> / 04</div>
+    <h1 id="matName"></h1>
+    <p class="desc" id="matDesc"></p>
+  </div>
+
+  <nav id="mats">
+    <div class="indicator" id="indicator"></div>
+  </nav>
+
+  <ul class="controls mono">
+    <li>Drop<kbd>Click</kbd></li>
+    <li>Charge &amp; release<kbd>Hold</kbd></li>
+    <li>Orbit<kbd>Drag</kbd></li>
+    <li>Zoom<kbd>Wheel</kbd></li>
+    <li>Matter<kbd>1–4</kbd></li>
+    <li>Shockwave<kbd>Space</kbd></li>
+  </ul>
+</div>
+
+<div id="cursor">
+  <svg viewBox="-24 -24 48 48">
+    <circle class="ring" r="18"></circle>
+    <circle class="charge" r="20"></circle>
+    <circle class="dot" r="1.6"></circle>
+  </svg>
+</div>
+
+<div id="intro">
+  <div class="big" id="introBig">Mercurial</div>
+  <div class="small mono">Hold anywhere to charge</div>
+</div>
+
+<div id="fallback" hidden>This piece needs WebGL2.<br>Try a recent Chrome, Firefox, Safari or Edge.</div>
+
+<script type="x-shader/x-fragment" id="frag">#version 300 es
+precision highp float;
+out vec4 fragColor;
+
+uniform vec2 uRes;
+uniform float uTime;
+uniform vec3 uCamPos;
+uniform mat3 uCamRot;
+uniform vec4 uBlobs[16];
+uniform int uCount;
+uniform float uBound;
+uniform int uMatA;
+uniform int uMatB;
+uniform float uMix;
+uniform float uShape;
+uniform vec4 uWave;
+uniform float uCharge;
+uniform float uFade;
+
+#define PI 3.14159265
+#define FLOOR_Y -1.9
+
+mat2 rot(float a) { float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+
+// Polynomial smooth minimum: the glue that makes separate drops fuse like liquid metal.
+float smin(float a, float b, float k) { float h = max(k - abs(a - b), 0.0) / k; return min(a, b) - h * h * k * 0.25; }
+
+float hash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float noise(vec3 x) {
+  vec3 i = floor(x), f = fract(x);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x), mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x), mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z);
+}
+float fbm(vec3 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 4; i++) { s += a * noise(p); p = p * 2.03 + vec3(1.7, 9.2, 3.1); a *= 0.5; } return s; }
+
+float sdTorus(vec3 p, vec2 t) { return length(vec2(length(p.xz) - t.x, p.y)) - t.y; }
+float sdRoundBox(vec3 p, vec3 b, float r) { vec3 q = abs(p) - b; return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0) - r; }
+float sdOcta(vec3 p, float s) { p = abs(p); return (p.x + p.y + p.z - s) * 0.57735027; }
+
+// The central form morphs continuously between four solids, one per material.
+float core(vec3 p) {
+  float sc = 1.0 - 0.35 * uCharge;
+  p /= sc;
+  p.xz *= rot(uTime * 0.25);
+  p.xy *= rot(uTime * 0.13);
+  float d0 = length(p) - 0.95;
+  float d1 = sdTorus(p, vec2(0.9, 0.34));
+  float d2 = sdRoundBox(p, vec3(0.58), 0.14);
+  float d3 = sdOcta(p, 1.2) - 0.05;
+  float d = mix(d0, d1, clamp(uShape, 0.0, 1.0));
+  d = mix(d, d2, clamp(uShape - 1.0, 0.0, 1.0));
+  d = mix(d, d3, clamp(uShape - 2.0, 0.0, 1.0));
+  d += sin(p.x * 3.0 + uTime * 1.3) * sin(p.y * 3.3 + uTime * 1.1) * sin(p.z * 2.9 + uTime * 0.9) * 0.045;
+  return d * sc;
+}
+
+float map(vec3 p) {
+  float d = core(p);
+  for (int i = 0; i < 16; i++) {
+    if (i >= uCount) break;
+    vec4 b = uBlobs[i];
+    d = smin(d, length(p - b.xyz) - b.w, 0.6);
+  }
+  if (uWave.w >= 0.0) {
+    float r = uWave.w * 3.5;
+    float dd = length(p - uWave.xyz);
+    d -= 0.09 * exp(-pow((dd - r) * 3.0, 2.0)) * exp(-uWave.w * 1.2);
+  }
+  return d;
+}
+
+vec2 sphIntersect(vec3 ro, vec3 rd, float r) {
+  float b = dot(ro, rd), c = dot(ro, ro) - r * r, h = b * b - c;
+  if (h < 0.0) return vec2(-1.0);
+  h = sqrt(h);
+  return vec2(-b - h, -b + h);
+}
+
+float march(vec3 ro, vec3 rd, int steps) {
+  vec2 bs = sphIntersect(ro, rd, uBound);
+  if (bs.y < 0.0) return -1.0;
+  float t = max(bs.x, 0.0);
+  float h = 1.0;
+  for (int i = 0; i < 128; i++) {
+    if (i >= steps) break;
+    h = map(ro + rd * t);
+    if (h < 0.0008 * t) return t;
+    t += h * 0.8;
+    if (t > bs.y) return -1.0;
+  }
+  return h < 0.02 ? t : -1.0;
+}
+
+vec3 calcNormal(vec3 p) {
+  const vec2 e = vec2(1.0, -1.0) * 0.0015;
+  return normalize(e.xyy * map(p + e.xyy) + e.yyx * map(p + e.yyx) + e.yxy * map(p + e.yxy) + e.xxx * map(p + e.xxx));
+}
+
+float calcAO(vec3 p, vec3 n) {
+  float o = 0.0, s = 1.0;
+  for (int i = 1; i <= 4; i++) { float h = 0.07 * float(i); o += (h - map(p + n * h)) * s; s *= 0.7; }
+  return clamp(1.0 - 2.5 * o, 0.0, 1.0);
+}
+
+float softShadow(vec3 ro, vec3 rd) {
+  vec2 bs = sphIntersect(ro, rd, uBound);
+  if (bs.y < 0.0) return 1.0;
+  float t = max(bs.x, 0.02), res = 1.0;
+  for (int i = 0; i < 40; i++) {
+    float h = map(ro + rd * t);
+    res = min(res, 10.0 * h / t);
+    t += clamp(h, 0.03, 0.4);
+    if (res < 0.002 || t > bs.y) break;
+  }
+  return clamp(res, 0.0, 1.0);
+}
+
+float angDist(float a, float b) { return abs(mod(a - b + PI, 2.0 * PI) - PI); }
+
+// A procedural photo studio: overhead softbox, strip lights and coloured rims, all analytic.
+vec3 env(vec3 d) {
+  d.xz *= rot(uTime * 0.04);
+  float y = d.y, a = atan(d.z, d.x);
+  vec3 col = mix(vec3(0.015, 0.015, 0.02), vec3(0.06, 0.065, 0.09), smoothstep(-0.3, 0.8, y));
+  col += vec3(0.35, 0.22, 0.5) * exp(-abs(y - 0.02) * 10.0) * 0.35;
+  col += vec3(1.0, 0.97, 0.92) * 3.0 * smoothstep(0.82, 0.9, y);
+  float band = smoothstep(-0.05, 0.08, y) * smoothstep(0.75, 0.6, y);
+  col += vec3(1.0, 0.96, 0.9) * 4.0 * smoothstep(0.16, 0.12, angDist(a, 0.9)) * band;
+  col += vec3(0.3, 0.8, 1.0) * 2.2 * smoothstep(0.09, 0.06, angDist(a, -1.9)) * band;
+  col += vec3(1.0, 0.35, 0.7) * 1.8 * smoothstep(0.25, 0.1, angDist(a, 2.8)) * smoothstep(-0.1, 0.2, y) * smoothstep(0.5, 0.2, y);
+  col = mix(col, vec3(0.012), smoothstep(0.0, -0.08, y));
+  return col;
+}
+
+vec3 shade(int m, vec3 p, vec3 n, vec3 rd, float ao) {
+  float ndv = clamp(dot(n, -rd), 0.0, 1.0);
+  float f = pow(1.0 - ndv, 5.0);
+  vec3 r = reflect(rd, n);
+  vec3 c;
+  if (m == 0) {
+    c = env(r) * mix(vec3(0.78, 0.8, 0.85), vec3(1.0), f);
+  } else if (m == 1) {
+    // Thin-film interference: hue depends on viewing angle and a slowly swirling film thickness.
+    float th = ndv * 2.2 + fbm(p * 1.5 + uTime * 0.1) * 1.2;
+    vec3 film = 0.5 + 0.5 * cos(2.0 * PI * (th + vec3(0.0, 0.33, 0.67)));
+    c = env(r) * mix(film, vec3(1.0), f * 0.6) * 0.95 + film * 0.04;
+  } else if (m == 2) {
+    // Three refraction indices give the glass its chromatic dispersion.
+    vec3 refr = vec3(env(refract(rd, n, 1.0 / 1.40)).r, env(refract(rd, n, 1.0 / 1.45)).g, env(refract(rd, n, 1.0 / 1.50)).b);
+    c = refr * vec3(0.55, 0.75, 1.0) * mix(0.9, 0.35, ndv) + env(r) * mix(0.04, 1.0, f);
+  } else {
+    vec3 q = p * 1.6 + vec3(0.0, uTime * 0.15, 0.0);
+    float nz = fbm(q);
+    float crack = smoothstep(0.06, 0.0, abs(nz - 0.5));
+    float heat = 0.6 + 0.4 * sin(uTime * 2.0 + nz * 12.0);
+    vec3 emit = mix(vec3(1.0, 0.18, 0.02), vec3(1.0, 0.75, 0.3), crack) * crack * 3.0 * heat;
+    emit += vec3(1.0, 0.25, 0.03) * pow(1.0 - ndv, 3.0) * 0.6;
+    c = env(r) * (0.04 + 0.3 * f) + emit;
+  }
+  return c * mix(0.35, 1.0, ao);
+}
+
+vec3 shadeMix(vec3 p, vec3 n, vec3 rd, float ao) {
+  if (uMix <= 0.001) return shade(uMatA, p, n, rd, ao);
+  if (uMix >= 0.999) return shade(uMatB, p, n, rd, ao);
+  return mix(shade(uMatA, p, n, rd, ao), shade(uMatB, p, n, rd, ao), uMix);
+}
+
+void main() {
+  vec2 fc = gl_FragCoord.xy;
+  vec2 uv = (2.0 * fc - uRes) / uRes.y;
+  vec3 ro = uCamPos;
+  vec3 rd = uCamRot * normalize(vec3(uv, 2.2));
+
+  vec3 bg = mix(vec3(0.012, 0.012, 0.018), vec3(0.03, 0.03, 0.045), smoothstep(-1.0, 1.0, uv.y));
+  bg += vec3(0.12, 0.08, 0.2) * exp(-length(uv - vec2(0.0, 0.1)) * 1.8) * 0.25;
+  vec3 col = bg;
+
+  float tObj = march(ro, rd, 110);
+  float tFloor = rd.y < 0.0 ? (FLOOR_Y - ro.y) / rd.y : -1.0;
+
+  if (tObj > 0.0 && (tFloor < 0.0 || tObj < tFloor)) {
+    vec3 p = ro + rd * tObj;
+    vec3 n = calcNormal(p);
+    col = shadeMix(p, n, rd, calcAO(p, n));
+    col += vec3(0.4, 0.8, 1.0) * uCharge * pow(1.0 - clamp(dot(n, -rd), 0.0, 1.0), 2.0) * 1.5;
+  } else if (tFloor > 0.0) {
+    vec3 p = ro + rd * tFloor;
+    float dist = length(p.xz);
+    vec3 fcol = vec3(0.018, 0.018, 0.024);
+
+    vec2 g = abs(fract(p.xz - 0.5) - 0.5) / fwidth(p.xz);
+    float line = 1.0 - min(min(g.x, g.y), 1.0);
+    fcol += vec3(0.08, 0.1, 0.14) * line * exp(-dist * 0.25) * 0.5;
+
+    fcol *= mix(0.25, 1.0, softShadow(p + vec3(0.0, 0.01, 0.0), normalize(vec3(0.3, 1.0, 0.2))));
+    fcol *= 0.45 + 0.55 * clamp(map(p) / 1.2, 0.0, 1.0);
+
+    // Glossy floor: trace the mirrored ray back into the sculpture.
+    vec3 rr = reflect(rd, vec3(0.0, 1.0, 0.0));
+    float tr = march(p + rr * 0.01, rr, 56);
+    if (tr > 0.0) {
+      vec3 q = p + rr * tr;
+      vec3 rc = shadeMix(q, calcNormal(q), rr, 1.0);
+      float fr = 0.18 + 0.5 * pow(1.0 - abs(rd.y), 3.0);
+      fcol = mix(fcol, rc, fr * exp(-tr * 0.35));
+    }
+
+    fcol += vec3(0.4, 0.8, 1.0) * exp(-pow((dist - (1.8 - uCharge * 0.9)) * 6.0, 2.0)) * uCharge * 0.9;
+    if (uWave.w >= 0.0) {
+      float wd = length(p.xz - uWave.xz);
+      fcol += vec3(0.5, 0.8, 1.0) * exp(-pow((wd - uWave.w * 3.5) * 4.0, 2.0)) * exp(-uWave.w * 1.5) * 0.6;
+    }
+    col = mix(fcol, bg, smoothstep(4.0, 18.0, tFloor));
+  }
+
+  col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+  col = pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2));
+  col *= 1.0 - 0.12 * dot(uv, uv);
+  col += (hash(vec3(fc, fract(uTime) * 100.0)) - 0.5) * 0.025;
+  fragColor = vec4(col * uFade, 1.0);
+}
+</script>
+
+<script>
+(() => {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const canvas = $('#gl');
+  const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, powerPreference: 'high-performance' });
+  const fail = msg => { $('#fallback').hidden = false; if (msg) $('#fallback').innerHTML += '<br><br><small>' + msg + '</small>'; $('#intro').remove(); };
+  if (!gl) return fail();
+
+  // GL setup
+  const VERT = '#version 300 es\nin vec2 aPos; void main() { gl_Position = vec4(aPos, 0.0, 1.0); }';
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src.trim());
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  const prog = gl.createProgram();
+  try {
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, $('#frag').textContent));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  } catch (e) { console.error(e); return fail(e.message); }
+  gl.useProgram(prog);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  const U = {};
+  ['uRes', 'uTime', 'uCamPos', 'uCamRot', 'uCount', 'uBound', 'uMatA', 'uMatB', 'uMix', 'uShape', 'uWave', 'uCharge', 'uFade']
+    .forEach(n => U[n] = gl.getUniformLocation(prog, n));
+  U.uBlobs = gl.getUniformLocation(prog, 'uBlobs[0]');
+  const blobData = new Float32Array(64);
+
+  // Math
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const len = a => Math.hypot(a[0], a[1], a[2]);
+  const norm = a => { const l = len(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const easeInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  // Materials
+  const MATERIALS = [
+    { name: 'Chrome', accent: '#cfe3ff', desc: 'Mirror-bright mercury. It hands back every light it is given.' },
+    { name: 'Iridescent', accent: '#c59bff', desc: 'A soap film one micron thick, painting with interference.' },
+    { name: 'Glass', accent: '#7fe0ff', desc: 'Cold and dispersive. Light bends, then splits into its colours.' },
+    { name: 'Magma', accent: '#ff7a3a', desc: 'A thin crust barely holding back the heat beneath.' }
+  ];
+  const mat = { from: 0, to: 0, t: 1, shape: 0 };
+
+  // Scene state
+  const FLOOR_Y = -1.9;
+  const MAX_DROPS = 13;
+  const cam = { yaw: 0.7, pitch: 0.22, dist: 7.5, targetDist: 7.5, vyaw: 0, vpitch: 0, kick: 0, pos: [0, 0, 0], right: [1, 0, 0], up: [0, 1, 0], fwd: [0, 0, -1] };
+  const drops = [];
+  const cursorBlob = { p: [0, 0, 0], r: 0, tr: 0 };
+  const wave = { c: [0, 0, 0], age: -1 };
+  const pointer = { x: innerWidth / 2, y: innerHeight / 2, over: false, down: false, dx: 0, dy: 0, downT: 0, dragging: false, charging: false, world: [0, 0, 0] };
+  let charge = 0, chargeVis = 0;
+  let T = 0, lastInteract = 0, nextAuto = 0;
+
+  // Sound: a tiny synth with a generated reverb tail, silent until the user opts in.
+  const Sound = {
+    ctx: null, on: false,
+    init() {
+      const c = this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.master = c.createGain(); this.master.gain.value = 0;
+      const verb = c.createConvolver();
+      const n = c.sampleRate * 2.8, ir = c.createBuffer(2, n, c.sampleRate);
+      for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3.2); }
+      verb.buffer = ir;
+      const wet = c.createGain(); wet.gain.value = 0.45;
+      this.master.connect(c.destination); this.master.connect(verb); verb.connect(wet); wet.connect(c.destination);
+      this.drone = c.createOscillator(); this.drone.type = 'sawtooth'; this.drone.frequency.value = 55;
+      this.droneF = c.createBiquadFilter(); this.droneF.type = 'lowpass'; this.droneF.frequency.value = 200; this.droneF.Q.value = 8;
+      this.droneG = c.createGain(); this.droneG.gain.value = 0;
+      this.drone.connect(this.droneF); this.droneF.connect(this.droneG); this.droneG.connect(this.master);
+      this.drone.start();
+      const nb = c.createBuffer(1, c.sampleRate * 1.5, c.sampleRate), nd = nb.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      this.noise = nb;
+    },
+    toggle() {
+      if (!this.ctx) this.init();
+      this.on = !this.on;
+      this.ctx.resume();
+      this.master.gain.setTargetAtTime(this.on ? 0.55 : 0, this.ctx.currentTime, 0.15);
+      return this.on;
+    },
+    tone(f, type, t0, dur, vol) {
+      const c = this.ctx, o = c.createOscillator(), g = c.createGain();
+      o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(this.master); o.start(t0); o.stop(t0 + dur + 0.05);
+      return o;
+    },
+    drop(y) {
+      if (!this.on) return;
+      const scale = [0, 3, 5, 7, 10, 12, 15, 17, 19, 22];
+      const f = 196 * Math.pow(2, scale[clamp(Math.round((y + 2) * 2.2), 0, 9)] / 12);
+      const t = this.ctx.currentTime;
+      const o = this.tone(f * 1.5, 'sine', t, 1.1, 0.22);
+      o.frequency.exponentialRampToValueAtTime(f, t + 0.08);
+      this.tone(f * 3.01, 'triangle', t, 0.4, 0.04);
+    },
+    burst(k) {
+      if (!this.on) return;
+      const c = this.ctx, t = c.currentTime;
+      const src = c.createBufferSource(); src.buffer = this.noise;
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 3;
+      lp.frequency.setValueAtTime(3000 + 3000 * k, t); lp.frequency.exponentialRampToValueAtTime(80, t + 1.3);
+      const g = c.createGain(); g.gain.setValueAtTime(0.25 + 0.5 * k, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+      src.connect(lp); lp.connect(g); g.connect(this.master); src.start(t);
+      const sub = this.tone(90, 'sine', t, 1.2, 0.35 + 0.3 * k);
+      sub.frequency.exponentialRampToValueAtTime(28, t + 1.0);
+    },
+    charge(v) {
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+      this.drone.frequency.setTargetAtTime(55 + v * 110, t, 0.05);
+      this.droneF.frequency.setTargetAtTime(200 + v * 2400, t, 0.05);
+      this.droneG.gain.setTargetAtTime(this.on ? v * 0.09 : 0, t, 0.04);
+    },
+    chord(i) {
+      if (!this.on) return;
+      const roots = [0, 5, 7, 3], t = this.ctx.currentTime;
+      [0, 7, 12, 16].forEach((iv, k) => this.tone(130.8 * Math.pow(2, (roots[i] + iv) / 12), 'sine', t + k * 0.04, 2.4, 0.06));
+    }
+  };
+
+  // Camera and picking
+  function updateCamera() {
+    const cp = Math.cos(cam.pitch), d = cam.dist + cam.kick;
+    cam.pos = [d * cp * Math.sin(cam.yaw), d * Math.sin(cam.pitch), d * cp * Math.cos(cam.yaw)];
+    cam.fwd = norm(sub([0, 0, 0], cam.pos));
+    cam.right = norm(cross(cam.fwd, [0, 1, 0]));
+    cam.up = cross(cam.right, cam.fwd);
+  }
+  // Unproject the pointer onto the camera-facing plane through the origin.
+  function pointerToWorld(px, py) {
+    const W = innerWidth, H = innerHeight;
+    const ux = (2 * px - W) / H, uy = (H - 2 * py) / H;
+    const dir = norm([
+      cam.right[0] * ux + cam.up[0] * uy + cam.fwd[0] * 2.2,
+      cam.right[1] * ux + cam.up[1] * uy + cam.fwd[1] * 2.2,
+      cam.right[2] * ux + cam.up[2] * uy + cam.fwd[2] * 2.2
+    ]);
+    const t = -dot(cam.pos, cam.fwd) / dot(dir, cam.fwd);
+    let p = [cam.pos[0] + dir[0] * t, cam.pos[1] + dir[1] * t, cam.pos[2] + dir[2] * t];
+    const l = len(p);
+    if (l > 3.4) p = p.map(v => v * 3.4 / l);
+    p[1] = Math.max(p[1], FLOOR_Y + 0.4);
+    return p;
+  }
+
+  // Interactions
+  function spawn(p, quiet) {
+    const living = drops.filter(d => d.tr > 0);
+    if (living.length >= MAX_DROPS) living[0].tr = 0;
+    const out = norm(p);
+    drops.push({ p: p.slice(), v: [out[0] * 0.6 + rand(-.3, .3), out[1] * 0.6 + rand(0, .6), out[2] * 0.6 + rand(-.3, .3)], r: 0, tr: rand(0.26, 0.5), seed: Math.random() * 10 });
+    wave.c = p.slice(); wave.age = 0;
+    if (!quiet) Sound.drop(p[1]);
+  }
+  function burst(k) {
+    for (const d of drops) {
+      const n = len(d.p) > 0.05 ? norm(d.p) : norm([rand(-1, 1), rand(0, 1), rand(-1, 1)]);
+      const s = 3 + 9 * k;
+      d.v[0] += n[0] * s + rand(-1, 1); d.v[1] += n[1] * s + rand(0, 2); d.v[2] += n[2] * s + rand(-1, 1);
+    }
+    wave.c = [0, 0, 0]; wave.age = 0;
+    cam.kick = 0.4 + 1.2 * k;
+    Sound.burst(k);
+  }
+  function setMaterial(i) {
+    if (i === mat.to) return;
+    mat.from = mat.t < 0.5 ? mat.from : mat.to;
+    mat.to = i; mat.t = 0;
+    updateMaterialUI(i);
+    Sound.chord(i);
+    wave.c = [0, 0, 0]; wave.age = 0;
+  }
+
+  canvas.addEventListener('pointerdown', e => {
+    canvas.setPointerCapture(e.pointerId);
+    Object.assign(pointer, { down: true, dx: 0, dy: 0, downT: performance.now(), dragging: false, charging: false, x: e.clientX, y: e.clientY });
+    lastInteract = T;
+  });
+  addEventListener('pointermove', e => {
+    const mx = e.clientX - pointer.x, my = e.clientY - pointer.y;
+    pointer.x = e.clientX; pointer.y = e.clientY;
+    pointer.over = e.target === canvas;
+    cursorEl.classList.toggle('ui', !pointer.over && !pointer.down);
+    if (pointer.down) {
+      pointer.dx += mx; pointer.dy += my;
+      if (!pointer.charging && !pointer.dragging && Math.hypot(pointer.dx, pointer.dy) > 6) pointer.dragging = true;
+      if (pointer.dragging) {
+        cam.vyaw = -mx * 0.006; cam.vpitch = my * 0.004;
+        cam.yaw += cam.vyaw; cam.pitch = clamp(cam.pitch + cam.vpitch, -0.08, 1.2);
+      }
+    }
+    lastInteract = T;
+  });
+  const release = () => {
+    if (!pointer.down) return;
+    if (pointer.charging) burst(charge);
+    else if (!pointer.dragging) spawn(pointer.world);
+    pointer.down = pointer.dragging = pointer.charging = false;
+    charge = 0;
+  };
+  canvas.addEventListener('pointerup', release);
+  canvas.addEventListener('pointercancel', release);
+  document.addEventListener('pointerleave', () => { pointer.over = false; });
+  addEventListener('wheel', e => { cam.targetDist = clamp(cam.targetDist + e.deltaY * 0.006, 3.6, 13); lastInteract = T; }, { passive: true });
+  addEventListener('keydown', e => {
+    if (e.key >= '1' && e.key <= '4') setMaterial(+e.key - 1);
+    if (e.code === 'Space') { e.preventDefault(); burst(0.6); }
+    lastInteract = T;
+  });
+
+  // UI
+  const cursorEl = $('#cursor');
+  const chargeArc = cursorEl.querySelector('.charge');
+  const nav = $('#mats'), indicator = $('#indicator');
+  const buttons = MATERIALS.map((m, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = m.name;
+    b.addEventListener('click', () => setMaterial(i));
+    nav.appendChild(b);
+    return b;
+  });
+  function placeIndicator() {
+    const b = buttons[mat.to];
+    indicator.style.width = b.offsetWidth + 'px';
+    indicator.style.transform = `translateX(${b.offsetLeft}px)`;
+  }
+  const title = $('#matName'), desc = $('#matDesc');
+  function makeWord(text) {
+    const w = document.createElement('span');
+    w.className = 'word enter';
+    [...text].forEach((ch, i) => { const s = document.createElement('span'); s.textContent = ch; s.style.setProperty('--i', i); w.appendChild(s); });
+    return w;
+  }
+  function updateMaterialUI(i) {
+    const m = MATERIALS[i];
+    document.documentElement.style.setProperty('--accent', m.accent);
+    buttons.forEach((b, k) => b.classList.toggle('active', k === i));
+    placeIndicator();
+    $('#idx').textContent = String(i + 1).padStart(2, '0');
+    title.querySelectorAll('.word:not(.leave)').forEach(w => {
+      w.classList.add('leave');
+      setTimeout(() => w.remove(), 1200);
+    });
+    const w = makeWord(m.name);
+    title.appendChild(w);
+    requestAnimationFrame(() => requestAnimationFrame(() => w.classList.remove('enter')));
+    desc.classList.add('swap');
+    setTimeout(() => { desc.textContent = m.desc; desc.classList.remove('swap'); }, 450);
+  }
+  $('#sound').addEventListener('click', e => {
+    const on = Sound.toggle();
+    e.currentTarget.classList.toggle('sound-on', on);
+    $('#soundLabel').textContent = on ? 'Sound on' : 'Sound off';
+  });
+
+  const introBig = $('#introBig');
+  introBig.innerHTML = [...introBig.textContent].map((c, i) => `<span style="--i:${i}">${c}</span>`).join('');
+
+  // Physics
+  function step(dt) {
+    const living = drops.length;
+    const acc = drops.map(() => [0, 0, 0]);
+    const coreR = 0.95 * (1 - 0.35 * chargeVis);
+
+    for (let i = 0; i < living; i++) {
+      const d = drops[i], p = d.p, a = acc[i];
+      d.r = damp(d.r, d.tr, 5, dt);
+      a[0] += -p[0] * 1.4 + p[2] * 0.9;
+      a[1] += -p[1] * 1.4 + Math.sin(T * 0.8 + d.seed) * 0.35;
+      a[2] += -p[2] * 1.4 - p[0] * 0.9;
+      if (chargeVis > 0) { a[0] -= p[0] * chargeVis * 9; a[1] -= p[1] * chargeVis * 9; a[2] -= p[2] * chargeVis * 9; }
+
+      const pl = len(p), minCore = coreR + d.r * 0.55;
+      if (pl < minCore && pl > 1e-4) { const k = (minCore - pl) * 10 / pl; a[0] += p[0] * k; a[1] += p[1] * k; a[2] += p[2] * k; }
+
+      if (cursorBlob.r > 0.05) {
+        const dv = sub(cursorBlob.p, p), dl = len(dv);
+        if (dl < 1.9) { const k = (1 - dl / 1.9) * 3; a[0] += dv[0] * k; a[1] += dv[1] * k; a[2] += dv[2] * k; }
+      }
+      for (let j = i + 1; j < living; j++) {
+        const o = drops[j], dv = sub(o.p, p), dl = len(dv) || 1e-4;
+        const min = (d.r + o.r) * 0.95 + 0.08;
+        if (dl < min) {
+          const k = (min - dl) * 7 / dl;
+          a[0] -= dv[0] * k; a[1] -= dv[1] * k; a[2] -= dv[2] * k;
+          acc[j][0] += dv[0] * k; acc[j][1] += dv[1] * k; acc[j][2] += dv[2] * k;
+        }
+      }
+    }
+    const drag = Math.exp(-1.8 * dt);
+    for (let i = drops.length - 1; i >= 0; i--) {
+      const d = drops[i];
+      for (let k = 0; k < 3; k++) { d.v[k] = (d.v[k] + acc[i][k] * dt) * drag; d.p[k] += d.v[k] * dt; }
+      if (d.p[1] - d.r < FLOOR_Y) { d.p[1] = FLOOR_Y + d.r; d.v[1] = Math.abs(d.v[1]) * 0.45; }
+      if (d.tr === 0 && d.r < 0.01) drops.splice(i, 1);
+    }
+
+    const hover = pointer.over && !pointer.dragging;
+    cursorBlob.tr = hover ? (pointer.charging ? 0.2 : 0.36) : 0;
+    cursorBlob.r = damp(cursorBlob.r, cursorBlob.tr, 6, dt);
+    const w = pointer.world;
+    for (let k = 0; k < 3; k++) cursorBlob.p[k] = damp(cursorBlob.p[k], w[k], 10, dt);
+  }
+
+  function update(dt) {
+    if (!pointer.dragging) {
+      const decay = Math.pow(0.92, dt * 60);
+      cam.yaw += cam.vyaw; cam.vyaw *= decay;
+      cam.pitch = clamp(cam.pitch + cam.vpitch, -0.08, 1.2); cam.vpitch *= decay;
+      if (T - lastInteract > 4) cam.yaw += dt * 0.06;
+    }
+    cam.dist = damp(cam.dist, cam.targetDist, 5, dt);
+    cam.kick = damp(cam.kick, 0, 4, dt);
+    updateCamera();
+    pointer.world = pointerToWorld(pointer.x, pointer.y);
+
+    if (pointer.down && !pointer.dragging && !pointer.charging && performance.now() - pointer.downT > 260) pointer.charging = true;
+    if (pointer.charging) charge = Math.min(1, charge + dt / 1.3);
+    chargeVis = damp(chargeVis, pointer.charging ? charge : 0, pointer.charging ? 8 : 5, dt);
+    Sound.charge(pointer.charging ? charge : 0);
+
+    mat.t = Math.min(1, mat.t + dt / 1.4);
+    mat.shape = damp(mat.shape, mat.to, 2.6, dt);
+
+    if (wave.age >= 0) { wave.age += dt; if (wave.age > 3) wave.age = -1; }
+
+    if (T - lastInteract > 8 && T > nextAuto) {
+      const th = rand(0, Math.PI * 2), ph = rand(-0.3, 0.9);
+      spawn([Math.cos(th) * Math.cos(ph) * 2.4, Math.sin(ph) * 2.4, Math.sin(th) * Math.cos(ph) * 2.4], true);
+      nextAuto = T + 2.4;
+    }
+
+    const substeps = 3;
+    for (let i = 0; i < substeps; i++) step(dt / substeps);
+
+    cursorEl.style.transform = `translate(${pointer.x}px,${pointer.y}px)`;
+    cursorEl.classList.toggle('drag', pointer.dragging);
+    cursorEl.classList.toggle('charging', pointer.charging);
+    chargeArc.style.strokeDashoffset = 126 * (1 - (pointer.charging ? charge : 0));
+  }
+
+  function render() {
+    let n = 0, bound = 1.4;
+    const push = (p, r) => {
+      blobData.set([p[0], p[1], p[2], r], n * 4); n++;
+      bound = Math.max(bound, len(p) + r);
+    };
+    if (cursorBlob.r > 0.01) push(cursorBlob.p, cursorBlob.r);
+    for (const d of drops) if (n < 16 && d.r > 0.005) push(d.p, d.r);
+
+    gl.uniform2f(U.uRes, canvas.width, canvas.height);
+    gl.uniform1f(U.uTime, T);
+    gl.uniform3fv(U.uCamPos, cam.pos);
+    gl.uniformMatrix3fv(U.uCamRot, false, [...cam.right, ...cam.up, ...cam.fwd]);
+    gl.uniform4fv(U.uBlobs, blobData);
+    gl.uniform1i(U.uCount, n);
+    gl.uniform1f(U.uBound, bound + 0.7);
+    gl.uniform1i(U.uMatA, mat.from);
+    gl.uniform1i(U.uMatB, mat.to);
+    gl.uniform1f(U.uMix, easeInOut(mat.t));
+    gl.uniform1f(U.uShape, mat.shape);
+    gl.uniform4f(U.uWave, wave.c[0], wave.c[1], wave.c[2], wave.age);
+    gl.uniform1f(U.uCharge, chargeVis);
+    gl.uniform1f(U.uFade, clamp((T - 0.5) / 2, 0, 1));
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    return n;
+  }
+
+  // Adaptive resolution keeps the raymarcher smooth on any GPU.
+  const maxScale = Math.min(devicePixelRatio || 1, 1.5);
+  let scale = Math.min(1, maxScale), frames = 0, acc = 0, good = 0;
+  function resize() {
+    canvas.width = Math.round(innerWidth * scale);
+    canvas.height = Math.round(innerHeight * scale);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    placeIndicator();
+  }
+  function adapt(ms) {
+    frames++; acc += ms;
+    if (frames < 40) return;
+    const avg = acc / frames;
+    frames = 0; acc = 0;
+    if (avg > 21 && scale > 0.45) { scale = Math.max(0.45, scale - 0.1); good = 0; resize(); }
+    else if (avg < 17.5 && scale < maxScale && ++good >= 3) { scale = Math.min(maxScale, scale + 0.05); good = 0; resize(); }
+    $('#fps').textContent = Math.round(1000 / avg);
+    $('#res').textContent = scale.toFixed(2);
+    $('#count').textContent = drops.filter(d => d.tr > 0).length;
+  }
+  addEventListener('resize', resize);
+
+  // Boot
+  for (let i = 0; i < 7; i++) {
+    drops.push({ p: [rand(-.3, .3), rand(-.3, .3), rand(-.3, .3)], v: [0, 0, 0], r: 0, tr: rand(0.28, 0.5), seed: Math.random() * 10 });
+  }
+  updateMaterialUI(0);
+  resize();
+  setTimeout(() => $('#intro').classList.add('done'), 1700);
+  setTimeout(() => burst(0.35), 1900);
+
+  const t0 = performance.now();
+  let last = t0;
+  function frame(now) {
+    const ms = now - last;
+    last = now;
+    const dt = Math.min(ms / 1000, 1 / 20);
+    T = (now - t0) / 1000;
+    adapt(ms);
+    update(dt);
+    render();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

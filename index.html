@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-XPERIENCE: one prompt, one file</title>
+<style>
+  :root {
+    --bg: #07070a;
+    --ink: #eef0f4;
+    --dim: rgba(238,240,244,.5);
+    --faint: rgba(238,240,244,.12);
+    --ease: cubic-bezier(.16,1,.3,1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); }
+  body {
+    color: var(--ink);
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    min-height: 100vh; overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  a { color: inherit; text-decoration: none; }
+
+  /* Ambient background: two light pools that trail the cursor, plus grain. */
+  .aura { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .aura i {
+    position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%;
+    filter: blur(90px); opacity: .22; will-change: transform;
+  }
+  .aura i:nth-child(1) { background: radial-gradient(circle, #1fb6d9, transparent 65%); }
+  .aura i:nth-child(2) { background: radial-gradient(circle, #9a5cff, transparent 65%); }
+  .grain {
+    position: fixed; inset: -50%; width: 200%; height: 200%; z-index: 1; pointer-events: none; opacity: .06;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    animation: grain 1.4s steps(6) infinite;
+  }
+  @keyframes grain {
+    0%,100% { transform: translate(0,0); } 25% { transform: translate(-3%,2%); }
+    50% { transform: translate(2%,-3%); } 75% { transform: translate(-2%,-2%); }
+  }
+
+  main { position: relative; z-index: 2; max-width: 1320px; margin: 0 auto; padding: 0 3rem 5rem; }
+
+  header.top {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 2.2rem 0; border-bottom: 1px solid var(--faint);
+    font-size: .68rem; letter-spacing: .28em; text-transform: uppercase;
+  }
+  .logo { font-weight: 700; letter-spacing: .38em; }
+  .logo em { font-style: normal; color: transparent; -webkit-text-stroke: 1px var(--ink); }
+  .top .meta { color: var(--dim); display: flex; gap: 2rem; }
+  .live { display: inline-flex; align-items: center; gap: .6rem; }
+  .live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #5cf0b0; box-shadow: 0 0 10px #5cf0b0; animation: blink 2s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+
+  .hero { padding: 9vh 0 7vh; }
+  .eyebrow { font-size: .7rem; letter-spacing: .32em; text-transform: uppercase; color: var(--dim); margin-bottom: 2rem; }
+  h1 {
+    font-size: clamp(3.4rem, 10.5vw, 10.5rem);
+    font-weight: 200; line-height: .88; letter-spacing: -.055em;
+  }
+  h1 .line { display: block; overflow: hidden; padding-bottom: .06em; }
+  h1 .line span { display: inline-block; transform: translateY(105%); animation: up 1.3s var(--ease) forwards; }
+  h1 .line:nth-child(2) span { animation-delay: .12s; }
+  h1 .line:nth-child(3) span { animation-delay: .24s; }
+  h1 .outline { color: transparent; -webkit-text-stroke: 1.2px var(--ink); font-style: italic; }
+  h1 .grad {
+    background: linear-gradient(90deg, #7ff6ff, #c59bff 45%, #ff7a3a);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    background-size: 200% 100%; animation: up 1.3s var(--ease) .24s forwards, shift 8s linear infinite;
+  }
+  @keyframes up { to { transform: none; } }
+  @keyframes shift { to { background-position: 200% 0; } }
+
+  .intro {
+    display: grid; grid-template-columns: 1.2fr 1fr; gap: 4rem; align-items: end;
+    margin-top: 4rem;
+    opacity: 0; animation: fade 1.2s ease .7s forwards;
+  }
+  @keyframes fade { to { opacity: 1; } }
+  .intro p { font-size: clamp(1.05rem, 1.5vw, 1.3rem); line-height: 1.65; color: var(--dim); max-width: 44ch; }
+  .intro p strong { color: var(--ink); font-weight: 500; }
+  .rules { display: grid; grid-template-columns: repeat(2, 1fr); border-top: 1px solid var(--faint); border-left: 1px solid var(--faint); }
+  .rules div { padding: 1.2rem 1.3rem; border-right: 1px solid var(--faint); border-bottom: 1px solid var(--faint); }
+  .rules b { display: block; font-size: 1.9rem; font-weight: 200; letter-spacing: -.03em; }
+  .rules span { font-size: .62rem; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); }
+
+  .section-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin: 6vh 0 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--faint);
+    font-size: .68rem; letter-spacing: .28em; text-transform: uppercase; color: var(--dim);
+  }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; perspective: 1600px; }
+
+  .card {
+    --accent: #7ff6ff;
+    position: relative; display: flex; flex-direction: column;
+    border: 1px solid var(--faint); border-radius: 22px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01));
+    transform-style: preserve-3d;
+    transition: transform .8s var(--ease), border-color .6s, box-shadow .8s;
+    opacity: 0; translate: 0 40px; animation: rise 1.2s var(--ease) forwards;
+  }
+  .card:nth-child(1) { animation-delay: .9s; }
+  .card:nth-child(2) { animation-delay: 1.05s; --accent: #c59bff; }
+  @keyframes rise { to { opacity: 1; translate: 0 0; } }
+  .card:hover { border-color: color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 30px 80px -30px color-mix(in srgb, var(--accent) 45%, transparent); }
+  .card::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+    background: radial-gradient(500px circle at var(--mx, 50%) var(--my, 0%), color-mix(in srgb, var(--accent) 16%, transparent), transparent 45%);
+    opacity: 0; transition: opacity .5s;
+  }
+  .card:hover::after { opacity: 1; }
+
+  .preview { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #000; border-bottom: 1px solid var(--faint); }
+  .preview .art { position: absolute; inset: 0; transition: transform 1.4s var(--ease), opacity .8s; }
+  .card:hover .preview .art { transform: scale(1.06); }
+  /* Live iframe preview, loaded on hover only so idle cards cost nothing. */
+  .preview iframe {
+    position: absolute; left: 0; top: 0; width: 200%; height: 200%;
+    transform: scale(.5); transform-origin: 0 0;
+    border: 0; pointer-events: none; opacity: 0; transition: opacity 1s ease .3s;
+  }
+  .preview iframe.ready { opacity: 1; }
+  .preview .tag {
+    position: absolute; left: 1.1rem; top: 1.1rem; z-index: 2;
+    font-size: .6rem; letter-spacing: .24em; text-transform: uppercase;
+    padding: .45rem .7rem; border-radius: 99px;
+    background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.15);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .preview .tag.hover-hint { left: auto; right: 1.1rem; transition: opacity .4s; }
+  .card:hover .preview .tag.hover-hint { opacity: 0; }
+
+  /* CSS-only poster art for each piece. */
+  .art-abyss {
+    background:
+      radial-gradient(2px 2px at 20% 30%, #9ff 60%, transparent), radial-gradient(1.5px 1.5px at 70% 60%, #9ff 60%, transparent),
+      radial-gradient(2px 2px at 40% 80%, #f8e 60%, transparent), radial-gradient(1.5px 1.5px at 85% 25%, #9ff 60%, transparent),
+      radial-gradient(1px 1px at 55% 45%, #fff 60%, transparent), radial-gradient(1.5px 1.5px at 10% 70%, #9ff 60%, transparent),
+      radial-gradient(ellipse 30% 22% at 58% 42%, rgba(127,246,255,.35), transparent 70%),
+      linear-gradient(180deg, #0b5170 0%, #03263c 35%, #010812 75%, #000 100%);
+  }
+  .art-abyss .jelly {
+    position: absolute; left: 52%; top: 28%; width: 16%; aspect-ratio: 1.2;
+    border-radius: 50% 50% 18% 18% / 70% 70% 30% 30%;
+    background: radial-gradient(circle at 50% 35%, rgba(220,255,255,.9), rgba(127,246,255,.35) 45%, rgba(127,246,255,.05) 75%);
+    box-shadow: 0 0 60px rgba(127,246,255,.5);
+    animation: bob 4s ease-in-out infinite;
+  }
+  .art-abyss .jelly::after {
+    content: ""; position: absolute; left: 12%; right: 12%; top: 92%; height: 180%;
+    background: repeating-linear-gradient(90deg, rgba(127,246,255,.35) 0 1px, transparent 1px 14%);
+    -webkit-mask: linear-gradient(#000, transparent); mask: linear-gradient(#000, transparent);
+  }
+  .art-abyss .jelly.b { left: 22%; top: 55%; width: 9%; animation-delay: -1.5s; filter: hue-rotate(90deg); }
+  @keyframes bob { 50% { translate: 0 -12%; scale: .96 1.04; } }
+  .art-abyss .rays {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(100deg, transparent 0 8%, rgba(200,250,255,.07) 8% 11%, transparent 11% 19%);
+    -webkit-mask: linear-gradient(#000, transparent 60%); mask: linear-gradient(#000, transparent 60%);
+  }
+
+  .art-merc { background: radial-gradient(ellipse at 50% 45%, #1c1830, #07070b 70%); }
+  .art-merc .blob {
+    position: absolute; left: 50%; top: 46%; width: 30%; aspect-ratio: 1; translate: -50% -50%;
+    border-radius: 46% 54% 58% 42% / 52% 44% 56% 48%;
+    background:
+      radial-gradient(circle at 34% 28%, #fff 0 6%, transparent 14%),
+      radial-gradient(circle at 60% 70%, rgba(127,224,255,.7), transparent 40%),
+      radial-gradient(circle at 50% 50%, #9aa3b8, #2a2c38 55%, #08080c 80%);
+    box-shadow: inset -20px -30px 60px rgba(0,0,0,.7), 0 0 80px rgba(197,155,255,.25);
+    animation: morph 9s ease-in-out infinite;
+  }
+  .art-merc .blob.s { width: 10%; left: 70%; top: 30%; animation-duration: 6s; animation-delay: -2s; }
+  .art-merc .floor {
+    position: absolute; left: -20%; right: -20%; bottom: -30%; height: 60%;
+    background-image: linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
+    background-size: 44px 44px; transform: perspective(300px) rotateX(62deg);
+    -webkit-mask: linear-gradient(transparent, #000 40%); mask: linear-gradient(transparent, #000 40%);
+  }
+  @keyframes morph {
+    33% { border-radius: 60% 40% 44% 56% / 40% 60% 42% 58%; rotate: 60deg; }
+    66% { border-radius: 40% 60% 62% 38% / 58% 38% 62% 42%; rotate: -40deg; }
+  }
+
+  .body { padding: 1.8rem 1.9rem 1.9rem; display: flex; flex-direction: column; gap: 1.2rem; flex: 1; }
+  .title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  .num { font-size: .7rem; letter-spacing: .2em; color: var(--accent); }
+  .card h2 { font-size: clamp(2.2rem, 4vw, 3.4rem); font-weight: 200; letter-spacing: -.045em; line-height: 1; }
+  .card p { color: var(--dim); line-height: 1.6; font-size: .98rem; max-width: 52ch; }
+  .chips { display: flex; flex-wrap: wrap; gap: .45rem; }
+  .chips span { font-size: .6rem; letter-spacing: .16em; text-transform: uppercase; padding: .4rem .65rem; border: 1px solid var(--faint); border-radius: 99px; color: var(--dim); }
+
+  .specs { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--faint); margin-top: auto; }
+  .specs div { padding: 1rem 0 0; }
+  .specs div + div { padding-left: 1rem; border-left: 1px solid var(--faint); }
+  .specs dt { font-size: .56rem; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); margin-bottom: .35rem; }
+  .specs dd { font-size: 1.05rem; font-weight: 300; font-variant-numeric: tabular-nums; }
+  .specs dd small { font-size: .65rem; color: var(--dim); }
+
+  .open {
+    position: relative; overflow: hidden;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.05rem 1.3rem; border-radius: 14px; border: 1px solid var(--faint);
+    font-size: .7rem; letter-spacing: .24em; text-transform: uppercase;
+    transition: color .5s, border-color .5s;
+  }
+  .open::before {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background: var(--accent); transform: translateY(101%); transition: transform .6s var(--ease);
+  }
+  .open:hover { color: #07070a; border-color: var(--accent); }
+  .open:hover::before { transform: none; }
+  .open .arrow { display: inline-block; transition: transform .6s var(--ease); }
+  .open:hover .arrow { transform: translate(4px,-4px); }
+  .open { isolation: isolate; }
+
+  footer {
+    margin-top: 7vh; padding-top: 1.6rem; border-top: 1px solid var(--faint);
+    display: flex; justify-content: space-between; gap: 2rem; flex-wrap: wrap;
+    font-size: .64rem; letter-spacing: .2em; text-transform: uppercase; color: var(--dim);
+  }
+  footer .note { max-width: 70ch; text-transform: none; letter-spacing: .02em; font-size: .8rem; line-height: 1.6; }
+
+  @media (max-width: 900px) {
+    main { padding: 0 1.4rem 4rem; }
+    .intro, .grid { grid-template-columns: 1fr; }
+    .top .meta span:not(.live) { display: none; }
+    .specs { grid-template-columns: repeat(2, 1fr); row-gap: 1rem; }
+    .specs div:nth-child(3) { padding-left: 0; border-left: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01s !important; transition-duration: .01s !important; } }
+</style>
+</head>
+<body>
+
+<div class="aura"><i></i><i></i></div>
+<div class="grain"></div>
+
+<main>
+  <header class="top mono">
+    <div class="logo">AI-<em>X</em>PERIENCE</div>
+    <div class="meta">
+      <span>Model · Opus 5.5</span>
+      <span>Vol. 01 · 2026</span>
+      <span class="live">2 pieces</span>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow mono">An experiment in generative craft</div>
+    <h1>
+      <span class="line"><span>One prompt.</span></span>
+      <span class="line"><span class="outline">One file.</span></span>
+      <span class="line"><span class="grad">No excuses.</span></span>
+    </h1>
+    <div class="intro">
+      <p>How far can an AI go when asked to build an <strong>advanced, animated web experience in a single prompt</strong>? Each piece here was generated from one request, with <strong>one follow-up allowed for minor corrections</strong>. No frameworks, no libraries, no assets: HTML, CSS and JavaScript in one self-contained file.</p>
+      <div class="rules">
+        <div><b>1 + 1</b><span class="mono">Prompt + fix</span></div>
+        <div><b>1</b><span class="mono">File per piece</span></div>
+        <div><b>0</b><span class="mono">Dependencies</span></div>
+        <div><b>~115K</b><span class="mono">Tokens in total</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-head mono"><span>Index of works</span><span>Hover to preview live</span></div>
+
+  <section class="grid">
+    <article class="card" data-src="pages/abyss.html">
+      <div class="preview">
+        <div class="art art-abyss"><div class="rays"></div><div class="jelly"></div><div class="jelly b"></div></div>
+        <span class="tag mono">Canvas 2D</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Abyss</h2><span class="num mono">Nº 01</span></div>
+        <p>A scroll-driven descent from the sunlit surface to 4000 metres. Bioluminescent plankton drift on a flow field and flare at your touch, while jellyfish with simulated tentacles pulse through the dark.</p>
+        <div class="chips mono"><span>Verlet physics</span><span>Flow field</span><span>Parallax</span><span>Scroll-linked</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Opus 5.5</dd></div>
+          <div><dt>Tokens</dt><dd>~60K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1 + 1</dd></div>
+          <div><dt>Size</dt><dd>28 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/abyss.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
+
+    <article class="card" data-src="pages/mercurial.html">
+      <div class="preview">
+        <div class="art art-merc"><div class="floor"></div><div class="blob"></div><div class="blob s"></div></div>
+        <span class="tag mono">WebGL2 · Raymarching</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Mercurial</h2><span class="num mono">Nº 02</span></div>
+        <p>A liquid-metal sculpture raymarched in real time. Drops fuse into a morphing core, a charge-and-release gesture detonates it, and four materials (chrome, soap film, dispersive glass, magma) crossfade on demand.</p>
+        <div class="chips mono"><span>SDF raymarching</span><span>Soft shadows</span><span>Web Audio</span><span>Adaptive resolution</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Opus 5.5</dd></div>
+          <div><dt>Tokens</dt><dd>~55K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1 + 1</dd></div>
+          <div><dt>Size</dt><dd>37 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/mercurial.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
+  </section>
+
+  <footer class="mono">
+    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5 in Claude Code.</span>
+    <span>AI-XPERIENCE · Vol. 01</span>
+  </footer>
+</main>
+
+<script>
+(() => {
+  // Aura follows the cursor with inertia.
+  const pools = document.querySelectorAll('.aura i');
+  let tx = innerWidth / 2, ty = innerHeight / 3, x = tx, y = ty, t = 0;
+  addEventListener('pointermove', e => { tx = e.clientX; ty = e.clientY; });
+  (function loop() {
+    t += 0.004;
+    x += (tx - x) * 0.04; y += (ty - y) * 0.04;
+    const s = Math.max(innerWidth, innerHeight) * 0.3;
+    pools[0].style.transform = `translate(${x - s + Math.sin(t) * 80}px, ${y - s + Math.cos(t * 1.3) * 60}px)`;
+    pools[1].style.transform = `translate(${innerWidth - x - s + Math.cos(t) * 90}px, ${innerHeight - y - s + Math.sin(t * .8) * 70}px)`;
+    requestAnimationFrame(loop);
+  })();
+
+  const fine = matchMedia('(hover: hover)').matches;
+  document.querySelectorAll('.card').forEach(card => {
+    const preview = card.querySelector('.preview');
+    let frame = null, timer = null;
+
+    card.addEventListener('pointermove', e => {
+      const r = card.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+      card.style.setProperty('--mx', px * 100 + '%');
+      card.style.setProperty('--my', py * 100 + '%');
+      if (fine) card.style.transform = `rotateY(${(px - .5) * 6}deg) rotateX(${(.5 - py) * 5}deg) translateZ(0)`;
+    });
+
+    card.addEventListener('pointerenter', () => {
+      if (!fine) return;
+      // Short delay so sweeping the cursor across the page does not spin up WebGL.
+      timer = setTimeout(() => {
+        frame = document.createElement('iframe');
+        frame.src = card.dataset.src;
+        frame.loading = 'eager';
+        frame.tabIndex = -1;
+        frame.setAttribute('aria-hidden', 'true');
+        frame.onload = () => frame && frame.classList.add('ready');
+        preview.appendChild(frame);
+      }, 250);
+    });
+
+    card.addEventListener('pointerleave', () => {
+      clearTimeout(timer);
+      card.style.transform = '';
+      if (frame) {
+        const f = frame; frame = null;
+        f.classList.remove('ready');
+        setTimeout(() => f.remove(), 900);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

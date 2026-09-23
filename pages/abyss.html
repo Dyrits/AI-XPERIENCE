@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abyss: a descent into living light</title>
+<style>
+  :root {
+    --ink: #e8fbff;
+    --glow: #7ff6ff;
+    --accent: #ff7ce5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: #000208;
+    color: var(--ink);
+    font-family: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+  canvas#sea {
+    position: fixed; inset: 0;
+    width: 100vw; height: 100vh;
+    display: block;
+    z-index: 0;
+  }
+  .grain {
+    position: fixed; inset: -50%;
+    width: 200%; height: 200%;
+    pointer-events: none; z-index: 1; opacity: .05;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    animation: grain 1.2s steps(6) infinite;
+  }
+  @keyframes grain {
+    0% { transform: translate(0,0); } 20% { transform: translate(-3%,2%); }
+    40% { transform: translate(2%,-4%); } 60% { transform: translate(-4%,-1%); }
+    80% { transform: translate(3%,3%); } 100% { transform: translate(0,0); }
+  }
+  main { position: relative; z-index: 2; pointer-events: none; }
+  section {
+    min-height: 120vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 10vw;
+  }
+  section:nth-child(even) { align-items: flex-end; text-align: right; }
+  .meta {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: .72rem; letter-spacing: .35em; text-transform: uppercase;
+    color: var(--glow); opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 1.2s ease, transform 1.2s cubic-bezier(.2,.8,.2,1);
+    margin-bottom: 1.4rem;
+  }
+  h1, h2 {
+    font-weight: 300; line-height: .95; letter-spacing: -.02em;
+    text-shadow: 0 0 40px rgba(127,246,255,.35);
+  }
+  h1 { font-size: clamp(4rem, 14vw, 13rem); font-style: italic; }
+  h2 { font-size: clamp(2.6rem, 7vw, 6.5rem); max-width: 14ch; }
+  h1 span, h2 span {
+    display: inline-block; white-space: pre;
+    opacity: 0; filter: blur(12px);
+    transform: translateY(.4em) rotate(4deg);
+    transition: opacity 1.1s ease, filter 1.4s ease, transform 1.4s cubic-bezier(.16,1,.3,1);
+    transition-delay: calc(var(--i) * 38ms);
+  }
+  p.lede {
+    margin-top: 2rem; max-width: 36ch;
+    font-size: clamp(1.05rem, 1.6vw, 1.4rem); line-height: 1.6;
+    color: rgba(232,251,255,.72); font-style: italic;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 1.6s ease .6s, transform 1.6s cubic-bezier(.16,1,.3,1) .6s;
+  }
+  .in .meta, .in p.lede { opacity: 1; transform: none; }
+  .in h1 span, .in h2 span { opacity: 1; filter: blur(0); transform: none; }
+
+  .hint {
+    margin-top: 3rem;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: .7rem; letter-spacing: .3em; text-transform: uppercase;
+    color: rgba(232,251,255,.5);
+    display: flex; gap: 2.2rem; flex-wrap: wrap;
+  }
+  .hint b { color: var(--glow); font-weight: 400; }
+  .scroll-cue {
+    position: absolute; left: 50%; bottom: 6vh; transform: translateX(-50%);
+    width: 1px; height: 70px; overflow: hidden;
+    background: rgba(255,255,255,.1);
+  }
+  .scroll-cue::after {
+    content: ""; position: absolute; left: 0; top: -40%;
+    width: 100%; height: 40%;
+    background: linear-gradient(transparent, var(--glow));
+    animation: drip 2.2s cubic-bezier(.6,0,.4,1) infinite;
+  }
+  @keyframes drip { to { top: 110%; } }
+
+  /* Depth gauge */
+  .hud {
+    position: fixed; right: 2.4vw; top: 50%; transform: translateY(-50%);
+    z-index: 3; pointer-events: none;
+    display: flex; align-items: center; gap: 1rem;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  }
+  .readout { text-align: right; }
+  .readout .depth {
+    font-size: 1.6rem; font-weight: 300; letter-spacing: .05em;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 18px rgba(127,246,255,.6);
+  }
+  .readout .depth small { font-size: .7rem; opacity: .6; margin-left: .2rem; }
+  .readout .zone {
+    font-size: .6rem; letter-spacing: .3em; text-transform: uppercase;
+    color: var(--glow); opacity: .8; margin-top: .3rem;
+    transition: color 1s ease;
+  }
+  .readout .temp { font-size: .6rem; opacity: .45; margin-top: .2rem; letter-spacing: .15em; }
+  .gauge {
+    position: relative; width: 1px; height: 38vh;
+    background: linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.05));
+  }
+  .gauge i {
+    position: absolute; left: -4px; width: 9px; height: 1px;
+    background: rgba(255,255,255,.3);
+  }
+  .gauge .bob {
+    position: absolute; left: -5px; top: 0;
+    width: 11px; height: 11px; border-radius: 50%;
+    border: 1px solid var(--glow);
+    box-shadow: 0 0 14px var(--glow), inset 0 0 6px var(--glow);
+    transform: translateY(-50%);
+  }
+
+  /* Cursor */
+  .cursor {
+    position: fixed; left: 0; top: 0; z-index: 10; pointer-events: none;
+    width: 34px; height: 34px; margin: -17px 0 0 -17px;
+    border-radius: 50%;
+    border: 1px solid rgba(127,246,255,.6);
+    box-shadow: 0 0 22px rgba(127,246,255,.35), inset 0 0 10px rgba(127,246,255,.25);
+    mix-blend-mode: screen;
+    transition: width .35s, height .35s, margin .35s, border-color .35s;
+  }
+  .cursor.down { width: 18px; height: 18px; margin: -9px 0 0 -9px; border-color: var(--accent); }
+  .cursor-dot {
+    position: fixed; left: 0; top: 0; z-index: 10; pointer-events: none;
+    width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 8px #fff;
+  }
+  @media (hover: none) { .cursor, .cursor-dot { display: none; } body { cursor: auto; } }
+  @media (max-width: 700px) { .hud .gauge { display: none; } .hud { top: auto; bottom: 3vh; transform: none; } }
+</style>
+</head>
+<body>
+
+<canvas id="sea"></canvas>
+<div class="grain"></div>
+
+<div class="hud">
+  <div class="readout">
+    <div class="depth"><span id="depth">0</span><small>m</small></div>
+    <div class="zone" id="zone">Surface</div>
+    <div class="temp" id="temp">24.0 °C</div>
+  </div>
+  <div class="gauge" id="gauge"><div class="bob" id="bob"></div></div>
+</div>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<main>
+  <section>
+    <div class="meta">A descent in five movements</div>
+    <h1 data-split>Abyss</h1>
+    <p class="lede">Beneath the last reach of the sun, the dark learned to make its own light.</p>
+    <div class="hint">
+      <span><b>Scroll</b> to sink</span>
+      <span><b>Move</b> to stir</span>
+      <span><b>Click</b> to call</span>
+    </div>
+    <div class="scroll-cue"></div>
+  </section>
+
+  <section>
+    <div class="meta">I · Epipelagic · 0 to 200 m</div>
+    <h2 data-split>Where light still remembers the sky.</h2>
+    <p class="lede">Sunbeams lean through the water like tired columns of a drowned cathedral. Everything here is still borrowed light.</p>
+  </section>
+
+  <section>
+    <div class="meta">II · Mesopelagic · 200 to 1000 m</div>
+    <h2 data-split>The blue thins into rumour.</h2>
+    <p class="lede">Red goes first, then yellow, then green. What remains is a blue so faint it feels like a memory of colour.</p>
+  </section>
+
+  <section>
+    <div class="meta">III · Bathypelagic · 1000 to 4000 m</div>
+    <h2 data-split>Here, every light is alive.</h2>
+    <p class="lede">Ninety percent of what lives down here glows. Touch the dark and watch it answer.</p>
+  </section>
+
+  <section>
+    <div class="meta">IV · Abyssopelagic · 4000 m</div>
+    <h2 data-split>You are the brightest thing for miles.</h2>
+    <p class="lede">Click. Somewhere in the black, something is listening.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+  const canvas = document.getElementById('sea');
+  const ctx = canvas.getContext('2d');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MAX_DEPTH = 4000;
+
+  let W = 0, H = 0, DPR = 1;
+  let time = 0, last = performance.now();
+  let depth = 0, depthTarget = 0;
+  let lastScrollY = scrollY, scrollDelta = 0, scrollVel = 0;
+
+  const mouse = { x: -9999, y: -9999, px: -9999, py: -9999, vx: 0, vy: 0, active: false };
+  const pulses = [];
+  let particles = [];
+  let jellies = [];
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  // Pre-rendered glow sprites, one per hue, drawn with additive blending for cheap bloom.
+  const sprites = {};
+  function makeSprite(hue) {
+    const s = 64, c = document.createElement('canvas');
+    c.width = c.height = s;
+    const g = c.getContext('2d');
+    const grad = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+    grad.addColorStop(0, `hsla(${hue},100%,92%,1)`);
+    grad.addColorStop(0.18, `hsla(${hue},100%,70%,.8)`);
+    grad.addColorStop(0.45, `hsla(${hue},100%,55%,.18)`);
+    grad.addColorStop(1, `hsla(${hue},100%,50%,0)`);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, s, s);
+    return c;
+  }
+  [178, 190, 205, 300, 160].forEach(h => sprites[h] = makeSprite(h));
+  const hues = Object.keys(sprites).map(Number);
+
+  // Cheap smooth pseudo-noise flow field built from layered sines.
+  function flowAngle(x, y, t) {
+    return (
+      Math.sin(x * 0.0021 + t * 0.00021) * 1.3 +
+      Math.cos(y * 0.0018 - t * 0.00017) * 1.1 +
+      Math.sin((x + y) * 0.0009 + t * 0.00011) * 0.9
+    ) * Math.PI;
+  }
+
+  class Particle {
+    constructor(init) { this.reset(init); }
+    reset(init) {
+      this.x = rand(0, W);
+      this.y = init ? rand(0, H) : (Math.random() < .5 ? -10 : H + 10);
+      this.z = rand(0.25, 1);
+      this.size = rand(0.6, 2.4) * this.z;
+      this.hue = Math.random() < 0.12 ? 300 : hues[(Math.random() * 3) | 0];
+      if (Math.random() < 0.06) this.hue = 160;
+      this.e = 0;
+      this.flicker = rand(0, Math.PI * 2);
+      this.vx = 0; this.vy = 0;
+    }
+    update(dt, glowK) {
+      const a = flowAngle(this.x, this.y, time);
+      const speed = 0.18 * this.z;
+      this.vx += Math.cos(a) * speed * 0.06;
+      this.vy += Math.sin(a) * speed * 0.06 - 0.004 * this.z;
+
+      if (mouse.active) {
+        const dx = this.x - mouse.x, dy = this.y - mouse.y;
+        const d2 = dx * dx + dy * dy, R = 140;
+        if (d2 < R * R) {
+          const d = Math.sqrt(d2) || 1, f = 1 - d / R;
+          this.e = Math.max(this.e, f);
+          this.vx += (dx / d) * f * 0.35 + mouse.vx * f * 0.04;
+          this.vy += (dy / d) * f * 0.35 + mouse.vy * f * 0.04;
+        }
+      }
+      for (const p of pulses) {
+        const dx = this.x - p.x, dy = this.y - p.y;
+        const d = Math.sqrt(dx * dx + dy * dy) || 1;
+        const band = Math.abs(d - p.r);
+        if (band < 40) {
+          const f = (1 - band / 40) * p.life;
+          this.e = Math.max(this.e, f);
+          this.vx += (dx / d) * f * 1.4;
+          this.vy += (dy / d) * f * 1.4;
+        }
+      }
+
+      this.vx *= 0.94; this.vy *= 0.94;
+      this.x += this.vx * dt;
+      this.y += this.vy * dt - scrollDelta * this.z * 0.9;
+      this.e *= Math.pow(0.965, dt);
+      this.flicker += 0.03 * dt;
+
+      if (this.x < -20) this.x = W + 20; else if (this.x > W + 20) this.x = -20;
+      if (this.y < -20) this.y = H + 20; else if (this.y > H + 20) this.y = -20;
+    }
+    draw(glowK) {
+      const tw = 0.6 + 0.4 * Math.sin(this.flicker);
+      const alpha = clamp((0.12 + 0.25 * tw) * glowK + this.e * 0.95, 0, 1);
+      const r = this.size * (5 + this.e * 9);
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(sprites[this.hue], this.x - r, this.y - r, r * 2, r * 2);
+    }
+  }
+
+  class Jelly {
+    constructor(init) { this.spawn(init); }
+    spawn(init) {
+      this.size = rand(22, 58);
+      this.x = rand(W * 0.08, W * 0.92);
+      this.y = init ? rand(H * 0.2, H * 1.2) : H + this.size * 5;
+      this.vx = 0; this.vy = 0;
+      this.phase = rand(0, 1);
+      this.rate = rand(0.0045, 0.0075);
+      this.hue = [185, 200, 290, 310, 170][(Math.random() * 5) | 0];
+      this.sway = rand(0, Math.PI * 2);
+      this.rot = 0;
+      this.tentacles = [];
+      const n = 5 + ((Math.random() * 4) | 0);
+      const segs = 14, segLen = this.size * 0.16;
+      for (let i = 0; i < n; i++) {
+        const pts = [];
+        for (let j = 0; j < segs; j++) pts.push({ x: this.x, y: this.y + j * segLen, px: this.x, py: this.y + j * segLen });
+        this.tentacles.push({ pts, off: (i / (n - 1)) * 2 - 1, segLen: segLen * rand(0.8, 1.3) });
+      }
+      this.arms = [];
+      for (let i = 0; i < 4; i++) {
+        const pts = [];
+        for (let j = 0; j < 8; j++) pts.push({ x: this.x, y: this.y, px: this.x, py: this.y });
+        this.arms.push({ pts, off: (i / 3 - 0.5) * 0.6, segLen: this.size * 0.12 });
+      }
+    }
+    shift(dx, dy) {
+      this.x += dx; this.y += dy;
+      for (const s of this.tentacles.concat(this.arms)) {
+        for (const p of s.pts) { p.x += dx; p.px += dx; p.y += dy; p.py += dy; }
+      }
+    }
+    contraction() {
+      // Sharp contraction followed by slow relaxation, like a real bell stroke.
+      const p = this.phase % 1;
+      return p < 0.28 ? Math.sin((p / 0.28) * Math.PI * 0.5) : Math.pow(1 - (p - 0.28) / 0.72, 2.2);
+    }
+    update(dt) {
+      const prevC = this.contraction();
+      this.phase += this.rate * dt;
+      const c = this.contraction();
+      const thrust = Math.max(0, c - prevC) * this.size * 0.11;
+
+      this.sway += 0.006 * dt;
+      const targetRot = Math.sin(this.sway) * 0.28 + clamp(this.vx * 0.15, -0.3, 0.3);
+      this.rot = lerp(this.rot, targetRot, 0.02 * dt);
+
+      this.vx += Math.sin(this.rot) * thrust + Math.sin(this.sway * 0.7) * 0.004;
+      this.vy += -Math.cos(this.rot) * thrust + 0.006;
+
+      if (mouse.active) {
+        const dx = this.x - mouse.x, dy = this.y - mouse.y, d = Math.hypot(dx, dy);
+        if (d < 160) { this.vx += (dx / d) * 0.05; this.vy += (dy / d) * 0.05; }
+      }
+      for (const p of pulses) {
+        const d = Math.hypot(this.x - p.x, this.y - p.y);
+        if (Math.abs(d - p.r) < 30) this.glowBoost = 1;
+      }
+      this.glowBoost = (this.glowBoost || 0) * Math.pow(0.97, dt);
+
+      this.vx *= Math.pow(0.975, dt);
+      this.vy *= Math.pow(0.975, dt);
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
+      this.shift(0, -scrollDelta * 0.6);
+
+      if (this.x < -this.size * 3) this.shift(W + this.size * 6, 0);
+      if (this.x > W + this.size * 3) this.shift(-W - this.size * 6, 0);
+      if (this.y < -this.size * 8) this.spawn(false);
+      if (this.y > H + this.size * 9 && scrollDelta < 0) this.shift(0, -H - this.size * 15);
+
+      const w = this.size * (1 - 0.22 * c);
+      const cos = Math.cos(this.rot), sin = Math.sin(this.rot);
+      const anchor = (ox, oy) => ({ x: this.x + ox * cos - oy * sin, y: this.y + ox * sin + oy * cos });
+
+      const sim = (strand, ox, oy, gravity, drag) => {
+        const a = anchor(ox, oy), pts = strand.pts;
+        pts[0].x = a.x; pts[0].y = a.y;
+        for (let j = 1; j < pts.length; j++) {
+          const p = pts[j];
+          const vx = (p.x - p.px) * drag, vy = (p.y - p.py) * drag;
+          p.px = p.x; p.py = p.y;
+          p.x += vx + Math.sin(time * 0.002 + j * 0.5 + strand.off * 3) * 0.08;
+          p.y += vy + gravity;
+        }
+        for (let k = 0; k < 3; k++) {
+          for (let j = 1; j < pts.length; j++) {
+            const a1 = pts[j - 1], b = pts[j];
+            const dx = b.x - a1.x, dy = b.y - a1.y, d = Math.hypot(dx, dy) || 1;
+            const diff = (d - strand.segLen) / d;
+            if (j === 1) { b.x -= dx * diff; b.y -= dy * diff; }
+            else { a1.x += dx * diff * 0.5; a1.y += dy * diff * 0.5; b.x -= dx * diff * 0.5; b.y -= dy * diff * 0.5; }
+          }
+        }
+      };
+      for (const t of this.tentacles) sim(t, t.off * w * 0.92, 0, 0.06, 0.96);
+      for (const a of this.arms) sim(a, a.off * w, this.size * 0.08, 0.04, 0.93);
+    }
+    draw(glowK) {
+      const c = this.contraction();
+      const w = this.size * (1 - 0.22 * c);
+      const h = this.size * (0.8 + 0.25 * c);
+      const glow = clamp(0.35 + glowK * 0.65 + this.glowBoost, 0, 1.6);
+      const hue = this.hue;
+
+      ctx.globalCompositeOperation = 'lighter';
+
+      ctx.lineCap = 'round';
+      for (const t of this.tentacles) {
+        const pts = t.pts;
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let j = 1; j < pts.length - 1; j++) {
+          const mx = (pts[j].x + pts[j + 1].x) / 2, my = (pts[j].y + pts[j + 1].y) / 2;
+          ctx.quadraticCurveTo(pts[j].x, pts[j].y, mx, my);
+        }
+        ctx.strokeStyle = `hsla(${hue},100%,75%,${0.28 * glow})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        const tip = pts[pts.length - 1];
+        ctx.globalAlpha = 0.5 * glow;
+        ctx.drawImage(sprites[hues[0]], tip.x - 4, tip.y - 4, 8, 8);
+        ctx.globalAlpha = 1;
+      }
+      for (const a of this.arms) {
+        const pts = a.pts;
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let j = 1; j < pts.length; j++) ctx.lineTo(pts[j].x, pts[j].y);
+        ctx.strokeStyle = `hsla(${hue},90%,70%,${0.22 * glow})`;
+        ctx.lineWidth = this.size * 0.09;
+        ctx.stroke();
+      }
+
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rot);
+
+      const halo = ctx.createRadialGradient(0, -h * 0.4, 0, 0, -h * 0.4, this.size * 2.4);
+      halo.addColorStop(0, `hsla(${hue},100%,60%,${0.22 * glow})`);
+      halo.addColorStop(1, `hsla(${hue},100%,50%,0)`);
+      ctx.fillStyle = halo;
+      ctx.fillRect(-this.size * 2.5, -this.size * 3, this.size * 5, this.size * 5);
+
+      ctx.beginPath();
+      ctx.moveTo(-w, 0);
+      ctx.bezierCurveTo(-w * 1.02, -h * 1.35, w * 1.02, -h * 1.35, w, 0);
+      const scallops = 8;
+      for (let i = scallops; i > 0; i--) {
+        const xa = -w + (2 * w / scallops) * i, xb = -w + (2 * w / scallops) * (i - 1);
+        ctx.quadraticCurveTo((xa + xb) / 2, h * 0.14 * (1 - c * 0.5), xb, 0);
+      }
+      const bell = ctx.createRadialGradient(0, -h * 0.7, 0, 0, -h * 0.3, w * 1.3);
+      bell.addColorStop(0, `hsla(${hue},100%,88%,${0.55 * glow})`);
+      bell.addColorStop(0.5, `hsla(${hue},100%,62%,${0.22 * glow})`);
+      bell.addColorStop(1, `hsla(${hue},100%,50%,${0.06 * glow})`);
+      ctx.fillStyle = bell;
+      ctx.fill();
+      ctx.strokeStyle = `hsla(${hue},100%,85%,${0.5 * glow})`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Radial canals and gonads give the bell its anatomy.
+      ctx.strokeStyle = `hsla(${hue},100%,90%,${0.18 * glow})`;
+      ctx.lineWidth = 0.8;
+      for (let i = -3; i <= 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, -h * 0.95);
+        ctx.quadraticCurveTo(i * w * 0.25, -h * 0.6, i * w * 0.3, 0);
+        ctx.stroke();
+      }
+      ctx.fillStyle = `hsla(${(hue + 40) % 360},100%,80%,${0.35 * glow})`;
+      for (let i = 0; i < 4; i++) {
+        const ang = (i / 4) * Math.PI * 2 + time * 0.0004;
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(ang) * w * 0.28, -h * 0.55 + Math.sin(ang) * h * 0.08, w * 0.12, h * 0.07, ang, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Pulsing rim lights race around the bell edge.
+      for (let i = 0; i <= scallops; i++) {
+        const x = -w + (2 * w / scallops) * i;
+        const lit = 0.5 + 0.5 * Math.sin(time * 0.006 - i * 0.9);
+        const r = 3 + lit * 5 * glow;
+        ctx.globalAlpha = clamp(lit * glow, 0, 1);
+        ctx.drawImage(sprites[hue > 250 ? 300 : 190], x - r, -r, r * 2, r * 2);
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+  }
+
+  function drawBackground(d) {
+    const k = d / MAX_DEPTH;
+    const top = [lerp(18, 0, smooth(0, .35, k)), lerp(120, 4, smooth(0, .45, k)), lerp(170, 14, smooth(0, .6, k))];
+    const bot = [lerp(4, 0, smooth(0, .25, k)), lerp(40, 1, smooth(0, .3, k)), lerp(80, 6, smooth(0, .5, k))];
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, `rgb(${top.map(Math.round)})`);
+    g.addColorStop(1, `rgb(${bot.map(Math.round)})`);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // God rays fade out as the sunlight is absorbed.
+    const rayK = 1 - smooth(0, 700, d);
+    if (rayK > 0.01) {
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 7; i++) {
+        const cx = W * (0.1 + i * 0.14) + Math.sin(time * 0.0003 + i * 1.7) * 60;
+        const spread = 60 + 50 * Math.sin(time * 0.0005 + i);
+        const len = H * (0.8 + 0.3 * Math.sin(i * 2.3));
+        const alpha = rayK * (0.05 + 0.04 * Math.sin(time * 0.0007 + i * 2.1));
+        const rg = ctx.createLinearGradient(0, 0, 0, len);
+        rg.addColorStop(0, `rgba(190,245,255,${alpha})`);
+        rg.addColorStop(1, 'rgba(190,245,255,0)');
+        ctx.fillStyle = rg;
+        ctx.beginPath();
+        ctx.moveTo(cx - 20, -10);
+        ctx.lineTo(cx + 20, -10);
+        ctx.lineTo(cx + spread + 120, len);
+        ctx.lineTo(cx - spread + 40, len);
+        ctx.closePath();
+        ctx.fill();
+      }
+      // Caustic shimmer near the surface.
+      const cg = ctx.createRadialGradient(W / 2, -H * 0.4, 0, W / 2, -H * 0.4, H * 1.1);
+      cg.addColorStop(0, `rgba(200,255,255,${0.18 * rayK})`);
+      cg.addColorStop(1, 'rgba(200,255,255,0)');
+      ctx.fillStyle = cg;
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+
+  function drawPulses(dt) {
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = pulses.length - 1; i >= 0; i--) {
+      const p = pulses[i];
+      p.r += (6 + p.r * 0.012) * dt;
+      p.life = Math.max(0, 1 - p.r / p.max);
+      p.y -= scrollDelta;
+      if (p.life <= 0) { pulses.splice(i, 1); continue; }
+      for (let k = 0; k < 3; k++) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.max(0, p.r - k * 14), 0, Math.PI * 2);
+        ctx.strokeStyle = `hsla(${p.hue},100%,75%,${p.life * (0.35 - k * 0.1)})`;
+        ctx.lineWidth = 2 - k * 0.5;
+        ctx.stroke();
+      }
+      const core = 60 * p.life;
+      ctx.globalAlpha = p.life;
+      ctx.drawImage(sprites[p.hue === 300 ? 300 : 178], p.x - core, p.y - core, core * 2, core * 2);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawVignette() {
+    ctx.globalCompositeOperation = 'source-over';
+    const v = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.75);
+    v.addColorStop(0, 'rgba(0,0,0,0)');
+    v.addColorStop(1, 'rgba(0,0,6,.65)');
+    ctx.fillStyle = v;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Scroll-linked HUD.
+  const $depth = document.getElementById('depth');
+  const $zone = document.getElementById('zone');
+  const $temp = document.getElementById('temp');
+  const $bob = document.getElementById('bob');
+  const $gauge = document.getElementById('gauge');
+  [0, 200, 1000, 4000].forEach(m => {
+    const tick = document.createElement('i');
+    tick.style.top = (Math.sqrt(m / MAX_DEPTH) * 100) + '%';
+    $gauge.appendChild(tick);
+  });
+  const zones = [
+    [5, 'Surface', '#bff8ff'], [200, 'Sunlight zone', '#7ff6ff'], [1000, 'Twilight zone', '#8fb8ff'],
+    [3990, 'Midnight zone', '#c79bff'], [Infinity, 'The abyss', '#ff7ce5']
+  ];
+  function updateHUD() {
+    $depth.textContent = Math.round(depth).toLocaleString('en-US');
+    const z = zones.find(z => depth < z[0]);
+    if ($zone.textContent !== z[1]) { $zone.textContent = z[1]; $zone.style.color = z[2]; }
+    const temp = depth < 200 ? lerp(24, 18, depth / 200) : depth < 1000 ? lerp(18, 4, (depth - 200) / 800) : lerp(4, 2, (depth - 1000) / 3000);
+    $temp.textContent = temp.toFixed(1) + ' °C · ' + (1 + depth / 10).toFixed(0) + ' atm';
+    $bob.style.top = (Math.sqrt(depth / MAX_DEPTH) * 100) + '%';
+  }
+
+  function readScroll() {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    // Easing the mapping lingers longer in the shallows, where the colour changes most.
+    const k = max > 0 ? clamp(scrollY / max, 0, 1) : 0;
+    depthTarget = Math.pow(k, 1.6) * MAX_DEPTH;
+  }
+
+  function resize() {
+    DPR = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const count = Math.round(clamp((W * H) / (reduced ? 9000 : 3800), 120, 650));
+    while (particles.length < count) particles.push(new Particle(true));
+    particles.length = count;
+    const jc = reduced ? 3 : clamp(Math.round(W / 260), 3, 8);
+    while (jellies.length < jc) jellies.push(new Jelly(true));
+    jellies.length = jc;
+    readScroll();
+  }
+
+  function frame(now) {
+    const dt = clamp((now - last) / 16.667, 0.1, 3);
+    last = now;
+    time = now;
+
+    const sy = scrollY;
+    scrollVel = lerp(scrollVel, clamp(sy - lastScrollY, -80, 80), clamp(0.18 * dt, 0, 1));
+    scrollDelta = scrollVel * 0.35;
+    lastScrollY = sy;
+
+    depth = lerp(depth, depthTarget, 0.06 * dt);
+    const glowK = 0.25 + 0.75 * smooth(100, 1400, depth);
+
+    mouse.vx = lerp(mouse.vx, mouse.x - mouse.px, 0.3);
+    mouse.vy = lerp(mouse.vy, mouse.y - mouse.py, 0.3);
+    mouse.px = mouse.x; mouse.py = mouse.y;
+
+    drawBackground(depth);
+
+    ctx.globalCompositeOperation = 'lighter';
+    for (const p of particles) { p.update(dt, glowK); p.draw(glowK); }
+    ctx.globalAlpha = 1;
+
+    for (const j of jellies) { j.update(dt); j.draw(glowK); }
+
+    drawPulses(dt);
+    drawVignette();
+    updateHUD();
+
+    requestAnimationFrame(frame);
+  }
+
+  // Cursor with inertia.
+  const $cursor = document.getElementById('cursor');
+  const $dot = document.getElementById('cursorDot');
+  let cx = innerWidth / 2, cy = innerHeight / 2;
+  (function cursorLoop() {
+    if (mouse.active) {
+      cx = lerp(cx, mouse.x, 0.16);
+      cy = lerp(cy, mouse.y, 0.16);
+      $cursor.style.transform = `translate(${cx}px,${cy}px)`;
+      $dot.style.transform = `translate(${mouse.x}px,${mouse.y}px)`;
+    }
+    requestAnimationFrame(cursorLoop);
+  })();
+
+  addEventListener('pointermove', e => {
+    if (!mouse.active) { mouse.px = e.clientX; mouse.py = e.clientY; }
+    mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true;
+  });
+  addEventListener('pointerleave', () => { mouse.active = false; mouse.x = mouse.y = -9999; });
+  document.addEventListener('mouseleave', () => { mouse.active = false; mouse.x = mouse.y = -9999; });
+  addEventListener('pointerdown', e => {
+    $cursor.classList.add('down');
+    pulses.push({ x: e.clientX, y: e.clientY, r: 0, max: Math.max(W, H) * 0.55, life: 1, hue: depth > 2500 ? 300 : 178 });
+  });
+  addEventListener('pointerup', () => $cursor.classList.remove('down'));
+  addEventListener('scroll', readScroll, { passive: true });
+  addEventListener('resize', resize);
+
+  // Letter-by-letter reveal.
+  document.querySelectorAll('[data-split]').forEach(el => {
+    const text = el.textContent;
+    el.textContent = '';
+    el.setAttribute('aria-label', text);
+    [...text].forEach((ch, i) => {
+      const s = document.createElement('span');
+      s.textContent = ch;
+      s.style.setProperty('--i', i);
+      s.setAttribute('aria-hidden', 'true');
+      el.appendChild(s);
+    });
+  });
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => e.target.classList.toggle('in', e.isIntersecting));
+  }, { threshold: 0.35 });
+  document.querySelectorAll('section').forEach(s => io.observe(s));
+
+  resize();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
