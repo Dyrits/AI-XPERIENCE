@@ -129,6 +129,41 @@
   .art-echo .pearl { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #ffd98c; box-shadow: 0 0 14px #ffd98c; animation: tw 2.8s ease-in-out infinite; }
   .art-echo .pearl.p1 { top: 31%; left: 65%; }
   .art-echo .pearl.p2 { top: 64%; left: 27%; animation-delay: 1.4s; }
+  .card:nth-child(6) { animation-delay: 1.65s; --accent: #ffd54f; }
+  .art-umbra { background: radial-gradient(ellipse at 50% 50%, #181d2a, #06070b 75%); }
+  .art-umbra .beam {
+    position: absolute; left: 50%; top: 50%; width: 0; height: 0;
+    border-left: 90px solid transparent; border-right: 90px solid transparent;
+    border-bottom: 220px solid rgba(255, 224, 130, 0.22);
+    transform-origin: 50% 0; transform: translate(-50%, 0) rotate(42deg);
+    filter: blur(4px);
+  }
+  .art-umbra .pillar-poly {
+    position: absolute; width: 28px; height: 48px; background: #0b0e17;
+    border: 1px solid rgba(255, 224, 130, 0.35); transform: rotate(45deg);
+  }
+  .art-umbra .pillar-poly.p1 { left: 34%; top: 38%; }
+  .art-umbra .pillar-poly.p2 { left: 66%; top: 58%; width: 36px; height: 36px; }
+  .art-umbra .shadow-cone {
+    position: absolute; left: 34%; top: 38%; width: 160px; height: 160px;
+    background: linear-gradient(135deg, rgba(3, 4, 7, 0.95), transparent);
+    transform-origin: 0 0; transform: rotate(15deg);
+  }
+  .art-umbra .core-orb {
+    position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px;
+    border-radius: 50%; background: #ffffff;
+    box-shadow: 0 0 25px #ffd54f, 0 0 55px rgba(255, 152, 0, 0.8);
+    animation: corePulse 3s ease-in-out infinite;
+  }
+  .art-umbra .orchid-bloom {
+    position: absolute; width: 8px; height: 8px; border-radius: 50%;
+    background: #c084fc; box-shadow: 0 0 16px #c084fc;
+    animation: orchGlow 2.5s ease-in-out infinite;
+  }
+  .art-umbra .orchid-bloom.o1 { left: 24%; top: 28%; }
+  .art-umbra .orchid-bloom.o2 { left: 78%; top: 72%; animation-delay: 1.2s; }
+  @keyframes corePulse { 50% { transform: scale(1.15); box-shadow: 0 0 35px #ffd54f, 0 0 75px #ff9800; } }
+  @keyframes orchGlow { 50% { opacity: 0.35; } }
   @keyframes tw { 50% { opacity: .25; } }
   @keyframes rise { to { opacity: 1; translate: 0 0; } }
   .card:hover { border-color: color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 30px 80px -30px color-mix(in srgb, var(--accent) 45%, transparent); }
@@ -269,9 +304,9 @@
   <header class="top mono">
     <div class="logo">AI-<em>X</em>PERIENCE</div>
     <div class="meta">
-      <span>Claude + Codex + GLM</span>
+      <span>Claude + Codex + GLM + Gemini</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">5 pieces</span>
+      <span class="live">6 pieces</span>
     </div>
   </header>
 
@@ -288,7 +323,7 @@
         <div><b>1 + 1</b><span class="mono">Prompt + fix</span></div>
         <div><b>1</b><span class="mono">File per piece</span></div>
         <div><b>0</b><span class="mono">Dependencies</span></div>
-        <div><b>~290K</b><span class="mono">Tokens in total</span></div>
+        <div><b>~340K</b><span class="mono">Tokens in total</span></div>
       </div>
     </div>
   </section>
@@ -405,10 +440,36 @@
         <a class="open mono" href="pages/echoveil.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+
+    <article class="card" data-src="pages/umbralux.html">
+      <div class="preview">
+        <div class="art art-umbra">
+          <i class="beam"></i>
+          <i class="shadow-cone"></i>
+          <b class="pillar-poly p1"></b><b class="pillar-poly p2"></b>
+          <div class="core-orb"></div>
+          <b class="orchid-bloom o1"></b><b class="orchid-bloom o2"></b>
+        </div>
+        <span class="tag mono">Canvas 2D · Optics</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Umbralux</h2><span class="num mono">Nº 06</span></div>
+        <p>A sacred spatial game of living light and sheltering shade. Move your radiant core to cast long shadows from stone monoliths: shelter fragile Umbral Orchids from your own blinding rays while bathing Sunstones in pure daylight and banishing shadow predators.</p>
+        <div class="chips mono"><span>Raycast shadows</span><span>2D Optics</span><span>Dual balance</span><span>Web Audio</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Gemini 3.8 Flash</dd></div>
+          <div><dt>Tokens</dt><dd>~52K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>46 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/umbralux.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5 in Claude Code, GPT-6 Atra in Codex and GLM-5.3.</span>
+    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5, GPT-6 Atra, GLM-5.3 and Gemini 3.8 Flash.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>

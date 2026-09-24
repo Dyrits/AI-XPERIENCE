@@ -18,6 +18,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Night atlas](pages/night-atlas.html) | Canvas 2D, projected 3D mesh | GPT-6 Atra | ~57K | 1 + 1 | 21 KB |
 | [Foldwake](pages/foldwake.html) | Canvas 2D, mirror geometry | GPT-6 Atra | ~60K | 1 | 21 KB |
 | [Echoveil](pages/echoveil.html) | Canvas 2D, sonar reveal | GLM-5.3 | ~58K | 1 | 33 KB |
+| [Umbralux](pages/umbralux.html) | Canvas 2D, raycast optics | Gemini 3.8 Flash | ~52K | 1 | 46 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -29,11 +30,13 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 **Echoveil.** A sonar-stealth game in a cave that only exists where sound has touched it. The world is pitch black: releasing a ping paints expanding rings of light over the walls for a few seconds, and a held charge sends a louder, wider burst. Quiet taps are safe, but bursts — and the pearls, and your own fading halo — draw the attention of lurkers that hunt the source of every echo. Gather seven pearls to open the gate, follow its slow pulses to the far side of the cave, and get out before your light gutters out.
 
+**Umbralux.** A spatial game of living light and sheltering shade. You are a wandering spark of sunlight in an ancient sundial sanctum. Moving your radiant core casts real-time geometric shadows from monolithic stone pillars. Bathe ancestral Sunstones in direct light to ignite them, but use the pillars' shadows to shelter delicate Umbral Orchids—your direct rays scorch them! Focus your beam to banish predatory Gloom Stalkers prowling in the dark, and discharge Eclipse Novas to survive across three escalating ritual chambers.
+
 The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes.
 
 ## Viewing
 
-Open `index.html` in a recent browser. It is a portfolio page listing all five pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
+Open `index.html` in a recent browser. It is a portfolio page listing all six pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
 
 No build step or server is needed. Mercurial requires WebGL2 and runs best on a dedicated or recent integrated GPU.
 
@@ -48,7 +51,8 @@ AI-XPERIENCE/
     ├── echoveil.html
     ├── foldwake.html
     ├── mercurial.html
-    └── night-atlas.html
+    ├── night-atlas.html
+    └── umbralux.html
 ```
 
 ## About the token figures
