@@ -106,6 +106,9 @@
   }
   .card:nth-child(1) { animation-delay: .9s; }
   .card:nth-child(2) { animation-delay: 1.05s; --accent: #c59bff; }
+  .card:nth-child(3) { animation-delay: 1.2s; --accent: #d9b875; }
+  .art-atlas { background: radial-gradient(ellipse at 65% 45%, #24443b, #071416 75%); }
+  .art-atlas svg { width: 100%; height: 100%; }
   @keyframes rise { to { opacity: 1; translate: 0 0; } }
   .card:hover { border-color: color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 30px 80px -30px color-mix(in srgb, var(--accent) 45%, transparent); }
   .card::after {
@@ -245,9 +248,9 @@
   <header class="top mono">
     <div class="logo">AI-<em>X</em>PERIENCE</div>
     <div class="meta">
-      <span>Model · Opus 5.5</span>
+      <span>Claude + Codex</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">2 pieces</span>
+      <span class="live">3 pieces</span>
     </div>
   </header>
 
@@ -264,7 +267,7 @@
         <div><b>1 + 1</b><span class="mono">Prompt + fix</span></div>
         <div><b>1</b><span class="mono">File per piece</span></div>
         <div><b>0</b><span class="mono">Dependencies</span></div>
-        <div><b>~115K</b><span class="mono">Tokens in total</span></div>
+        <div><b>~172K</b><span class="mono">Tokens in total</span></div>
       </div>
     </div>
   </section>
@@ -311,10 +314,40 @@
         <a class="open mono" href="pages/mercurial.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+
+    <article class="card" data-src="pages/night-atlas.html">
+      <div class="preview">
+        <div class="art art-atlas">
+          <svg viewBox="0 0 640 400" aria-hidden="true">
+            <g fill="none" stroke="#d9b875" stroke-width=".7">
+              <circle cx="360" cy="195" r="140" opacity=".22"/>
+              <ellipse cx="360" cy="195" rx="180" ry="65" transform="rotate(-20 360 195)" opacity=".18"/>
+              <path d="M130 265 Q200 170 320 130 Q425 160 575 150 Q485 210 370 260 Q235 250 130 265Z" fill="#9dceb5" fill-opacity=".07"/>
+              <path d="M130 265 320 130 370 260 575 150 M180 245 340 170 485 183 M235 238 355 214 430 219 M200 198 275 245 M250 164 325 253 M390 145 415 237 M460 152 475 208 M370 260 Q425 320 535 335 M375 253 Q440 308 535 335" opacity=".55"/>
+            </g>
+            <g fill="#f5e6bd"><circle cx="130" cy="265" r="2"/><circle cx="320" cy="130" r="3"/><circle cx="370" cy="260" r="2"/><circle cx="575" cy="150" r="2"/><circle cx="340" cy="170" r="2"/><circle cx="355" cy="214" r="2"/><circle cx="100" cy="95" r="1"/><circle cx="240" cy="70" r="1"/><circle cx="540" cy="60" r="3"/><circle cx="450" cy="325" r="1"/></g>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · Constellations</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Night atlas</h2><span class="num mono">Nº 03</span></div>
+        <p>A winged constellation drifts through an imaginary celestial chart. Draw your own constellation and release it into the sky, with a trail of stardust and optional generated chimes.</p>
+        <div class="chips mono"><span>Procedural wings</span><span>Draw to create</span><span>Web Audio</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>GPT-6</dd></div>
+          <div><dt>Tokens</dt><dd>~57K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1 + 1</dd></div>
+          <div><dt>Size</dt><dd>21 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/night-atlas.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5 in Claude Code.</span>
+    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5 in Claude Code and GPT-6 in Codex.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>
