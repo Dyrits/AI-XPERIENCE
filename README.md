@@ -20,7 +20,8 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Echoveil](pages/echoveil.html) | Canvas 2D, sonar reveal | GLM-5.3 | ~58K | 1 | 33 KB |
 | [Umbralux](pages/umbralux.html) | Canvas 2D, raycast optics | Gemini 3.8 Flash | ~52K | 1 | 46 KB |
 | [Estuary](pages/estuary.html) | Canvas 2D, curl-noise flow field | DeepSeek V4 Pro | ~55K | 1 | 28 KB |
-| [The last warm window](pages/the-last-warm-window.html) | Canvas 2D, animated narrative | GPT-6 | Unrecorded | 1 | 23 KB |
+| [The last warm window](pages/the-last-warm-window.html) | Canvas 2D, animated narrative | GPT-6 Astra | ~58K | 1 + 2 | 23 KB |
+| [Lifeline](pages/lifeline.html) | Canvas 2D, single continuous line | Claude Opus 5.5 | ~150K | 1 | 34 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -38,7 +39,9 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 **The last warm window.** A two-minute story about a mother who brings two cups of tea to an abandoned station. Passing trains carry memories of her daughter while rain turns to snow and the years pass. Holding a memory reveals her daughter beside the bench and slows the story. Includes six selectable chapters, optional synthesized music, pause and replay controls, and reduced-motion playback.
 
-The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes.
+**Lifeline.** A life told as a single ink line drawn on paper. The line gets a heartbeat, loops like a child at play, climbs mountains, then meets a red thread: they dance, draw a heart and build a house, and a small gold line appears between them and flies off as a kite. When the red thread comes to rest, the ink line circles it once and carries on with a thin red strand wound around it. At the end the camera steps back and the whole life appears as one drawing. Watercolour washes bloom behind each chapter, and optional synthesized music and heartbeats follow the pen. Hold the mouse or Space to hurry time.
+
+The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand.
 
 ## Viewing
 
@@ -57,6 +60,7 @@ AI-XPERIENCE/
     ├── echoveil.html
     ├── estuary.html
     ├── foldwake.html
+    ├── lifeline.html
     ├── mercurial.html
     ├── night-atlas.html
     ├── the-last-warm-window.html
@@ -66,5 +70,3 @@ AI-XPERIENCE/
 ## About the token figures
 
 The token counts are rough estimates, not billing data. They include the context sent to the model, the generated code and the correction round.
-
-The token count for The last warm window was not recorded.

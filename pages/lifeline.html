@@ -170,9 +170,9 @@ function sprite(key) {
   let base = [];
   for (let i = 0; i < 10; i++) { const a = i / 10 * TAU, rr = 112 * (0.8 + R() * 0.4); base.push([s / 2 + Math.cos(a) * rr, s / 2 + Math.sin(a) * rr]); }
   base = deform(base, 3, 0.42, R);
-  for (let l = 0; l < 42; l++) {
-    const p = deform(base, 2, 0.3, R);
-    g.fillStyle = `rgba(${r},${gg},${b},${l % 7 === 0 ? 0.05 : 0.026})`;
+  for (let l = 0; l < 48; l++) {
+    const p = deform(base, 3, 0.4, R);
+    g.fillStyle = `rgba(${r},${gg},${b},${l % 8 === 0 ? 0.026 : 0.012})`;
     g.beginPath(); g.moveTo(p[0][0], p[0][1]);
     for (let i = 1; i < p.length; i++) g.lineTo(p[i][0], p[i][1]);
     g.closePath(); g.fill();

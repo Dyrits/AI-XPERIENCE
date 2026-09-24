@@ -272,9 +272,9 @@
   <header class="top mono">
     <div class="logo">AI-<em>X</em>PERIENCE</div>
     <div class="meta">
-      <span>Claude + Codex + GLM + Gemini</span>
+      <span>Claude + Codex + GLM + DeepSeek</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">7 pieces</span>
+      <span class="live">8 pieces</span>
     </div>
   </header>
 
@@ -288,10 +288,10 @@
     <div class="intro">
       <p>How far can an AI go when asked to build an <strong>advanced, animated web experience in a single prompt</strong>? Each piece here was generated from one request, with <strong>one follow-up allowed for minor corrections</strong>. No frameworks, no libraries, no assets: HTML, CSS and JavaScript in one self-contained file.</p>
       <div class="rules">
-        <div><b>1 + 1</b><span class="mono">Prompt + fix</span></div>
+        <div><b>1 (+ 2 max.)</b><span class="mono">Prompt (+ fixes)</span></div>
         <div><b>1</b><span class="mono">File per piece</span></div>
         <div><b>0</b><span class="mono">Dependencies</span></div>
-        <div><b>—</b><span class="mono">Total tokens unrecorded</span></div>
+        <div><b>~553K</b><span class="mono">Tokens in total</span></div>
       </div>
     </div>
   </section>
@@ -475,18 +475,47 @@
         <p>Every evening, a mother brings two cups of tea to the station. A two-minute story of waiting, told through passing trains, changing seasons and a single amber window. Hold a memory to bring her daughter back beside the bench.</p>
         <div class="chips mono"><span>Six chapters</span><span>Living memories</span><span>Synthesized music</span></div>
         <dl class="specs mono">
-          <div><dt>Model</dt><dd>GPT-6</dd></div>
-          <div><dt>Tokens</dt><dd>Unrecorded</dd></div>
-          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Model</dt><dd>GPT-6 Astra</dd></div>
+          <div><dt>Tokens</dt><dd>~58K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1 + 2</dd></div>
           <div><dt>Size</dt><dd>23 <small>KB</small></dd></div>
         </dl>
         <a class="open mono" href="pages/the-last-warm-window.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+
+    <article class="card" data-src="pages/lifeline.html" style="--accent: #d9594f; animation-delay: 1.95s;">
+      <div class="preview">
+        <div class="art" style="background: radial-gradient(ellipse at center, #f2eadb, #d9ccb3 80%);">
+          <svg viewBox="0 0 600 375" width="100%" height="100%" aria-hidden="true">
+            <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="392" cy="196" rx="44" ry="52" fill="#d6857a" opacity=".35"/>
+              <path d="M-10 196 H70 L78 190 L86 196 H100 L104 202 L111 140 L118 214 L124 196 H160 Q190 150 210 196 Q230 150 250 196 H300 Q330 170 350 196 Q380 120 392 150 Q404 120 434 196 H610" stroke="#1d1b26" stroke-width="2.2"/>
+              <path d="M240 60 Q290 110 262 150 Q240 186 300 190 Q330 222 350 200 Q380 272 392 242 Q404 272 434 200 H610" stroke="#b3262b" stroke-width="2"/>
+              <path d="M470 196 Q500 150 520 110 L505 88 L520 60 L535 88 L520 110" stroke="#c98d17" stroke-width="1.6"/>
+            </g>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · Single line story</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Lifeline</h2><span class="num mono">Nº 09</span></div>
+        <p>A whole life drawn as one ink line on paper: a heartbeat, childhood loops, a meeting with a red thread, a home, a child who flies off as a kite, a loss. At the end the camera steps back and the life reads as a single drawing. Hold to hurry time.</p>
+        <div class="chips mono"><span>One continuous line</span><span>Watercolour washes</span><span>Synthesized music</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
+          <div><dt>Tokens</dt><dd>~150K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>34 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/lifeline.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5, GPT-6 Atra, GPT-6, GLM-5.3 and Gemini 3.8 Flash.</span>
+    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5, GPT-6 Atra, GPT-6 Astra, GLM-5.3 and Gemini 3.8 Flash.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>
