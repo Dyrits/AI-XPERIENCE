@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lifeline</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: #efe6d4; color: #241f2a; }
+  body { font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: default; touch-action: none; }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; }
+
+  #cap {
+    position: fixed; left: 0; right: 0; bottom: 10vh; padding: 0 8vw; text-align: center; pointer-events: none;
+    font-style: italic; font-size: clamp(20px, 2.3vw, 32px); line-height: 1.35;
+    text-shadow: 0 0 18px #efe6d4, 0 0 6px #efe6d4;
+    opacity: 0; filter: blur(8px); transform: translateY(10px);
+    transition: opacity 1.2s ease, filter 1.2s ease, transform 1.2s ease;
+  }
+  #cap.show { opacity: 1; filter: blur(0); transform: none; }
+  #cap .num { display: block; font-style: normal; margin-bottom: .9em; color: rgba(36,31,42,.5); }
+
+  #prog { position: fixed; left: 0; bottom: 0; height: 2px; width: 0; background: linear-gradient(90deg, #1d1b26, #b3262b 60%, #c98d17); opacity: .55; }
+  #hint { position: fixed; left: 26px; bottom: 22px; color: rgba(36,31,42,.45); transition: opacity 1s; pointer-events: none; }
+  #snd { position: fixed; right: 22px; top: 20px; background: none; border: 1px solid rgba(36,31,42,.25); color: rgba(36,31,42,.7); padding: 8px 12px; border-radius: 20px; cursor: pointer; transition: border-color .3s, color .3s; }
+  #snd:hover { border-color: rgba(36,31,42,.7); color: #241f2a; }
+
+  #intro {
+    position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+    background: radial-gradient(ellipse at center, #f4ecdc 0%, #e9dfca 100%); cursor: pointer; z-index: 5;
+    transition: opacity 1.6s ease, visibility 1.6s;
+  }
+  #intro.gone { opacity: 0; visibility: hidden; }
+  #intro h1 { font-weight: 400; font-style: italic; font-size: clamp(54px, 9vw, 120px); letter-spacing: .02em; }
+  #intro svg { width: min(460px, 70vw); height: 70px; overflow: visible; }
+  #intro svg path { fill: none; stroke: #1d1b26; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 900; stroke-dashoffset: 900; animation: ecg 3.4s cubic-bezier(.6,.1,.3,1) infinite; }
+  #intro svg path.r { stroke: #b3262b; animation-delay: .25s; opacity: .8; }
+  @keyframes ecg { 0% { stroke-dashoffset: 900; } 60% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+  #intro p { font-style: italic; font-size: clamp(16px, 1.6vw, 21px); color: rgba(36,31,42,.75); }
+  #intro .mono { color: rgba(36,31,42,.45); animation: breathe 2.6s ease-in-out infinite; }
+  @keyframes breathe { 50% { opacity: .35; } }
+
+  #again {
+    position: fixed; left: 50%; bottom: 4.5vh; transform: translateX(-50%); padding: 11px 22px; border-radius: 24px;
+    background: none; border: 1px solid rgba(36,31,42,.35); color: #241f2a; cursor: pointer;
+    opacity: 0; pointer-events: none; transition: opacity 1.4s, background .3s, color .3s;
+  }
+  #again.show { opacity: 1; pointer-events: auto; }
+  #again:hover { background: #241f2a; color: #efe6d4; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="cap"></div>
+<div id="prog"></div>
+<div id="hint" class="mono">Hold to hurry time</div>
+<button id="snd" class="mono">Sound on</button>
+<button id="again" class="mono">Draw it again</button>
+
+<div id="intro">
+  <h1>Lifeline</h1>
+  <svg viewBox="0 0 460 70" aria-hidden="true">
+    <path d="M0 45 H150 L160 38 L170 45 H190 L196 52 L206 4 L216 62 L224 45 H250 L262 34 L276 45 H460"/>
+    <path class="r" d="M0 49 H150 L160 42 L170 49 H190 L196 56 L206 8 L216 66 L224 49 H250 L262 38 L276 49 H460"/>
+  </svg>
+  <p>A story told with a single line.</p>
+  <span class="mono">Click to begin · sound on</span>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const capEl = document.getElementById('cap');
+const progEl = document.getElementById('prog');
+const hintEl = document.getElementById('hint');
+const sndBtn = document.getElementById('snd');
+const againBtn = document.getElementById('again');
+const introEl = document.getElementById('intro');
+
+const TAU = Math.PI * 2;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = t => t * t * (3 - 2 * t);
+const eout = t => 1 - (1 - t) * (1 - t);
+const hash = i => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+const n1 = x => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return lerp(hash(i), hash(i + 1), u) * 2 - 1; };
+const m = n => 440 * Math.pow(2, (n - 69) / 12);
+const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+
+let W = 0, H = 0, DPR = 1;
+
+/* ---------------------------------------------------------------- sound */
+
+const AU = {
+  ctx: null, master: null, rev: null, sg: null, muted: false,
+  init() {
+    if (this.ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const c = this.ctx = new AC();
+    this.master = c.createGain(); this.master.gain.value = this.muted ? 0 : 0.8; this.master.connect(c.destination);
+    const len = c.sampleRate * 3, ir = c.createBuffer(2, len, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+    this.rev = c.createConvolver(); this.rev.buffer = ir;
+    const wet = c.createGain(); wet.gain.value = 0.55; this.rev.connect(wet); wet.connect(this.master);
+    // Pen scratch: looped noise through a band-pass, level follows the nib speed.
+    const nb = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), nd = nb.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource(); src.buffer = nb; src.loop = true;
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 0.7;
+    this.sg = c.createGain(); this.sg.gain.value = 0;
+    src.connect(bp); bp.connect(this.sg); this.sg.connect(this.master); src.start();
+  },
+  note(f, when = 0, vel = 0.14, dur = 2.8) {
+    const c = this.ctx; if (!c) return;
+    const t = c.currentTime + when;
+    const o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), g2 = c.createGain();
+    o.type = 'sine'; o.frequency.value = f; o2.type = 'triangle'; o2.frequency.value = f * 2; g2.gain.value = 0.22;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vel, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0006, t + dur);
+    o.connect(g); o2.connect(g2); g2.connect(g); g.connect(this.master); g.connect(this.rev);
+    o.start(t); o2.start(t); o.stop(t + dur + 0.1); o2.stop(t + dur + 0.1);
+  },
+  chord(notes, gap = 0.16, vel = 0.12, dur = 3) { notes.forEach((n, i) => this.note(m(n), i * gap, vel, dur)); },
+  beat(v = 0.55) {
+    const c = this.ctx; if (!c) return;
+    const t = c.currentTime;
+    [0, 0.19].forEach((d, i) => {
+      const o = c.createOscillator(), g = c.createGain(), vv = v * (i ? 0.6 : 1);
+      o.type = 'sine'; o.frequency.setValueAtTime(95, t + d); o.frequency.exponentialRampToValueAtTime(38, t + d + 0.18);
+      g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(vv, t + d + 0.01); g.gain.exponentialRampToValueAtTime(0.001, t + d + 0.36);
+      o.connect(g); g.connect(this.master); o.start(t + d); o.stop(t + d + 0.4);
+    });
+  },
+  scratch(v) { if (this.sg) this.sg.gain.setTargetAtTime(v, this.ctx.currentTime, 0.06); },
+  toggle() {
+    this.muted = !this.muted;
+    if (this.master) this.master.gain.setTargetAtTime(this.muted ? 0 : 0.8, this.ctx.currentTime, 0.1);
+  }
+};
+
+/* ---------------------------------------------------------------- watercolour sprites */
+
+const PIG = {
+  blue: [92, 118, 152], sun: [236, 170, 60], rose: [222, 118, 118], red: [196, 56, 58], ochre: [214, 160, 96],
+  window: [246, 188, 64], sky: [118, 160, 202], grey: [104, 110, 124], memory: [184, 44, 56], dawn: [244, 182, 108]
+};
+let spriteSeed = 7;
+function gauss(R) { return (R() + R() + R() + R() - 2) * 0.9; }
+function deform(pts, depth, v, R) {
+  for (let d = 0; d < depth; d++) {
+    const out = [];
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]), ang = R() * TAU, g = gauss(R) * len * v;
+      out.push(a, [(a[0] + b[0]) / 2 + Math.cos(ang) * g, (a[1] + b[1]) / 2 + Math.sin(ang) * g]);
+    }
+    pts = out;
+  }
+  return pts;
+}
+// Layered, randomly deformed translucent polygons: the classic generative watercolour wash.
+function sprite(key) {
+  const R = mulberry(spriteSeed += 101), s = 420, c = document.createElement('canvas');
+  c.width = c.height = s;
+  const g = c.getContext('2d'), [r, gg, b] = PIG[key];
+  let base = [];
+  for (let i = 0; i < 10; i++) { const a = i / 10 * TAU, rr = 112 * (0.8 + R() * 0.4); base.push([s / 2 + Math.cos(a) * rr, s / 2 + Math.sin(a) * rr]); }
+  base = deform(base, 3, 0.42, R);
+  for (let l = 0; l < 42; l++) {
+    const p = deform(base, 2, 0.3, R);
+    g.fillStyle = `rgba(${r},${gg},${b},${l % 7 === 0 ? 0.05 : 0.026})`;
+    g.beginPath(); g.moveTo(p[0][0], p[0][1]);
+    for (let i = 1; i < p.length; i++) g.lineTo(p[i][0], p[i][1]);
+    g.closePath(); g.fill();
+  }
+  return c;
+}
+
+/* ---------------------------------------------------------------- the story, built as timed ink */
+
+const INK = '#1d1b26', RED = '#b3262b', GOLD = '#c98d17';
+const TH = {
+  A: { col: INK, w: 2.8, pts: [], x: 0, y: 0, seed: 3.1, n: 0 },
+  B: { col: RED, w: 2.5, pts: [], x: 0, y: 0, seed: 17.7, n: 0 },
+  C: { col: GOLD, w: 2.1, pts: [], x: 0, y: 0, seed: 41.3, n: 0 },
+  D: { col: RED, w: 1.15, pts: [], x: 0, y: 0, seed: 0, n: 0, ph: 0 }
+};
+const EV = [], CAP = [], BLOT = [], ZK = [[0, 1.12]];
+let T = 0, chapter = 0, smoke = null, rainOn = 1e9, rainOff = 1e9;
+const ev = (t, fn) => EV.push({ t, fn });
+const cap = (text, t = T, num = true) => CAP.push({ t, text, num: num ? ++chapter : 0 });
+const zoom = (z, t = T) => ZK.push([t, z]);
+const blot = (x, y, size, key, t, a = 1) => BLOT.push({ x, y, size, spr: sprite(key), t, a });
+const poly = pts => u => {
+  const f = u * (pts.length - 1), i = Math.min(pts.length - 2, Math.floor(f)), r = f - i;
+  return [lerp(pts[i][0], pts[i + 1][0], r), lerp(pts[i][1], pts[i + 1][1], r)];
+};
+
+// Appends a stroke to a thread. fn(u) gives a position (relative to the thread's pen unless abs), resampled at constant pen speed unless raw.
+function add(name, fn, o = {}) {
+  const th = TH[name], sx = th.x, sy = th.y, M = 900;
+  const dense = new Array(M + 1), cum = new Float64Array(M + 1);
+  for (let i = 0; i <= M; i++) {
+    const p = fn(i / M);
+    dense[i] = o.abs ? p : [sx + p[0], sy + p[1]];
+    if (i) cum[i] = cum[i - 1] + Math.hypot(dense[i][0] - dense[i - 1][0], dense[i][1] - dense[i - 1][1]);
+  }
+  const len = cum[M];
+  const dur = o.dur ?? Math.max(0.2, len / (o.speed || 180));
+  const t0 = o.t0 ?? T;
+  const n = Math.max(2, Math.ceil(dur * 72));
+  const out = [];
+  let j = 0;
+  for (let k = th.pts.length ? 1 : 0; k <= n; k++) {
+    const u = k / n;
+    let x, y;
+    if (o.raw) {
+      const f = u * M, i = Math.min(M - 1, Math.floor(f)), r = f - i;
+      x = lerp(dense[i][0], dense[i + 1][0], r); y = lerp(dense[i][1], dense[i + 1][1], r);
+    } else {
+      const target = u * len;
+      while (j < M - 1 && cum[j + 1] < target) j++;
+      const sl = cum[j + 1] - cum[j], r = sl > 0 ? clamp((target - cum[j]) / sl, 0, 1) : 0;
+      x = lerp(dense[j][0], dense[j + 1][0], r); y = lerp(dense[j][1], dense[j + 1][1], r);
+    }
+    th.n++;
+    x += n1(th.n * 0.045 + th.seed) * 1.1;
+    y += n1(th.n * 0.045 + th.seed + 50) * 1.1;
+    const p = { x, y, t: t0 + u * dur, w: th.w * (o.w ? o.w(u) : 1), a: o.a ? o.a(u) : 1 };
+    th.pts.push(p); out.push(p);
+  }
+  th.x = dense[M][0]; th.y = dense[M][1];
+  // A thin red thread that winds around the ink line: what remains of the other.
+  if (o.twin) {
+    const D = TH.D;
+    for (let i = 0; i < out.length; i++) {
+      const a = out[Math.max(0, i - 1)], b = out[Math.min(out.length - 1, i + 1)];
+      const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
+      if (i) D.ph += Math.hypot(out[i].x - out[i - 1].x, out[i].y - out[i - 1].y) * 0.11;
+      const off = 4.2 * Math.sin(D.ph), u = i / (out.length - 1);
+      D.pts.push({ x: out[i].x - dy / l * off, y: out[i].y + dx / l * off, t: out[i].t, w: D.w * (0.7 + 0.3 * Math.cos(D.ph)), a: (o.ta ? o.ta(u) : 0.85) });
+    }
+  }
+  return dur;
+}
+
+function build() {
+  // I. The line
+  cap('In the beginning, there was only a line.', 0.6);
+  T = 0.9;
+  ev(1.0, () => AU.chord([48, 55], 0.4, 0.1, 4));
+  T += add('A', u => [760 * u, 0], { speed: 140, w: u => 0.2 + 0.8 * Math.min(1, u * 5) });
+
+  // II. Heartbeat
+  cap('Then, a heartbeat.');
+  zoom(1.05);
+  const b1 = [[0, 0], [40, 0], [55, -14], [70, 0], [96, 0], [104, 12]];
+  const b2 = [[0, 0], [10, -187], [22, 40], [32, -12], [66, -12], [86, -40], [108, -12], [180, -12]];
+  for (let k = 0; k < 3; k++) {
+    T += add('A', poly(b1), { speed: 190 });
+    ev(T, () => AU.beat());
+    T += add('A', poly(b2), { speed: 300 });
+  }
+  T += add('A', u => [120 * u, 0], { speed: 190 });
+
+  // III. Play
+  cap('It learned to play.');
+  zoom(1.0);
+  {
+    const L = 4, d = add('A', u => {
+      const th = TAU * L * u, b = 76 * (0.42 + 0.58 * Math.sin(Math.PI * u));
+      return [44 * th - b * Math.sin(th), b * (Math.cos(th) - 1)];
+    }, { speed: 300 });
+    [72, 76, 79, 84].forEach((n, i) => ev(T + d * (i + 0.5) / L, () => AU.note(m(n), 0, 0.1)));
+    T += d;
+  }
+  T += add('A', u => [140 * u, 0], { speed: 200 });
+
+  // IV. Wander
+  cap('It grew, and wandered far.');
+  zoom(0.88);
+  {
+    const x0 = TH.A.x, y0 = TH.A.y;
+    const mt = [[0, 0], [120, -40], [200, -12], [330, -140], [410, -80], [540, -215], [620, -160], [780, -410], [870, -255], [950, -305], [1110, -70], [1260, -20], [1420, 0]];
+    const d = add('A', poly(mt), { speed: 235 });
+    blot(x0 + 690, y0 - 170, 1150, 'blue', T + d * 0.35, 0.75);
+    blot(x0 + 980, y0 - 560, 320, 'sun', T + d * 0.55, 0.95);
+    ev(T + 0.2, () => AU.chord([60, 67], 0.25, 0.09));
+    ev(T + d * 0.52, () => AU.chord([67, 74, 79], 0.18, 0.11));
+    T += d;
+  }
+
+  // V. Meeting
+  cap('One day, it met another.');
+  zoom(0.84);
+  {
+    const ax = TH.A.x, ay = TH.A.y, D = 9, L = 1400, um = 0.6;
+    const fA = u => [ax + L * u, ay - 22 * Math.sin(TAU * u * 0.75) * (1 - u)];
+    add('A', fA, { abs: true, raw: true, dur: D });
+    const s = [ax + 820, ay - 560], tgt = fA(um); tgt[1] -= 30;
+    TH.B.x = s[0]; TH.B.y = s[1];
+    add('B', u => {
+      if (u < um) { const v = u / um, e = eout(v); return [lerp(s[0], tgt[0], e) + 150 * Math.sin(Math.PI * v * 2) * (1 - v), lerp(s[1], tgt[1], e)]; }
+      const p = fA(u); return [p[0], p[1] - (30 - 12 * (u - um) / (1 - um))];
+    }, { abs: true, raw: true, dur: D, w: u => Math.min(1, 0.15 + u * 5) });
+    blot(tgt[0] + 40, tgt[1] + 10, 420, 'rose', T + D * um, 0.7);
+    ev(T + D * um, () => AU.chord([76, 79, 83], 0.32, 0.12));
+    T += D;
+  }
+
+  // VI. Dance, then a heart
+  cap('They danced.');
+  {
+    const ax = TH.A.x, ay = TH.A.y, by = TH.B.y, cy = (ay + by) / 2, R0 = (ay - by) / 2;
+    const D = 7.5, L = 1200, TT = TAU * 3 + Math.PI / 2;
+    const R = u => lerp(R0, 6, u) + 78 * Math.pow(Math.sin(Math.PI * u), 1.4);
+    add('A', u => [ax + L * u, cy + R(u) * Math.cos(TT * u)], { abs: true, raw: true, dur: D, w: u => 1 + 0.35 * Math.sin(TT * u) });
+    add('B', u => [ax + L * u, cy - R(u) * Math.cos(TT * u)], { abs: true, raw: true, dur: D, w: u => 1 - 0.35 * Math.sin(TT * u) });
+    [64, 67, 71, 67, 72].forEach((n, i) => ev(T + i * 1.4 + 0.3, () => AU.note(m(n), 0, 0.09)));
+    T += D;
+
+    const sc = 15, cx0 = TH.A.x, hy0 = TH.A.y, hcx = cx0 + 5 * sc, HD = 5.5;
+    const hx = t => 16 * Math.pow(Math.sin(t), 3), hy = t => 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    add('A', u => { const t = -Math.PI * u; return [hcx - sc * hy(t), hy0 + sc * hx(t)]; }, { abs: true, raw: true, dur: HD });
+    add('B', u => { const t = Math.PI * u; return [hcx - sc * hy(t), hy0 + sc * hx(t)]; }, { abs: true, raw: true, dur: HD });
+    blot(hcx + 4 * sc, hy0, 600, 'red', T + HD * 0.8, 0.7);
+    ev(T + HD - 0.2, () => AU.chord([60, 64, 67, 72, 76], 0.12, 0.12, 4));
+    T += HD;
+  }
+
+  // VII. Home
+  { const D = 1.8; add('A', u => [240 * u, 0], { dur: D }); add('B', u => [240 * u, -16 * eout(u)], { dur: D, raw: true }); T += D; }
+  cap('They made a home.');
+  zoom(0.8);
+  {
+    const x0 = TH.A.x, y0 = TH.A.y;
+    const hs = [[0, 0], [80, 0], [80, -230], [48, -230], [250, -425], [332, -346], [332, -425], [378, -425], [378, -302], [452, -230], [420, -230], [420, 0], [640, 0]];
+    const d = add('A', poly(hs), { speed: 220 });
+    add('B', poly(hs), { dur: d });
+    blot(x0 + 250, y0 - 160, 640, 'ochre', T + d * 0.85, 0.7);
+    blot(x0 + 250, y0 - 120, 180, 'window', T + d + 0.6, 1);
+    smoke = { x: x0 + 355, y: y0 - 432, t: T + d * 0.75 };
+    ev(T + 0.3, () => AU.chord([65, 69, 72], 0.2, 0.1));
+    ev(T + d + 0.6, () => AU.chord([77, 81], 0.3, 0.09));
+    T += d;
+  }
+
+  // VIII. A child
+  { const D = 2; add('A', u => [240 * u, 22 * ease(u)], { dur: D, raw: true }); add('B', u => [240 * u, -22 * ease(u)], { dur: D, raw: true }); T += D; }
+  cap('Something small began between them.');
+  zoom(0.85);
+  {
+    TH.C.x = TH.A.x; TH.C.y = (TH.A.y + TH.B.y) / 2 + 8;
+    const L = 4, a = 17, b = 21, len = a * TAU * L, D = 4.6;
+    add('C', u => { const th = TAU * L * u; return [a * th - b * Math.sin(th), -(b - b * Math.cos(th)) * 0.55]; }, { raw: true, dur: D, w: u => 0.25 + 0.75 * Math.min(1, u * 3) });
+    add('A', u => [len * u, 0], { dur: D, raw: true });
+    add('B', u => [len * u, 0], { dur: D, raw: true });
+    [84, 88, 91, 88].forEach((n, i) => ev(T + i * 1.1 + 0.2, () => AU.note(m(n), 0, 0.06, 1.6)));
+    T += D;
+  }
+  cap('And one day, it flew.');
+  zoom(0.66);
+  {
+    const pts = [];
+    for (let i = 0; i <= 50; i++) { const v = i / 50; pts.push([520 * v + 40 * Math.sin(v * Math.PI * 3) * (1 - v), -410 * Math.pow(v, 1.5)]); }
+    const K = pts[pts.length - 1], rot = -0.35, cr = Math.cos(rot), sr = Math.sin(rot);
+    const kite = [[-48, -72], [0, -165], [48, -72], [0, 0], [0, -165], [-48, -72], [48, -72]];
+    for (const [kx, ky] of kite) pts.push([K[0] + kx * cr - ky * sr, K[1] + kx * sr + ky * cr]);
+    const E = pts[pts.length - 1];
+    for (let i = 1; i <= 40; i++) { const v = i / 40; pts.push([E[0] + 760 * v, E[1] - 720 * v + 60 * Math.sin(v * TAU * 1.5)]); }
+    const cx = TH.C.x, cy = TH.C.y;
+    // Pen speed must stay constant along the whole flight, so resample by length.
+    const d = add('C', poly(pts), { speed: 260, w: u => u > 0.78 ? lerp(1, 0.25, (u - 0.78) / 0.22) : 1, a: u => u > 0.8 ? lerp(1, 0.2, (u - 0.8) / 0.2) : 1 });
+    const dx = d * 125;
+    add('A', u => [dx * u, -14 * ease(u)], { dur: d, raw: true });
+    add('B', u => [dx * u, 10 * ease(u)], { dur: d, raw: true });
+    blot(cx + K[0] + 10, cy + K[1] - 90, 760, 'sky', T + d * 0.4, 0.7);
+    ev(T + d * 0.38, () => AU.chord([79, 83, 86, 91], 0.14, 0.09));
+    T += d;
+  }
+
+  // IX. Loss
+  cap('Time grew heavy.');
+  zoom(0.95);
+  {
+    const D = 8, L = 760, ax = TH.A.x, ay = TH.A.y, g0 = TH.A.y - TH.B.y;
+    add('A', u => [L * u, 70 * u * u], { raw: true, dur: D });
+    add('B', u => [L * u, 70 * u * u + g0 - lerp(g0, 18, ease(u)) + 5 * u * u * Math.sin(u * 90)], { raw: true, dur: D, a: u => 1 - 0.5 * u, w: u => 1 - 0.35 * u });
+    blot(ax + 420, ay - 300, 1000, 'grey', T + 1, 0.7);
+    rainOn = T + 1.5;
+    ev(T + 0.3, () => AU.chord([57, 60, 64], 0.35, 0.1, 4));
+    T += D;
+  }
+  cap('One of them rested.');
+  {
+    const b = [TH.B.x, TH.B.y], c = [b[0] + 26, b[1]], SD = 3.2, r = 58;
+    add('B', u => { const ang = Math.PI + u * TAU * 2.2, rr = 26 * (1 - u); return [c[0] + rr * Math.cos(ang), c[1] + rr * Math.sin(ang)]; }, { abs: true, raw: true, dur: SD, a: u => 0.5 - 0.22 * u, w: u => 0.65 * (1 - 0.6 * u) });
+    const ax = TH.A.x, ay = TH.A.y, tx = c[0] - ax, ty = c[1] + r - ay;
+    add('A', u => [tx * u, ty * ease(u)], { raw: true, dur: SD });
+    ev(T + 0.2, () => AU.chord([45, 52], 0.5, 0.12, 5));
+    T += SD;
+    const CD = 4.5;
+    add('A', u => { const th = Math.PI / 2 - TAU * u; return [c[0] + r * Math.cos(th), c[1] + r * Math.sin(th)]; }, { abs: true, raw: true, dur: CD });
+    ev(T + 0.3, () => AU.chord([69, 72, 76], 0.6, 0.08, 4));
+    blot(c[0], c[1], 260, 'memory', T + CD * 0.6, 0.8);
+    T += CD;
+  }
+
+  // X. Carrying on
+  cap('The other kept going, carrying both colours.');
+  zoom(1.0);
+  rainOff = T + 2.5;
+  {
+    const tw = { twin: true, speed: 210, ta: u => 0.85 };
+    T += add('A', u => [200 * u, 0], { ...tw, ta: u => 0.85 * Math.min(1, u * 2) });
+    const small = [[0, 0], [30, 0], [40, -8], [50, 0], [66, 0], [71, 7], [78, -100], [85, 26], [92, 0], [118, 0], [132, -16], [148, 0], [220, 0]];
+    for (let k = 0; k < 2; k++) {
+      ev(T + 0.4, () => AU.beat(0.32));
+      T += add('A', poly(small), tw);
+      T += add('A', u => [260 * u, 0], tw);
+    }
+    T += add('A', poly([[0, 0], [200, -60], [420, -20], [560, 0]]), tw);
+    ev(T - 1, () => AU.chord([60, 64, 67], 0.3, 0.08));
+  }
+
+  // XI. Horizon
+  cap('Slower now. Softer.');
+  zoom(0.9);
+  {
+    const D = 10, x0 = TH.A.x, y0 = TH.A.y;
+    add('A', u => [1300 * u, -240 * ease(u) + 20 * Math.sin(u * TAU * 1.5) * (1 - u)], { raw: true, dur: D, a: u => 1 - ease(u) * 0.97, w: u => 1 - 0.6 * u, twin: true, ta: u => 0.85 * (1 - u) });
+    blot(x0 + 900, y0 - 320, 1500, 'dawn', T + 1.5, 0.8);
+    ev(T + 0.4, () => AU.chord([48, 55, 64, 71, 76], 0.45, 0.08, 5));
+    T += D;
+  }
+}
+build();
+const TEND = T;
+cap('Step back.', TEND + 1.4, false);
+cap('A life is a single line. It takes its shape from the lines it meets.', TEND + 6.5, false);
+ev(TEND + 1.2, () => AU.chord([48, 55, 60, 64, 67, 72], 0.22, 0.1, 6));
+
+// Bounding box of the whole drawing for the final reveal.
+const BB = { x0: 1e9, y0: 1e9, x1: -1e9, y1: -1e9 };
+for (const k of 'ABC') for (const p of TH[k].pts) { BB.x0 = Math.min(BB.x0, p.x); BB.x1 = Math.max(BB.x1, p.x); BB.y0 = Math.min(BB.y0, p.y); BB.y1 = Math.max(BB.y1, p.y); }
+
+/* ---------------------------------------------------------------- paper */
+
+let grain = null, grainPat = null, vign = null;
+function buildPaper() {
+  const s = 256, c = document.createElement('canvas'); c.width = c.height = s;
+  const g = c.getContext('2d'), id = g.createImageData(s, s), R = mulberry(99);
+  for (let i = 0; i < s * s; i++) {
+    const v = R(), o = i * 4;
+    if (v < 0.5) { id.data[o] = 90; id.data[o + 1] = 70; id.data[o + 2] = 50; id.data[o + 3] = v * 34; }
+    else { id.data[o] = 255; id.data[o + 1] = 250; id.data[o + 2] = 240; id.data[o + 3] = (v - 0.5) * 30; }
+  }
+  g.putImageData(id, 0, 0);
+  g.strokeStyle = 'rgba(120,95,70,0.07)'; g.lineWidth = 0.7;
+  for (let i = 0; i < 70; i++) {
+    const x = R() * s, y = R() * s, a = R() * TAU, l = 6 + R() * 22;
+    g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a + 0.5) * l * 0.5, y + Math.sin(a + 0.5) * l * 0.5, x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
+  }
+  grain = c; grainPat = ctx.createPattern(c, 'repeat');
+}
+function buildVignette() {
+  vign = document.createElement('canvas'); vign.width = W; vign.height = H;
+  const g = vign.getContext('2d'), gr = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.hypot(W, H) * 0.62);
+  gr.addColorStop(0, 'rgba(90,60,30,0)'); gr.addColorStop(1, 'rgba(90,60,30,0.26)');
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+}
+
+/* ---------------------------------------------------------------- runtime state */
+
+let started = false, now = 0, last = 0, spd = 1, hurry = false, evIdx = 0;
+let cam = { x: 0, y: 0, z: 1.12 }, S = 1, capIdx = -1, capTimer = 0, lastTipX = null;
+const drops = Array.from({ length: 200 }, () => ({ x: Math.random(), y: Math.random(), l: 10 + Math.random() * 18, v: 0.9 + Math.random() * 0.7 }));
+const baseScale = () => Math.min(H / 900, W / 1150);
+
+function resetCam() {
+  S = baseScale() * 1.12;
+  cam.x = 0 - W * 0.12 / S; cam.y = 0; cam.z = 1.12;
+}
+function reset() {
+  now = 0; evIdx = 0; capIdx = -1; spd = 1;
+  capEl.classList.remove('show'); againBtn.classList.remove('show');
+  hintEl.style.opacity = 1;
+  resetCam();
+}
+
+function upper(P, t) { let lo = 0, hi = P.length - 1; if (!P.length || P[0].t > t) return -1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (P[mid].t <= t) lo = mid; else hi = mid - 1; } return lo; }
+function tip(th, t) {
+  const P = th.pts, e = upper(P, t);
+  if (e < 0) return null;
+  const p = P[e];
+  if (e >= P.length - 1) return { x: p.x, y: p.y, w: p.w, a: p.a, e, done: t - p.t };
+  const q = P[e + 1], f = clamp((t - p.t) / (q.t - p.t || 1), 0, 1);
+  return { x: lerp(p.x, q.x, f), y: lerp(p.y, q.y, f), w: p.w, a: p.a, e, done: 0 };
+}
+function zoomAt(t) {
+  let z = ZK[0][1];
+  for (let i = 1; i < ZK.length; i++) {
+    if (t < ZK[i][0]) break;
+    const k = ease(clamp((t - ZK[i][0]) / 3, 0, 1));
+    z = lerp(ZK[i - 1][1], ZK[i][1], k);
+  }
+  return z;
+}
+
+/* ---------------------------------------------------------------- drawing */
+
+const X = x => (x - cam.x) * S + W / 2;
+const Y = y => (y - cam.y) * S + H / 2;
+
+function drawThread(th, alpha) {
+  const P = th.pts, tp = tip(th, now);
+  if (!tp) return;
+  const end = tp.e, CH = S < 0.35 ? 36 : 10, mg = 160;
+  ctx.strokeStyle = th.col;
+  for (let i = 0; i < end || (i === 0 && end === 0); i += CH) {
+    const j = Math.min(end, i + CH), a = P[i], b = P[j];
+    const ax = X(a.x), ay = Y(a.y), bx = X(b.x), by = Y(b.y);
+    if ((ax < -mg && bx < -mg) || (ax > W + mg && bx > W + mg) || (ay < -mg && by < -mg) || (ay > H + mg && by > H + mg)) { if (i >= end) break; continue; }
+    ctx.globalAlpha = a.a * alpha;
+    ctx.lineWidth = Math.max(0.9, a.w * S);
+    ctx.beginPath(); ctx.moveTo(ax, ay);
+    for (let k = i + 1; k <= j; k++) ctx.lineTo(X(P[k].x), Y(P[k].y));
+    if (j === end) ctx.lineTo(X(tp.x), Y(tp.y));
+    ctx.stroke();
+    if (i >= end) break;
+  }
+  // The nib: a wet bead of ink at the tip while the thread is still being drawn.
+  if (tp.done < 0.6) {
+    const k = 1 - tp.done / 0.6, x = X(tp.x), y = Y(tp.y), r = Math.max(1.6, tp.w * S * 0.95);
+    ctx.globalAlpha = 0.14 * k * tp.a; ctx.fillStyle = th.col;
+    ctx.beginPath(); ctx.arc(x, y, r * 3.2 + Math.sin(now * 6) * 0.8, 0, TAU); ctx.fill();
+    ctx.globalAlpha = 0.9 * k * tp.a;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBlots() {
+  ctx.globalCompositeOperation = 'multiply';
+  for (const b of BLOT) {
+    const age = now - b.t;
+    if (age <= 0) continue;
+    const k = eout(clamp(age / 3.2, 0, 1)), sz = b.size * S * (0.72 + 0.28 * k), x = X(b.x), y = Y(b.y);
+    if (x + sz < 0 || x - sz > W || y + sz < 0 || y - sz > H) continue;
+    ctx.globalAlpha = k * b.a;
+    ctx.drawImage(b.spr, x - sz / 2, y - sz / 2, sz, sz);
+  }
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+function drawSmoke() {
+  if (!smoke || now < smoke.t || now > smoke.t + 20) return;
+  ctx.fillStyle = '#4a4650';
+  for (let i = 0; i < 40; i++) {
+    const age = now - (smoke.t + i * 0.42);
+    if (age <= 0 || age > 5) continue;
+    const x = smoke.x + age * 12 + 9 * Math.sin(age * 1.4 + i), y = smoke.y - age * 30, r = (5 + age * 5) * S;
+    ctx.globalAlpha = 0.1 * (1 - age / 5) * Math.min(1, age * 3);
+    ctx.beginPath(); ctx.arc(X(x), Y(y), r, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawRain(dt) {
+  const k = clamp((now - rainOn) / 2, 0, 1) * (1 - clamp((now - rainOff) / 3, 0, 1));
+  if (k <= 0) return;
+  ctx.strokeStyle = '#3a4458'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  const n = Math.floor(drops.length * k);
+  for (let i = 0; i < n; i++) {
+    const d = drops[i];
+    d.y += d.v * dt * spd * 0.9;
+    if (d.y > 1.05) { d.y = -0.05; d.x = Math.random() * 1.2; }
+    const x = d.x * W, y = d.y * H;
+    ctx.moveTo(x, y); ctx.lineTo(x - d.l * 0.28, y + d.l);
+  }
+  ctx.globalAlpha = 0.28 * k; ctx.stroke(); ctx.globalAlpha = 1;
+}
+
+function draw(dt) {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = '#efe6d4'; ctx.fillRect(0, 0, W, H);
+  if (grainPat) {
+    const ox = ((-cam.x * S) % 256 + 256) % 256, oy = ((-cam.y * S) % 256 + 256) % 256;
+    ctx.save(); ctx.translate(ox - 256, oy - 256); ctx.fillStyle = grainPat; ctx.fillRect(0, 0, W + 512, H + 512); ctx.restore();
+  }
+  drawBlots();
+  drawSmoke();
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  drawThread(TH.D, 1);
+  drawThread(TH.C, 1);
+  drawThread(TH.B, 1);
+  drawThread(TH.A, 0.94);
+  drawRain(dt);
+  if (vign) ctx.drawImage(vign, 0, 0, W, H);
+}
+
+/* ---------------------------------------------------------------- captions */
+
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV'];
+function updateCaption() {
+  let idx = -1;
+  for (let i = 0; i < CAP.length; i++) if (CAP[i].t <= now) idx = i;
+  const c = CAP[idx], last = idx === CAP.length - 1;
+  const expired = c && !last && now - c.t > 6.5;
+  const want = c && !expired ? idx : -1;
+  if (want === capIdx) return;
+  capIdx = want;
+  clearTimeout(capTimer);
+  capEl.classList.remove('show');
+  if (want < 0) return;
+  capTimer = setTimeout(() => {
+    capEl.innerHTML = (c.num ? `<span class="num mono">${ROMAN[c.num]}</span>` : '') + c.text;
+    capEl.classList.add('show');
+  }, capEl.textContent ? 700 : 50);
+}
+
+/* ---------------------------------------------------------------- loop */
+
+function frame(ts) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (ts - (last || ts)) / 1000);
+  last = ts;
+  update(dt);
+  draw(dt);
+}
+
+function update(dt) {
+  if (started) {
+    const reveal = now > TEND + 1;
+    spd += ((hurry && !reveal ? 3.4 : 1) - spd) * (1 - Math.exp(-dt * 4));
+    now += dt * spd;
+    while (evIdx < EV.length && EV[evIdx].t <= now) { if (spd < 2.5 || EV[evIdx].t > TEND) EV[evIdx].fn(); evIdx++; }
+
+    const base = baseScale();
+    let tx, ty, tz, k;
+    if (!reveal) {
+      let sx = 0, sy = 0, ws = 0;
+      const a = tip(TH.A, now);
+      for (const [name, w] of [['A', 1], ['B', 0.35], ['C', 0.6]]) {
+        const p = tip(TH[name], now);
+        if (p && p.done < 0.8) { sx += p.x * w; sy += p.y * w; ws += w; }
+      }
+      tz = zoomAt(now);
+      const z = base * cam.z;
+      tx = (ws ? sx / ws : a ? a.x : 0) - W * 0.12 / z;
+      ty = ws ? sy / ws : a ? a.y : 0;
+      if (a) ty = clamp(ty, a.y - 300, a.y + 300);
+      k = 1 - Math.exp(-dt * 2.2 * Math.sqrt(spd));
+      const tipX = a ? a.x : 0;
+      if (lastTipX !== null && AU.ctx) AU.scratch(AU.muted ? 0 : clamp(Math.abs(tipX - lastTipX) / Math.max(dt, 1e-3) * 0.00011, 0, 0.035));
+      lastTipX = tipX;
+    } else {
+      const bw = BB.x1 - BB.x0, bh = BB.y1 - BB.y0;
+      tz = Math.min(W * 0.88 / bw, H * 0.62 / bh) / base;
+      tx = (BB.x0 + BB.x1) / 2; ty = (BB.y0 + BB.y1) / 2 + bh * 0.06;
+      k = 1 - Math.exp(-dt * 0.7);
+      AU.scratch(0);
+      if (now > TEND + 10) againBtn.classList.add('show');
+    }
+    cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k; cam.z += (tz - cam.z) * k;
+    S = base * cam.z;
+    progEl.style.width = clamp(now / TEND, 0, 1) * 100 + '%';
+    if (now > 14) hintEl.style.opacity = 0;
+    updateCaption();
+  }
+}
+
+/* ---------------------------------------------------------------- setup */
+
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  buildVignette();
+  if (!started) resetCam();
+}
+
+function start(withSound) {
+  if (started) return;
+  started = true;
+  introEl.classList.add('gone');
+  if (withSound) AU.init();
+  reset();
+}
+
+addEventListener('resize', resize);
+introEl.addEventListener('click', () => start(true));
+cv.addEventListener('pointerdown', () => { hurry = true; });
+addEventListener('pointerup', () => { hurry = false; });
+addEventListener('pointercancel', () => { hurry = false; });
+addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); if (!started) start(true); else hurry = true; }
+  if (e.code === 'KeyM') sndBtn.click();
+});
+addEventListener('keyup', e => { if (e.code === 'Space') hurry = false; });
+sndBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  if (!AU.ctx) { AU.init(); if (AU.muted) AU.toggle(); sndBtn.textContent = 'Sound on'; return; }
+  AU.toggle();
+  sndBtn.textContent = AU.muted ? 'Sound off' : 'Sound on';
+});
+againBtn.addEventListener('click', e => { e.stopPropagation(); reset(); });
+
+resize();
+buildPaper();
+requestAnimationFrame(frame);
+// Inside a preview frame there is nobody to click: start silently.
+if (window.self !== window.top) { sndBtn.textContent = 'Sound off'; AU.muted = true; start(false); }
+// ?t=seconds jumps straight to a moment of the story.
+const jump = parseFloat(new URLSearchParams(location.search).get('t'));
+if (jump > 0) { start(false); while (now < jump) update(1 / 30); }
+})();
+</script>
+</body>
+</html>

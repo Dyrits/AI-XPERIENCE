@@ -20,6 +20,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Echoveil](pages/echoveil.html) | Canvas 2D, sonar reveal | GLM-5.3 | ~58K | 1 | 33 KB |
 | [Umbralux](pages/umbralux.html) | Canvas 2D, raycast optics | Gemini 3.8 Flash | ~52K | 1 | 46 KB |
 | [Estuary](pages/estuary.html) | Canvas 2D, curl-noise flow field | DeepSeek V4 Pro | ~55K | 1 | 28 KB |
+| [The last warm window](pages/the-last-warm-window.html) | Canvas 2D, animated narrative | GPT-6 | Unrecorded | 1 | 23 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -35,11 +36,13 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 **Estuary.** A tool for sculpting invisible currents and harvesting them as art. A divergence-free curl-noise flow carries thousands of glowing particles, and you reshape the current by dropping sources, sinks, vortices and repellers — all mapped onto a torus so the field tiles perfectly by construction. Palettes, flow strength and trail persistence are tunable, and a single button exports a seamless generative texture (up to 4096 px) for wallpapers and backgrounds.
 
+**The last warm window.** A two-minute story about a mother who brings two cups of tea to an abandoned station. Passing trains carry memories of her daughter while rain turns to snow and the years pass. Holding a memory reveals her daughter beside the bench and slows the story. Includes six selectable chapters, optional synthesized music, pause and replay controls, and reduced-motion playback.
+
 The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes.
 
 ## Viewing
 
-Open `index.html` in a recent browser. It is a portfolio page listing all seven pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
+Open `index.html` in a recent browser. It is a portfolio page listing the pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
 
 No build step or server is needed. Mercurial requires WebGL2 and runs best on a dedicated or recent integrated GPU.
 
@@ -56,9 +59,12 @@ AI-XPERIENCE/
     ├── foldwake.html
     ├── mercurial.html
     ├── night-atlas.html
+    ├── the-last-warm-window.html
     └── umbralux.html
 ```
 
 ## About the token figures
 
 The token counts are rough estimates, not billing data. They include the context sent to the model, the generated code and the correction round.
+
+The token count for The last warm window was not recorded.

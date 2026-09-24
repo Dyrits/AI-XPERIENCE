@@ -129,44 +129,9 @@
   .art-echo .pearl { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #ffd98c; box-shadow: 0 0 14px #ffd98c; animation: tw 2.8s ease-in-out infinite; }
   .art-echo .pearl.p1 { top: 31%; left: 65%; }
   .art-echo .pearl.p2 { top: 64%; left: 27%; animation-delay: 1.4s; }
-  .card:nth-child(6) { animation-delay: 1.65s; --accent: #ffd54f; }
-  .card:nth-child(7) { animation-delay: 1.8s; --accent: #7ff6ff; }
+  .card:nth-child(6) { animation-delay: 1.65s; --accent: #7ff6ff; }
   .art-estuary { background: radial-gradient(ellipse at 60% 45%, #0b1a2a, #04070c 75%); }
   .art-estuary svg { width: 100%; height: 100%; }
-  .art-umbra { background: radial-gradient(ellipse at 50% 50%, #181d2a, #06070b 75%); }
-  .art-umbra .beam {
-    position: absolute; left: 50%; top: 50%; width: 0; height: 0;
-    border-left: 90px solid transparent; border-right: 90px solid transparent;
-    border-bottom: 220px solid rgba(255, 224, 130, 0.22);
-    transform-origin: 50% 0; transform: translate(-50%, 0) rotate(42deg);
-    filter: blur(4px);
-  }
-  .art-umbra .pillar-poly {
-    position: absolute; width: 28px; height: 48px; background: #0b0e17;
-    border: 1px solid rgba(255, 224, 130, 0.35); transform: rotate(45deg);
-  }
-  .art-umbra .pillar-poly.p1 { left: 34%; top: 38%; }
-  .art-umbra .pillar-poly.p2 { left: 66%; top: 58%; width: 36px; height: 36px; }
-  .art-umbra .shadow-cone {
-    position: absolute; left: 34%; top: 38%; width: 160px; height: 160px;
-    background: linear-gradient(135deg, rgba(3, 4, 7, 0.95), transparent);
-    transform-origin: 0 0; transform: rotate(15deg);
-  }
-  .art-umbra .core-orb {
-    position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px;
-    border-radius: 50%; background: #ffffff;
-    box-shadow: 0 0 25px #ffd54f, 0 0 55px rgba(255, 152, 0, 0.8);
-    animation: corePulse 3s ease-in-out infinite;
-  }
-  .art-umbra .orchid-bloom {
-    position: absolute; width: 8px; height: 8px; border-radius: 50%;
-    background: #c084fc; box-shadow: 0 0 16px #c084fc;
-    animation: orchGlow 2.5s ease-in-out infinite;
-  }
-  .art-umbra .orchid-bloom.o1 { left: 24%; top: 28%; }
-  .art-umbra .orchid-bloom.o2 { left: 78%; top: 72%; animation-delay: 1.2s; }
-  @keyframes corePulse { 50% { transform: scale(1.15); box-shadow: 0 0 35px #ffd54f, 0 0 75px #ff9800; } }
-  @keyframes orchGlow { 50% { opacity: 0.35; } }
   @keyframes tw { 50% { opacity: .25; } }
   @keyframes rise { to { opacity: 1; translate: 0 0; } }
   .card:hover { border-color: color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 30px 80px -30px color-mix(in srgb, var(--accent) 45%, transparent); }
@@ -326,7 +291,7 @@
         <div><b>1 + 1</b><span class="mono">Prompt + fix</span></div>
         <div><b>1</b><span class="mono">File per piece</span></div>
         <div><b>0</b><span class="mono">Dependencies</span></div>
-        <div><b>~340K</b><span class="mono">Tokens in total</span></div>
+        <div><b>—</b><span class="mono">Total tokens unrecorded</span></div>
       </div>
     </div>
   </section>
@@ -442,33 +407,7 @@
         </dl>
         <a class="open mono" href="pages/echoveil.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
-    </article>
-
-    <article class="card" data-src="pages/umbralux.html">
-      <div class="preview">
-        <div class="art art-umbra">
-          <i class="beam"></i>
-          <i class="shadow-cone"></i>
-          <b class="pillar-poly p1"></b><b class="pillar-poly p2"></b>
-          <div class="core-orb"></div>
-          <b class="orchid-bloom o1"></b><b class="orchid-bloom o2"></b>
-        </div>
-        <span class="tag mono">Canvas 2D · Optics</span>
-        <span class="tag hover-hint mono">Hover · live</span>
-      </div>
-      <div class="body">
-        <div class="title-row"><h2>Umbralux</h2><span class="num mono">Nº 06</span></div>
-        <p>A sacred spatial game of living light and sheltering shade. Move your radiant core to cast long shadows from stone monoliths: shelter fragile Umbral Orchids from your own blinding rays while bathing Sunstones in pure daylight and banishing shadow predators.</p>
-        <div class="chips mono"><span>Raycast shadows</span><span>2D Optics</span><span>Dual balance</span><span>Web Audio</span></div>
-        <dl class="specs mono">
-          <div><dt>Model</dt><dd>Gemini 3.8 Flash</dd></div>
-          <div><dt>Tokens</dt><dd>~52K <small>est.</small></dd></div>
-          <div><dt>Prompts</dt><dd>1</dd></div>
-          <div><dt>Size</dt><dd>46 <small>KB</small></dd></div>
-        </dl>
-        <a class="open mono" href="pages/umbralux.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
-      </div>
-    </article>
+</article>
 
     <article class="card" data-src="pages/estuary.html">
       <div class="preview">
@@ -508,10 +447,46 @@
         <a class="open mono" href="pages/estuary.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+
+    <article class="card" data-src="pages/the-last-warm-window.html" style="--accent: #e7ad79; animation-delay: 1.8s;">
+      <div class="preview">
+        <div class="art" style="background: linear-gradient(#142731, #435657 68%, #091b28);">
+          <svg viewBox="0 0 600 375" width="100%" height="100%" aria-hidden="true">
+            <defs><radialGradient id="station-glow"><stop stop-color="#ffc37b" stop-opacity=".35"/><stop offset="1" stop-color="#ffc37b" stop-opacity="0"/></radialGradient></defs>
+            <circle cx="475" cy="79" r="19" fill="#b6bca7" opacity=".5"/><circle cx="468" cy="75" r="18" fill="#243942"/>
+            <path d="M0 246 Q100 205 220 236 T600 222 V375 H0Z" fill="#233d47"/>
+            <path d="M0 300 L600 277 V289 L0 312Z" fill="#101f28"/>
+            <path d="M290 294V375 M350 290V375 M410 287V375 M470 284V375" stroke="#101f28" stroke-width="7"/>
+            <path d="M355 216H438V286H355Z" fill="#182830"/><path d="M330 216L367 199L454 214L449 223H330Z" fill="#101e28"/>
+            <circle cx="390" cy="247" r="65" fill="url(#station-glow)"/>
+            <path d="M377 231H408V264H377Z" fill="#d6a364"/><path d="M392 231V264 M377 247H408" stroke="#574834" stroke-width="2"/>
+            <path d="M338 221V288 M275 277H327 M281 266H324 M283 270V295 M320 270V292" stroke="#14232c" stroke-width="4"/>
+            <circle cx="301" cy="258" r="4" fill="#111c24"/><path d="M297 263L294 282H307L304 263Z" fill="#111c24"/>
+            <path d="M297 263Q313 265 320 260" fill="none" stroke="#b57051" stroke-width="2"/>
+            <path d="M280 273H284 M320 273H324" stroke="#d4c3a0" stroke-width="3"/>
+            <path d="M378 308H412 M382 319H420 M368 334H409 M387 349H430" stroke="#d6a364" opacity=".22"/>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · Animated story</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>The last warm window</h2><span class="num mono">Nº 08</span></div>
+        <p>Every evening, a mother brings two cups of tea to the station. A two-minute story of waiting, told through passing trains, changing seasons and a single amber window. Hold a memory to bring her daughter back beside the bench.</p>
+        <div class="chips mono"><span>Six chapters</span><span>Living memories</span><span>Synthesized music</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>GPT-6</dd></div>
+          <div><dt>Tokens</dt><dd>Unrecorded</dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>23 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/the-last-warm-window.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5, GPT-6 Atra, GLM-5.3 and Gemini 3.8 Flash.</span>
+    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5, GPT-6 Atra, GPT-6, GLM-5.3 and Gemini 3.8 Flash.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>
