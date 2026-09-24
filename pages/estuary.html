@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estuary — a tileable flow-field studio</title>
+<style>
+  :root {
+    --bg: #05060a;
+    --panel: rgba(12, 15, 24, .72);
+    --panel-line: rgba(255, 255, 255, .09);
+    --ink: #eaf0f6;
+    --dim: rgba(234, 240, 246, .52);
+    --faint: rgba(234, 240, 246, .16);
+    --acc: #7ff6ff;
+    --ease: cubic-bezier(.16, 1, .3, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+
+  #stage { position: fixed; inset: 0; display: block; }
+  #vignette {
+    position: fixed; inset: 0; pointer-events: none; z-index: 2;
+    background: radial-gradient(120% 90% at 50% 42%, transparent 55%, rgba(0, 0, 0, .55) 100%);
+  }
+
+  /* Wordmark */
+  .brand {
+    position: fixed; left: 1.7rem; top: 1.5rem; z-index: 5; pointer-events: none;
+  }
+  .brand h1 {
+    font-size: 1.5rem; font-weight: 300; letter-spacing: .42em; text-transform: uppercase;
+  }
+  .brand p {
+    margin-top: .35rem; font-size: .62rem; letter-spacing: .18em; text-transform: uppercase; color: var(--dim);
+  }
+
+  /* Control panel */
+  #panel {
+    position: fixed; left: 1.5rem; bottom: 1.5rem; z-index: 6; width: 300px;
+    background: var(--panel); border: 1px solid var(--panel-line); border-radius: 18px;
+    backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    padding: 1.1rem 1.15rem 1.25rem;
+    transform: translateY(calc(100% + 2rem)); transition: transform .6s var(--ease);
+  }
+  #panel.open { transform: none; }
+  #panel h2 {
+    font-size: .62rem; font-weight: 500; letter-spacing: .28em; text-transform: uppercase; color: var(--dim);
+    margin-bottom: .9rem; display: flex; justify-content: space-between; align-items: center;
+  }
+  #panel h2 .count { color: var(--acc); letter-spacing: .1em; }
+
+  .tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: .45rem; margin-bottom: 1.05rem; }
+  .tool {
+    position: relative; padding: .6rem .3rem; border-radius: 11px; border: 1px solid var(--panel-line);
+    background: rgba(255, 255, 255, .03); color: var(--dim); font-size: .58rem; letter-spacing: .06em;
+    text-transform: uppercase; cursor: pointer; transition: all .25s; text-align: center; font-family: inherit;
+  }
+  .tool .dot { display: block; width: 7px; height: 7px; border-radius: 50%; margin: 0 auto .38rem; background: currentColor; box-shadow: 0 0 9px currentColor; }
+  .tool:hover { color: var(--ink); border-color: var(--faint); transform: translateY(-1px); }
+  .tool.active { color: #05060a; background: var(--acc); border-color: var(--acc); font-weight: 600; }
+  .tool.active .dot { box-shadow: 0 0 9px var(--acc); }
+
+  .sliders { display: flex; flex-direction: column; gap: .82rem; margin-bottom: 1.05rem; }
+  .slider label { display: flex; justify-content: space-between; font-size: .6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+  .slider label output { color: var(--ink); font-variant-numeric: tabular-nums; }
+  input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 2px; background: var(--faint); border-radius: 2px; outline: none; margin-top: .55rem; }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--ink);
+    cursor: pointer; box-shadow: 0 0 0 4px rgba(127, 246, 255, .18);
+  }
+  input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 50%; background: var(--ink); cursor: pointer; }
+
+  .palettes { display: flex; gap: .45rem; margin-bottom: 1.05rem; }
+  .pal {
+    flex: 1; height: 30px; border-radius: 9px; border: 1px solid var(--panel-line); cursor: pointer;
+    opacity: .55; transition: opacity .25s, transform .25s;
+  }
+  .pal:hover { opacity: .85; }
+  .pal.active { opacity: 1; outline: 2px solid var(--acc); outline-offset: 2px; }
+
+  .row { display: flex; gap: .5rem; }
+  .btn {
+    flex: 1; padding: .72rem .5rem; border-radius: 11px; border: 1px solid var(--panel-line);
+    background: rgba(255, 255, 255, .04); color: var(--ink); font-size: .62rem; letter-spacing: .16em;
+    text-transform: uppercase; cursor: pointer; font-family: inherit; transition: all .25s;
+  }
+  .btn:hover { border-color: var(--faint); background: rgba(255, 255, 255, .08); }
+  .btn.primary { background: var(--acc); color: #05060a; border-color: var(--acc); font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.08); }
+
+  .export-menu { display: flex; gap: .5rem; margin-top: .7rem; height: 0; overflow: hidden; transition: height .4s var(--ease); }
+  .export-menu.show { height: 42px; }
+  .export-menu .btn { padding: .5rem; font-size: .58rem; }
+
+  /* FAB + hint */
+  #fab {
+    position: fixed; left: 1.5rem; bottom: 1.5rem; z-index: 7; width: 54px; height: 54px; border-radius: 50%;
+    border: 1px solid var(--panel-line); background: var(--panel); backdrop-filter: blur(16px);
+    color: var(--ink); cursor: pointer; font-size: 1.35rem; display: grid; place-items: center;
+    transition: transform .5s var(--ease), opacity .4s;
+  }
+  #fab:hover { transform: rotate(90deg); }
+  #fab.hide { opacity: 0; pointer-events: none; }
+
+  #hint {
+    position: fixed; left: 50%; bottom: 2rem; transform: translateX(-50%); z-index: 4;
+    font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: var(--dim);
+    pointer-events: none; opacity: 1; transition: opacity 1.5s ease;
+    text-align: center; line-height: 2; background: rgba(5, 6, 10, .4); padding: .5rem 1rem; border-radius: 99px;
+    backdrop-filter: blur(6px);
+  }
+  #hint.gone { opacity: 0; }
+  #hint b { color: var(--ink); font-weight: 500; }
+
+  #busy {
+    position: fixed; inset: 0; z-index: 20; display: none; place-items: center;
+    background: rgba(5, 6, 10, .72); backdrop-filter: blur(6px);
+    font-size: .72rem; letter-spacing: .3em; text-transform: uppercase; color: var(--dim);
+  }
+  #busy.show { display: grid; }
+  #busy .spin { width: 34px; height: 34px; border: 2px solid var(--faint); border-top-color: var(--acc); border-radius: 50%; animation: rot .9s linear infinite; margin: 0 auto 1.2rem; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+
+  @media (max-width: 560px) {
+    #panel { width: calc(100vw - 2rem); }
+    .tools { grid-template-columns: repeat(4, 1fr); }
+    .brand h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stage"></canvas>
+<div id="vignette"></div>
+
+<div class="brand">
+  <h1>Estuary</h1>
+  <p class="mono">a tileable flow-field studio</p>
+</div>
+
+<div id="hint" class="mono">
+  <b>Click</b> to place a current &nbsp;·&nbsp; <b>Drag</b> to move one &nbsp;·&nbsp; <b>Erase</b> to remove &nbsp;·&nbsp; <b>H</b> controls &nbsp;·&nbsp; <b>P</b> pause
+</div>
+
+<div id="panel">
+  <h2><span>Currents</span><span class="count" id="fcount">0 placed</span></h2>
+
+  <div class="tools" id="tools">
+    <button class="tool active" data-tool="move"><i class="dot"></i>Move</button>
+    <button class="tool" data-tool="source"><i class="dot" style="color:#66f7ff"></i>Source</button>
+    <button class="tool" data-tool="sink"><i class="dot" style="color:#ff5c7a"></i>Sink</button>
+    <button class="tool" data-tool="vortexCW"><i class="dot" style="color:#9c7bff"></i>Vortex ↻</button>
+    <button class="tool" data-tool="vortexCCW"><i class="dot" style="color:#5ca8ff"></i>Vortex ↺</button>
+    <button class="tool" data-tool="repeller"><i class="dot" style="color:#ffd166"></i>Repel</button>
+    <button class="tool" data-tool="attractor"><i class="dot" style="color:#7dff9c"></i>Attract</button>
+    <button class="tool" data-tool="erase"><i class="dot" style="color:#ff7a7a"></i>Erase</button>
+  </div>
+
+  <div class="sliders">
+    <div class="slider">
+      <label>Flow strength <output id="o-flow">1.0</output></label>
+      <input type="range" id="flow" min="0" max="2.6" step="0.01" value="1.0">
+    </div>
+    <div class="slider">
+      <label>Current speed <output id="o-speed">1.6</output></label>
+      <input type="range" id="speed" min="0" max="3" step="0.01" value="1.6">
+    </div>
+    <div class="slider">
+      <label>Particles <output id="o-count">2600</output></label>
+      <input type="range" id="count" min="500" max="7000" step="50" value="2600">
+    </div>
+    <div class="slider">
+      <label>Trail persistence <output id="o-fade">0.04</output></label>
+      <input type="range" id="fade" min="0.01" max="0.14" step="0.005" value="0.04">
+    </div>
+    <div class="slider">
+      <label>Line width <output id="o-width">1.4</output></label>
+      <input type="range" id="width" min="0.4" max="3" step="0.1" value="1.4">
+    </div>
+  </div>
+
+  <div class="palettes" id="palettes">
+    <div class="pal active" data-pal="spectrum" style="background: linear-gradient(90deg,#ff4b4b,#ffe14b,#4bff8a,#4bc7ff,#7b4bff,#ff4bd7);"></div>
+    <div class="pal" data-pal="aurora" style="background: linear-gradient(90deg,#2affc4,#4be0ff,#4b7bff,#9b4bff);"></div>
+    <div class="pal" data-pal="ember" style="background: linear-gradient(90deg,#3a0d0d,#ff5a1f,#ffb347,#fff2c0);"></div>
+    <div class="pal" data-pal="mono" style="background: linear-gradient(90deg,#0a2a33,#3fb5c9,#bfeef7,#ffffff);"></div>
+  </div>
+
+  <div class="row">
+    <button class="btn" id="pause">Pause</button>
+    <button class="btn" id="clear">Clear</button>
+    <button class="btn" id="reset">Reset</button>
+  </div>
+  <div class="row" style="margin-top:.5rem">
+    <button class="btn primary" id="export">Export tile</button>
+  </div>
+  <div class="export-menu" id="export-menu">
+    <button class="btn" data-size="1024">1024</button>
+    <button class="btn" data-size="2048">2048</button>
+    <button class="btn" data-size="4096">4096</button>
+  </div>
+</div>
+
+<button id="fab" aria-label="Toggle controls">＋</button>
+
+<div id="busy"><div><div class="spin"></div><span id="busy-label">Rendering tile</span></div></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("stage");
+  const ctx = canvas.getContext("2d");
+  const trail = document.createElement("canvas");
+  const tctx = trail.getContext("2d");
+
+  let W = 0, H = 0, DPR = 1;
+  const minDim = () => Math.min(W, H);
+
+  const params = {
+    flow: 1.0,
+    speed: 1.6,
+    count: 2600,
+    fade: 0.04,
+    width: 1.4,
+    palette: "spectrum",
+    paused: false,
+  };
+  let tool = "move";
+
+  const K = 3.2;            // swirl cells across the domain (normalized)
+  const MAX_AGE = 45;       // seconds a particle may live before respawning
+  const VEL_SCALE = 0.002;  // normalized velocity -> per-frame motion factor (gentle)
+
+  // ---------------- noise ----------------
+  class Noise {
+    constructor(seed) {
+      const p = new Uint8Array(256);
+      for (let i = 0; i < 256; i++) p[i] = i;
+      let s = seed >>> 0;
+      const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) >>> 0);
+      for (let i = 255; i > 0; i--) {
+        const j = rnd() % (i + 1);
+        const t = p[i]; p[i] = p[j]; p[j] = t;
+      }
+      this.perm = new Uint8Array(512);
+      for (let i = 0; i < 512; i++) this.perm[i] = p[i & 255];
+    }
+    noise(x, y) {
+      const p = this.perm;
+      const X = Math.floor(x), Y = Math.floor(y);
+      const xf = x - X, yf = y - Y;
+      const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+      const a = p[X & 255] + (Y & 255), b = p[(X + 1) & 255] + (Y & 255);
+      const c = p[X & 255] + ((Y + 1) & 255), d = p[(X + 1) & 255] + ((Y + 1) & 255);
+      const A = p[a & 255] / 255, B = p[b & 255] / 255, C = p[c & 255] / 255, D = p[d & 255] / 255;
+      const top = A + u * (B - A), bot = C + u * (D - C);
+      return (top + v * (bot - top)) * 2 - 1;
+    }
+    fbm(x, y) {
+      let amp = 1, freq = 1, sum = 0, norm = 0;
+      for (let i = 0; i < 3; i++) {
+        sum += amp * this.noise(x * freq, y * freq);
+        norm += amp;
+        amp *= 0.5; freq *= 2;
+      }
+      return sum / norm;
+    }
+  }
+  const noise = new Noise(20260925);
+
+  // ---------------- features ----------------
+  const FEATURES = {
+    source:    { color: "#66f7ff", strength: 1.4, radius: 0.09 },
+    sink:      { color: "#ff5c7a", strength: 2.6, radius: 0.13 },
+    vortexCW:  { color: "#9c7bff", strength: 3.2, radius: 0.22 },
+    vortexCCW: { color: "#5ca8ff", strength: 3.2, radius: 0.22 },
+    repeller:  { color: "#ffd166", strength: 2.8, radius: 0.15 },
+    attractor: { color: "#7dff9c", strength: 2.8, radius: 0.15 },
+  };
+
+  let features = [];
+  let seed = 0;
+
+  function addFeature(type, nx, ny) {
+    if (!FEATURES[type]) return;
+    features.push({ type, nx, ny, radius: FEATURES[type].radius, strength: FEATURES[type].strength, seed: seed++ });
+    updateCount();
+  }
+
+  function defaultScene() {
+    features = [];
+    addFeature("vortexCW", 0.62, 0.50);
+    addFeature("source", 0.28, 0.32);
+    addFeature("attractor", 0.46, 0.74);
+    addFeature("repeller", 0.82, 0.22);
+  }
+
+  function torus(d) { if (d > 0.5) d -= 1; else if (d < -0.5) d += 1; return d; }
+
+  // velocity of the flow at normalized (px, py), in normalized-units/sec
+  function fieldVelocity(px, py) {
+    const e = 0.02;
+    const ny1 = noise.fbm(px * K, (py + e) * K);
+    const ny2 = noise.fbm(px * K, (py - e) * K);
+    const nx1 = noise.fbm((px + e) * K, py * K);
+    const nx2 = noise.fbm((px - e) * K, py * K);
+    let vx = (ny1 - ny2) / (2 * e) / K * params.flow;
+    let vy = -(nx1 - nx2) / (2 * e) / K * params.flow;
+
+    for (let i = 0; i < features.length; i++) {
+      const f = features[i];
+      const dx = torus(px - f.nx), dy = torus(py - f.ny);
+      const r = Math.hypot(dx, dy);
+      if (r >= f.radius || r === 0) continue;
+      const t = 1 - r / f.radius;
+      const inv = t * t * f.strength;
+      switch (f.type) {
+        case "vortexCW":  vx += -dy / r * inv; vy +=  dx / r * inv; break;
+        case "vortexCCW": vx +=  dy / r * inv; vy += -dx / r * inv; break;
+        case "repeller":  vx +=  dx / r * inv; vy +=  dy / r * inv; break;
+        case "attractor":
+        case "sink":      vx += -dx / r * inv; vy += -dy / r * inv; break;
+        case "source":    vx +=  dx / r * inv; vy +=  dy / r * inv; break; // gentle outward push
+      }
+    }
+    return [vx, vy];
+  }
+
+  // ---------------- particles ----------------
+  let particles = [];
+
+  function spawnAtRandom() {
+    return { px: Math.random(), py: Math.random(), age: Math.random() * MAX_AGE };
+  }
+  function spawnFromSource() {
+    const srcs = features.filter(f => f.type === "source");
+    const f = srcs[(Math.random() * srcs.length) | 0];
+    const a = Math.random() * Math.PI * 2, rr = Math.random() * f.radius * 0.5;
+    return { px: f.nx + Math.cos(a) * rr, py: f.ny + Math.sin(a) * rr, age: 0 };
+  }
+
+  function respawn(p) {
+    const srcs = features.some(f => f.type === "source");
+    const q = srcs && Math.random() < 0.75 ? spawnFromSource() : spawnAtRandom();
+    p.px = q.px; p.py = q.py; p.age = q.age;
+  }
+
+  function initParticles() {
+    particles = [];
+    for (let i = 0; i < params.count; i++) particles.push(spawnAtRandom());
+  }
+
+  function colorOf(vx, vy, alpha) {
+    const ang = Math.atan2(vy, vx);
+    const t = ang / (2 * Math.PI) + 0.5;
+    const sp = Math.min(1, Math.hypot(vx, vy) / 4);
+    let h, s, l;
+    switch (params.palette) {
+      case "aurora":   h = 140 + t * 130; s = 78; l = 52 + sp * 12; break;
+      case "ember":    h = 8 + sp * 48;   s = 95; l = 42 + sp * 30; break;
+      case "mono":     h = 190;           s = 42; l = 42 + sp * 52; break;
+      default:         h = t * 360;       s = 92; l = 52 + sp * 10;
+    }
+    return `hsla(${h},${s}%,${l}%,${alpha})`;
+  }
+
+  // ---------------- rendering ----------------
+  function paintBackground() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#070a12");
+    g.addColorStop(1, "#030407");
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    trail.width = Math.round(W * DPR); trail.height = Math.round(H * DPR);
+    tctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    paintBackground();
+  }
+
+  let last = performance.now();
+  let hintTimer = setTimeout(() => document.getElementById("hint").classList.add("gone"), 9000);
+
+  function frame(now) {
+    requestAnimationFrame(frame);
+    let dt = (now - last) / 1000; last = now;
+    if (dt > 0.05) dt = 0.05;
+
+    if (!params.paused) {
+      // fade existing trails
+      tctx.globalCompositeOperation = "destination-out";
+      tctx.fillStyle = `rgba(0,0,0,${params.fade})`;
+      tctx.fillRect(0, 0, W, H);
+      tctx.globalCompositeOperation = "lighter";
+      tctx.lineCap = "round";
+      tctx.lineWidth = params.width;
+
+      const step = dt * 60 * VEL_SCALE * params.speed;
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const v = fieldVelocity(p.px, p.py);
+        const nx = p.px + v[0] * step, ny = p.py + v[1] * step;
+        const pxn = nx < 0 ? nx + 1 : (nx >= 1 ? nx - 1 : nx);
+        const pyn = ny < 0 ? ny + 1 : (ny >= 1 ? ny - 1 : ny);
+        const wrapped = Math.abs(pxn - p.px) > 0.4 || Math.abs(pyn - p.py) > 0.4;
+
+        // sink removal
+        let dead = false;
+        if (!wrapped) {
+          for (let j = 0; j < features.length; j++) {
+            const f = features[j];
+            if (f.type !== "sink") continue;
+            const dx = torus(pxn - f.nx), dy = torus(pyn - f.ny);
+            if (Math.hypot(dx, dy) < f.radius && Math.random() < dt * 3) { dead = true; break; }
+          }
+        }
+
+        if (!wrapped) {
+          tctx.strokeStyle = colorOf(v[0], v[1], params.palette === "mono" ? 0.16 : 0.12);
+          tctx.beginPath();
+          tctx.moveTo(p.px * W, p.py * H);
+          tctx.lineTo(pxn * W, pyn * H);
+          tctx.stroke();
+        }
+
+        p.px = pxn; p.py = pyn;
+        p.age += dt;
+        if (dead || p.age > MAX_AGE) respawn(p);
+      }
+
+      // keep density in sync with the slider
+      while (particles.length < params.count) particles.push(spawnAtRandom());
+      if (particles.length > params.count) particles.length = params.count;
+    }
+
+    // composite: repaint background, then trails, then markers
+    paintBackground();
+    ctx.drawImage(trail, 0, 0, W, H);
+    drawMarkers(now / 1000);
+  }
+
+  function drawMarkers(time) {
+    const R = minDim();
+    ctx.globalCompositeOperation = "lighter";
+    for (let i = 0; i < features.length; i++) {
+      const f = features[i], spec = FEATURES[f.type];
+      const x = f.nx * W, y = f.ny * H, rad = f.radius * R;
+      const pulse = 0.5 + 0.5 * Math.sin(time * 1.8 + f.seed * 6.28);
+
+      ctx.save();
+      ctx.translate(x, y);
+
+      // glow ring
+      ctx.strokeStyle = spec.color;
+      ctx.globalAlpha = 0.28 + pulse * 0.35;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(0, 0, rad, 0, Math.PI * 2); ctx.stroke();
+
+      // inner core
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = spec.color;
+      ctx.beginPath(); ctx.arc(0, 0, 2.4, 0, Math.PI * 2); ctx.fill();
+
+      // type-specific motion cue
+      if (f.type === "vortexCW" || f.type === "vortexCCW") {
+        const dir = f.type === "vortexCW" ? 1 : -1;
+        ctx.globalAlpha = 0.6;
+        ctx.lineWidth = 1.4;
+        for (let k = 0; k < 3; k++) {
+          const a = time * 1.2 * dir + k * (Math.PI * 2 / 3);
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * rad * 0.35, Math.sin(a) * rad * 0.35);
+          ctx.lineTo(Math.cos(a) * rad * 0.95, Math.sin(a) * rad * 0.95);
+          ctx.stroke();
+        }
+      } else if (f.type === "source") {
+        const rr = rad * (0.3 + 0.7 * ((time * 0.7 + f.seed) % 1));
+        ctx.globalAlpha = (1 - ((time * 0.7 + f.seed) % 1)) * 0.6;
+        ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.stroke();
+      } else if (f.type === "sink") {
+        const rr = rad * (0.95 - 0.65 * ((time * 0.7 + f.seed) % 1));
+        ctx.globalAlpha = (1 - ((time * 0.7 + f.seed) % 1)) * 0.6;
+        ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.stroke();
+      } else {
+        // repeller / attractor: dashed ring
+        ctx.globalAlpha = 0.5;
+        ctx.setLineDash([5, 7]);
+        ctx.lineDashOffset = (f.type === "repeller" ? -1 : 1) * time * 14;
+        ctx.beginPath(); ctx.arc(0, 0, rad, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+
+    // cursor preview
+    if (cursor.visible && tool !== "move" && tool !== "erase") {
+      const spec = FEATURES[tool];
+      if (spec) {
+        ctx.globalCompositeOperation = "lighter";
+        ctx.strokeStyle = spec.color;
+        ctx.globalAlpha = 0.5;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(cursor.x, cursor.y, spec.radius * R, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = "source-over";
+      }
+    }
+  }
+
+  // ---------------- interaction ----------------
+  const cursor = { x: 0, y: 0, visible: false };
+
+  function featureAt(x, y) {
+    const R = minDim() * 0.045;
+    let best = -1, bestD = Infinity;
+    for (let i = 0; i < features.length; i++) {
+      const f = features[i];
+      const dx = f.nx * W - x, dy = f.ny * H - y;
+      const d = Math.hypot(dx, dy);
+      const rad = Math.max(f.radius * minDim(), R);
+      if (d < rad && d < bestD) { bestD = d; best = i; }
+    }
+    return best;
+  }
+
+  let dragging = -1;
+  let pointerDown = false;
+  let lastPointer = { x: 0, y: 0 };
+
+  canvas.addEventListener("pointermove", e => {
+    cursor.x = e.clientX; cursor.y = e.clientY; cursor.visible = true;
+    if (dragging >= 0) {
+      features[dragging].nx = Math.min(1, Math.max(0, e.clientX / W));
+      features[dragging].ny = Math.min(1, Math.max(0, e.clientY / H));
+    }
+  });
+  canvas.addEventListener("pointerleave", () => { cursor.visible = false; });
+
+  canvas.addEventListener("pointerdown", e => {
+    pointerDown = true;
+    lastPointer.x = e.clientX; lastPointer.y = e.clientY;
+    const idx = featureAt(e.clientX, e.clientY);
+
+    if (tool === "erase") {
+      if (idx >= 0) { features.splice(idx, 1); updateCount(); }
+      return;
+    }
+    if (tool === "move" || idx >= 0) {
+      dragging = idx >= 0 ? idx : -1;
+      if (dragging < 0) dragging = -1;
+      return;
+    }
+    // place a new feature
+    addFeature(tool, e.clientX / W, e.clientY / H);
+    dragging = features.length - 1;
+  });
+
+  window.addEventListener("pointerup", () => { dragging = -1; pointerDown = false; });
+
+  function updateCount() {
+    document.getElementById("fcount").textContent = features.length + " placed";
+  }
+
+  // ---------------- UI wiring ----------------
+  const toolsEl = document.getElementById("tools");
+  toolsEl.addEventListener("click", e => {
+    const b = e.target.closest(".tool");
+    if (!b) return;
+    setTool(b.dataset.tool);
+  });
+  function setTool(t) {
+    tool = t;
+    toolsEl.querySelectorAll(".tool").forEach(b => b.classList.toggle("active", b.dataset.tool === t));
+    canvas.style.cursor = t === "move" ? "grab" : t === "erase" ? "not-allowed" : "crosshair";
+  }
+
+  function bindSlider(id, key, out, fmt) {
+    const el = document.getElementById(id), o = document.getElementById(out);
+    el.addEventListener("input", () => {
+      params[key] = parseFloat(el.value);
+      o.textContent = fmt ? fmt(params[key]) : params[key];
+    });
+  }
+  bindSlider("flow", "flow", "o-flow", v => v.toFixed(2));
+  bindSlider("speed", "speed", "o-speed", v => v.toFixed(2));
+  bindSlider("count", "count", "o-count", v => Math.round(v));
+  bindSlider("fade", "fade", "o-fade", v => v.toFixed(3));
+  bindSlider("width", "width", "o-width", v => v.toFixed(1));
+
+  document.getElementById("palettes").addEventListener("click", e => {
+    const p = e.target.closest(".pal");
+    if (!p) return;
+    params.palette = p.dataset.pal;
+    document.querySelectorAll(".pal").forEach(x => x.classList.toggle("active", x === p));
+  });
+
+  document.getElementById("pause").addEventListener("click", function () {
+    params.paused = !params.paused;
+    this.textContent = params.paused ? "Resume" : "Pause";
+  });
+
+  document.getElementById("clear").addEventListener("click", () => {
+    tctx.globalCompositeOperation = "destination-out";
+    tctx.fillStyle = "rgba(0,0,0,1)";
+    tctx.fillRect(0, 0, W, H);
+    tctx.globalCompositeOperation = "lighter";
+  });
+
+  document.getElementById("reset").addEventListener("click", () => {
+    defaultScene();
+    initParticles();
+    document.getElementById("clear").click();
+  });
+
+  const panel = document.getElementById("panel");
+  const fab = document.getElementById("fab");
+  function togglePanel() { panel.classList.toggle("open"); fab.classList.toggle("hide", panel.classList.contains("open")); }
+  fab.addEventListener("click", togglePanel);
+
+  const exportMenu = document.getElementById("export-menu");
+  document.getElementById("export").addEventListener("click", () => exportMenu.classList.toggle("show"));
+  exportMenu.addEventListener("click", e => {
+    const b = e.target.closest(".btn");
+    if (b && b.dataset.size) { exportTile(+b.dataset.size); exportMenu.classList.remove("show"); }
+  });
+
+  window.addEventListener("keydown", e => {
+    const map = { 1: "move", 2: "source", 3: "sink", 4: "vortexCW", 5: "vortexCCW", 6: "repeller", 7: "attractor", 8: "erase" };
+    if (e.key >= "1" && e.key <= "8") setTool(map[e.key]);
+    else if (e.key === "h" || e.key === "H") togglePanel();
+    else if (e.key === "p" || e.key === "P") document.getElementById("pause").click();
+    else if (e.key === "c" || e.key === "C") document.getElementById("clear").click();
+    else if (e.key === "x" || e.key === "X") exportTile(2048);
+  });
+
+  // ---------------- export ----------------
+  function exportTile(size) {
+    const busy = document.getElementById("busy");
+    const label = document.getElementById("busy-label");
+    busy.classList.add("show");
+    label.textContent = "Rendering " + size + "px tile";
+
+    setTimeout(() => {
+      const c = document.createElement("canvas");
+      c.width = size; c.height = size;
+      const x = c.getContext("2d");
+      x.fillStyle = "#06070c";
+      x.fillRect(0, 0, size, size);
+      x.globalCompositeOperation = "lighter";
+      x.lineCap = "round";
+      x.lineWidth = Math.max(1, size / 720);
+
+      const N = Math.min(14000, Math.round((size * size) / 1400));
+      const ps = [];
+      for (let i = 0; i < N; i++) ps.push({ px: Math.random(), py: Math.random(), life: 80 + Math.random() * 160, age: Math.random() * 120 });
+
+      const steps = Math.round(size / 3.4);
+      const step = VEL_SCALE * params.speed;
+
+      for (let s = 0; s < steps; s++) {
+        for (let i = 0; i < ps.length; i++) {
+          const p = ps[i];
+          if (p.age > p.life) { p.px = Math.random(); p.py = Math.random(); p.age = 0; p.life = 80 + Math.random() * 160; }
+          const v = fieldVelocity(p.px, p.py);
+          const nx = p.px + v[0] * step, ny = p.py + v[1] * step;
+          const pxn = nx < 0 ? nx + 1 : (nx >= 1 ? nx - 1 : nx);
+          const pyn = ny < 0 ? ny + 1 : (ny >= 1 ? ny - 1 : ny);
+          const wrapped = Math.abs(pxn - p.px) > 0.4 || Math.abs(pyn - p.py) > 0.4;
+          if (!wrapped) {
+            x.strokeStyle = colorOf(v[0], v[1], 0.09);
+            x.beginPath();
+            x.moveTo(p.px * size, p.py * size);
+            x.lineTo(pxn * size, pyn * size);
+            x.stroke();
+          }
+          p.px = pxn; p.py = pyn; p.age++;
+        }
+      }
+
+      const a = document.createElement("a");
+      a.download = "estuary-" + size + ".png";
+      a.href = c.toDataURL("image/png");
+      a.click();
+      busy.classList.remove("show");
+    }, 30);
+  }
+
+  // ---------------- boot ----------------
+  window.addEventListener("resize", resize);
+  resize();
+  defaultScene();
+  initParticles();
+  updateCount();
+  setTool("move");
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

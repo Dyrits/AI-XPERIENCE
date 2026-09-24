@@ -19,6 +19,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Foldwake](pages/foldwake.html) | Canvas 2D, mirror geometry | GPT-6 Atra | ~60K | 1 | 21 KB |
 | [Echoveil](pages/echoveil.html) | Canvas 2D, sonar reveal | GLM-5.3 | ~58K | 1 | 33 KB |
 | [Umbralux](pages/umbralux.html) | Canvas 2D, raycast optics | Gemini 3.8 Flash | ~52K | 1 | 46 KB |
+| [Estuary](pages/estuary.html) | Canvas 2D, curl-noise flow field | DeepSeek V4 Pro | ~55K | 1 | 28 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -32,11 +33,13 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 **Umbralux.** A spatial game of living light and sheltering shade. You are a wandering spark of sunlight in an ancient sundial sanctum. Moving your radiant core casts real-time geometric shadows from monolithic stone pillars. Bathe ancestral Sunstones in direct light to ignite them, but use the pillars' shadows to shelter delicate Umbral Orchids—your direct rays scorch them! Focus your beam to banish predatory Gloom Stalkers prowling in the dark, and discharge Eclipse Novas to survive across three escalating ritual chambers.
 
+**Estuary.** A tool for sculpting invisible currents and harvesting them as art. A divergence-free curl-noise flow carries thousands of glowing particles, and you reshape the current by dropping sources, sinks, vortices and repellers — all mapped onto a torus so the field tiles perfectly by construction. Palettes, flow strength and trail persistence are tunable, and a single button exports a seamless generative texture (up to 4096 px) for wallpapers and backgrounds.
+
 The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes.
 
 ## Viewing
 
-Open `index.html` in a recent browser. It is a portfolio page listing all six pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
+Open `index.html` in a recent browser. It is a portfolio page listing all seven pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
 
 No build step or server is needed. Mercurial requires WebGL2 and runs best on a dedicated or recent integrated GPU.
 
@@ -49,6 +52,7 @@ AI-XPERIENCE/
 └── pages/
     ├── abyss.html
     ├── echoveil.html
+    ├── estuary.html
     ├── foldwake.html
     ├── mercurial.html
     ├── night-atlas.html

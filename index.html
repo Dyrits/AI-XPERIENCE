@@ -130,6 +130,9 @@
   .art-echo .pearl.p1 { top: 31%; left: 65%; }
   .art-echo .pearl.p2 { top: 64%; left: 27%; animation-delay: 1.4s; }
   .card:nth-child(6) { animation-delay: 1.65s; --accent: #ffd54f; }
+  .card:nth-child(7) { animation-delay: 1.8s; --accent: #7ff6ff; }
+  .art-estuary { background: radial-gradient(ellipse at 60% 45%, #0b1a2a, #04070c 75%); }
+  .art-estuary svg { width: 100%; height: 100%; }
   .art-umbra { background: radial-gradient(ellipse at 50% 50%, #181d2a, #06070b 75%); }
   .art-umbra .beam {
     position: absolute; left: 50%; top: 50%; width: 0; height: 0;
@@ -306,7 +309,7 @@
     <div class="meta">
       <span>Claude + Codex + GLM + Gemini</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">6 pieces</span>
+      <span class="live">7 pieces</span>
     </div>
   </header>
 
@@ -464,6 +467,45 @@
           <div><dt>Size</dt><dd>46 <small>KB</small></dd></div>
         </dl>
         <a class="open mono" href="pages/umbralux.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
+
+    <article class="card" data-src="pages/estuary.html">
+      <div class="preview">
+        <div class="art art-estuary">
+          <svg viewBox="0 0 640 400" aria-hidden="true">
+            <g fill="none" stroke-linecap="round">
+              <path d="M-20 90 C150 30 240 170 400 110 C540 58 640 96 660 60" stroke="#7ff6ff" stroke-opacity=".55" stroke-width="1.2"/>
+              <path d="M-20 150 C140 110 250 240 420 160 C560 96 640 150 660 120" stroke="#9c7bff" stroke-opacity=".45" stroke-width="1.1"/>
+              <path d="M-20 230 C160 200 280 300 460 220 C580 170 640 210 660 200" stroke="#ffd166" stroke-opacity=".38" stroke-width="1"/>
+              <path d="M-20 300 C170 280 300 350 480 290 C590 250 640 300 660 290" stroke="#7ff6ff" stroke-opacity=".3" stroke-width="1"/>
+              <g stroke="#9c7bff" stroke-width="1" stroke-opacity=".6">
+                <path d="M420 200 C470 150 560 170 560 230 C560 290 470 310 420 260 C370 210 380 160 440 155"/>
+                <path d="M440 155 C510 150 600 200 580 300 C560 390 430 370 380 300 C330 230 370 180 470 175"/>
+              </g>
+            </g>
+            <g>
+              <circle cx="82" cy="112" r="4" fill="#7ff6ff"/><circle cx="82" cy="112" r="9" fill="none" stroke="#7ff6ff" stroke-opacity=".4"/>
+              <circle cx="420" cy="200" r="5" fill="#9c7bff"/><circle cx="420" cy="200" r="13" fill="none" stroke="#9c7bff" stroke-opacity=".5"/>
+              <circle cx="560" cy="300" r="4" fill="#ffd166"/><circle cx="560" cy="300" r="9" fill="none" stroke="#ffd166" stroke-opacity=".4"/>
+              <circle cx="252" cy="272" r="3" fill="#7ff6ff" opacity=".7"/><circle cx="330" cy="180" r="2.5" fill="#7ff6ff" opacity=".6"/>
+            </g>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · Flow field</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Estuary</h2><span class="num mono">Nº 07</span></div>
+        <p>A tool for sculpting invisible currents. Drop sources, sinks, vortices and repellers into a curl-noise flow, watch glowing particles trace every streamline, then export a seamless, tileable generative texture for wallpapers and backgrounds.</p>
+        <div class="chips mono"><span>Curl-noise flow</span><span>Particle tracing</span><span>Tileable export</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>DeepSeek V4 Pro</dd></div>
+          <div><dt>Tokens</dt><dd>~55K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>28 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/estuary.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
   </section>
