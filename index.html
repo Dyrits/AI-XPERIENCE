@@ -107,6 +107,9 @@
   .card:nth-child(1) { animation-delay: .9s; }
   .card:nth-child(2) { animation-delay: 1.05s; --accent: #c59bff; }
   .card:nth-child(3) { animation-delay: 1.2s; --accent: #d9b875; }
+  .card:nth-child(4) { animation-delay: 1.35s; --accent: #a5f7db; }
+  .art-fold { background: radial-gradient(ellipse at center, #21464a, #080f18 75%); }
+  .art-fold svg { width: 100%; height: 100%; }
   .art-atlas { background: radial-gradient(ellipse at 65% 45%, #24443b, #071416 75%); }
   .art-atlas svg { width: 100%; height: 100%; }
   @keyframes rise { to { opacity: 1; translate: 0 0; } }
@@ -250,7 +253,7 @@
     <div class="meta">
       <span>Claude + Codex</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">3 pieces</span>
+      <span class="live">4 pieces</span>
     </div>
   </header>
 
@@ -267,7 +270,7 @@
         <div><b>1 + 1</b><span class="mono">Prompt + fix</span></div>
         <div><b>1</b><span class="mono">File per piece</span></div>
         <div><b>0</b><span class="mono">Dependencies</span></div>
-        <div><b>~172K</b><span class="mono">Tokens in total</span></div>
+        <div><b>~232K</b><span class="mono">Tokens in total</span></div>
       </div>
     </div>
   </section>
@@ -336,7 +339,7 @@
         <p>A winged constellation drifts through an imaginary celestial chart. Draw your own constellation and release it into the sky, with a trail of stardust and optional generated chimes.</p>
         <div class="chips mono"><span>Procedural wings</span><span>Draw to create</span><span>Web Audio</span></div>
         <dl class="specs mono">
-          <div><dt>Model</dt><dd>GPT-6</dd></div>
+          <div><dt>Model</dt><dd>GPT-6 Atra</dd></div>
           <div><dt>Tokens</dt><dd>~57K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 1</dd></div>
           <div><dt>Size</dt><dd>21 <small>KB</small></dd></div>
@@ -344,10 +347,26 @@
         <a class="open mono" href="pages/night-atlas.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+
+    <article class="card" data-src="pages/foldwake.html">
+      <div class="preview">
+        <div class="art art-fold"><svg viewBox="0 0 640 400" aria-hidden="true"><defs><pattern id="fold-grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#a5f7db" stroke-opacity=".12"/></pattern></defs><rect width="640" height="400" fill="url(#fold-grid)"/><g fill="none" stroke="#a5f7db"><circle cx="320" cy="200" r="49"/><circle cx="320" cy="200" r="58" opacity=".25"/><path d="M405 90 405 310"/><path d="M495 200Q405 130 320 200" stroke-dasharray="3 6" opacity=".5"/></g><g fill="#ffcd89"><path d="m495 187 8 13-8 13-8-13Z"/><path d="m185 100 6 10-6 10-6-10Z"/><path d="m230 296 6 10-6 10-6-10Z"/></g><circle cx="320" cy="200" r="9" fill="none" stroke="#ffcd89"/><text x="320" y="285" text-anchor="middle" fill="#a5f7db" font-family="monospace" font-size="10" letter-spacing="4">FOLD THE DISTANCE</text></svg></div>
+        <span class="tag mono">Canvas 2D · Game</span><span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Foldwake</h2><span class="num mono">Nº 04</span></div>
+        <p>Draw a crease in space and flip drifting sparks into their home. Line up the ghosts, catch several lights in one fold, and race the clock as tears open in the field.</p>
+        <div class="chips mono"><span>Mirror geometry</span><span>90-second game</span><span>Web Audio</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>GPT-6 Atra</dd></div><div><dt>Tokens</dt><dd>~60K <small>est.</small></dd></div><div><dt>Prompts</dt><dd>1</dd></div><div><dt>Size</dt><dd>21 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/foldwake.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5 in Claude Code and GPT-6 in Codex.</span>
+    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5 in Claude Code and GPT-6 Atra in Codex.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>
