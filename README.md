@@ -17,6 +17,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Mercurial](pages/mercurial.html) | WebGL2 raymarching | Claude Opus 5.5 | ~55K | 1 + 1 | 37 KB |
 | [Night atlas](pages/night-atlas.html) | Canvas 2D, projected 3D mesh | GPT-6 Atra | ~57K | 1 + 1 | 21 KB |
 | [Foldwake](pages/foldwake.html) | Canvas 2D, mirror geometry | GPT-6 Atra | ~60K | 1 | 21 KB |
+| [Echoveil](pages/echoveil.html) | Canvas 2D, sonar reveal | GLM-5.3 | ~58K | 1 | 33 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -26,11 +27,13 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 **Foldwake.** A game about folding space to bring drifting lights home. Draw a crease and release to reflect nearby sparks across it, using ghost previews to aim for the central ring. Rescue 18 lights in 90 seconds while moving tears swallow sparks. Folds recharge, multi-catches refund energy, and optional synthesized tones accompany each fold. Supports mouse, touch and keyboard controls.
 
+**Echoveil.** A sonar-stealth game in a cave that only exists where sound has touched it. The world is pitch black: releasing a ping paints expanding rings of light over the walls for a few seconds, and a held charge sends a louder, wider burst. Quiet taps are safe, but bursts — and the pearls, and your own fading halo — draw the attention of lurkers that hunt the source of every echo. Gather seven pearls to open the gate, follow its slow pulses to the far side of the cave, and get out before your light gutters out.
+
 The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes.
 
 ## Viewing
 
-Open `index.html` in a recent browser. It is a portfolio page listing all four pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
+Open `index.html` in a recent browser. It is a portfolio page listing all five pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
 
 No build step or server is needed. Mercurial requires WebGL2 and runs best on a dedicated or recent integrated GPU.
 
@@ -42,6 +45,7 @@ AI-XPERIENCE/
 ├── README.md
 └── pages/
     ├── abyss.html
+    ├── echoveil.html
     ├── foldwake.html
     ├── mercurial.html
     └── night-atlas.html

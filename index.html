@@ -112,6 +112,24 @@
   .art-fold svg { width: 100%; height: 100%; }
   .art-atlas { background: radial-gradient(ellipse at 65% 45%, #24443b, #071416 75%); }
   .art-atlas svg { width: 100%; height: 100%; }
+  .card:nth-child(5) { animation-delay: 1.5s; --accent: #ff9d5c; }
+  .art-echo { background: radial-gradient(ellipse at 50% 58%, #0a1c26, #04070c 75%); }
+  .art-echo .wall { position: absolute; height: 1px; background: linear-gradient(90deg, transparent, rgba(140,225,255,.35), transparent); }
+  .art-echo .wall.w1 { left: -10%; right: 22%; top: 24%; transform: rotate(-13deg); }
+  .art-echo .wall.w2 { left: 32%; right: -10%; top: 72%; transform: rotate(9deg); }
+  .art-echo .wall.w3 { left: 10%; width: 34%; top: 48%; transform: rotate(6deg); }
+  .art-echo .ripple {
+    position: absolute; left: 50%; top: 58%; width: 26px; height: 26px; margin: -13px 0 0 -13px;
+    border-radius: 50%; border: 1px solid rgba(140,225,255,.8);
+    animation: rip 3.6s linear infinite;
+  }
+  .art-echo .ripple.r2 { animation-delay: 1.2s; }
+  .art-echo .ripple.r3 { animation-delay: 2.4s; }
+  @keyframes rip { from { transform: scale(.15); opacity: .95; } to { transform: scale(14); opacity: 0; } }
+  .art-echo .pearl { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #ffd98c; box-shadow: 0 0 14px #ffd98c; animation: tw 2.8s ease-in-out infinite; }
+  .art-echo .pearl.p1 { top: 31%; left: 65%; }
+  .art-echo .pearl.p2 { top: 64%; left: 27%; animation-delay: 1.4s; }
+  @keyframes tw { 50% { opacity: .25; } }
   @keyframes rise { to { opacity: 1; translate: 0 0; } }
   .card:hover { border-color: color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 30px 80px -30px color-mix(in srgb, var(--accent) 45%, transparent); }
   .card::after {
@@ -251,9 +269,9 @@
   <header class="top mono">
     <div class="logo">AI-<em>X</em>PERIENCE</div>
     <div class="meta">
-      <span>Claude + Codex</span>
+      <span>Claude + Codex + GLM</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">4 pieces</span>
+      <span class="live">5 pieces</span>
     </div>
   </header>
 
@@ -270,7 +288,7 @@
         <div><b>1 + 1</b><span class="mono">Prompt + fix</span></div>
         <div><b>1</b><span class="mono">File per piece</span></div>
         <div><b>0</b><span class="mono">Dependencies</span></div>
-        <div><b>~232K</b><span class="mono">Tokens in total</span></div>
+        <div><b>~290K</b><span class="mono">Tokens in total</span></div>
       </div>
     </div>
   </section>
@@ -363,10 +381,34 @@
         <a class="open mono" href="pages/foldwake.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+
+    <article class="card" data-src="pages/echoveil.html">
+      <div class="preview">
+        <div class="art art-echo">
+          <i class="wall w1"></i><i class="wall w2"></i><i class="wall w3"></i>
+          <i class="ripple"></i><i class="ripple r2"></i><i class="ripple r3"></i>
+          <b class="pearl p1"></b><b class="pearl p2"></b>
+        </div>
+        <span class="tag mono">Canvas 2D · Sonar</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Echoveil</h2><span class="num mono">Nº 05</span></div>
+        <p>A cave that only exists where sound has touched it. Pings of light paint the walls for a few heartbeats, but loud echoes wake the things that hunt by listening. Gather seven pearls and slip out through the gate before your own light dies.</p>
+        <div class="chips mono"><span>Sonar reveal</span><span>Procedural cave</span><span>Stealth</span><span>Web Audio</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>GLM-5.3</dd></div>
+          <div><dt>Tokens</dt><dd>~58K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>33 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/echoveil.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5 in Claude Code and GPT-6 Atra in Codex.</span>
+    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5 in Claude Code, GPT-6 Atra in Codex and GLM-5.3.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>
