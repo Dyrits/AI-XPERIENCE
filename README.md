@@ -24,6 +24,8 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Lifeline](pages/lifeline.html) | Canvas 2D, single continuous line | Claude Opus 5.5 | ~150K | 1 | 34 KB |
 | [Starshard](pages/starshard.html) | Canvas 2D, roguelike shooter | GLM-5.3 | ~70K | 1 + 2 | 80 KB |
 | [Vesper](pages/vesper.html) | Canvas 2D, idle clicker | Claude Opus 5.5 | ~150K | 1 + 1 | 78 KB |
+| [Echo Ward](pages/echo-ward.html) | Canvas 2D, tower defense | Claude Opus 5.5 | ~170K | 1 + 1 | 71 KB |
+| [Until the tide](pages/until-the-tide.html) | Canvas 2D, escape game | GPT-6 | ~70K | 1 | 54 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -47,6 +49,10 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 **Vesper.** An idle clicker set on the last day before a Hush from beyond the sky swallows sound, then light. Strike a belfry bell as its halo closes for true strikes that build harmony and fill a city-wide Peal, raise nine kinds of chimes that ring on their own, catch drifting moth-lanterns for bursts and stolen minutes, and cast a Great Bell in five stages before dusk. Five chapters each force a choice with a visible effect and a hidden echo, and the choices change the ending. Each run ends when the Hush arrives and carries echoes back into permanent recollections, so every morning reaches further. A tower clock counts toward midnight, the synthesized bell dulls as the dark approaches, and progress saves locally.
 
+**Echo Ward.** A tower defense where you defend time, not a place. The map is a causal graph of historical moments shown as three stacked layers (Past, Present and Future), and corruption leaks from rifts along causal links toward five anchor events. Wards anchor to one moment in one layer and only touch anomalies in that layer: Past wards weaken and thin out rift spawns, Present wards reach further, Future wards execute and trigger chain bursts across every layer. Each ward has a causal echo: Sniper kills erase anomalies from the next wave, Stasis rewinds damaged anchors, Fracture splits anomalies and leaves the next wave weak to a chosen damage type, and Paradox cancels abilities outright. Ripple Creeps multiply, Overwrite Brutes sink through the layers and scar anchors permanently, Loopers double back, Retroviruses run backward through the Past unmaking wards, and Divergence Events open alternate-timeline branches that add new rifts and paths mid-run. Twenty waves, synthesized sound, best run saved locally.
+
+**Until the tide.** An escape game set in your father's lighthouse after a storm floods the causeway. Search three illustrated rooms, decipher the keeper's tide notes, restore an electrical circuit, align the lantern's lens and signal a rescue launch. Animated rain and waves surround the tower, and the machinery responds as you repair it. Includes an automatic notebook, graduated hints, optional synthesized sound, local saves and reduced-motion support. There is no countdown.
+
 The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand. Vesper received a correction that set the bell inside a belfry tower instead of in open air. Starshard needed two correction rounds: crash fixes (a palette key mismatch that crashed the game when splitters appeared, and a music-sequencer index bug that crashed the run seconds after launch), and a desktop-only gate that blocks the game on touch devices.
 
 ## Viewing
@@ -63,6 +69,7 @@ AI-XPERIENCE/
 ├── README.md
 └── pages/
     ├── abyss.html
+    ├── echo-ward.html
     ├── echoveil.html
     ├── estuary.html
     ├── foldwake.html
@@ -72,6 +79,7 @@ AI-XPERIENCE/
     ├── starshard.html
     ├── the-last-warm-window.html
     ├── umbralux.html
+    ├── until-the-tide.html
     └── vesper.html
 ```
 
