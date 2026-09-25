@@ -29,6 +29,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Longhand](https://dyrits.github.io/AI-XPERIENCE/pages/longhand.html) | Canvas 2D, drawn-line runner | GLM-5.3 | ~65K | 1 + 1 | 34 KB |
 | [Loaded](https://dyrits.github.io/AI-XPERIENCE/pages/loaded.html) | Canvas 2D, dice roguelike | Claude Opus 5.5 | ~200K | 1 + 1 | 96 KB |
 | [Enough](https://dyrits.github.io/AI-XPERIENCE/pages/enough.html) | Canvas 2D, motion graphic | Claude Opus 5.5 | ~100K | 1 | 32 KB |
+| [Replace you](https://dyrits.github.io/AI-XPERIENCE/pages/replace-you.html) | Canvas 2D, motion graphic | GTP-5 Astra | ~51K | 1 | 15 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -62,6 +63,11 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 **Enough.** A ten-second looping motion graphic on the theme "One prompt is enough". A prompt is typed into an input box and squashed into a spark, which bursts into particles while CODE, MOTION, COLOR and SOUND slam across on diagonal bands. The particles settle into a tile grid that ripples and flips into rings of colour, then scatter into a spinning carousel of animated windows around a giant outlined ONE. Everything collapses into a coral disc that shrinks into the full stop of the title, and that full stop turns into the caret of the next loop. Every frame is computed from the time alone, so the timeline can be paused, scrubbed and stepped. Synthesized score in sync with the picture, reduced-motion support.
 
+**Replace you.** An eighteen-second looping motion graphic on the theme "AI will replace you. Will it kill you?".
+Human silhouettes pass through a scanner and are duplicated, oversized red typography asks the question, and a pulse goes flat before beating again beneath "STILL HERE".
+Acid green, red and paper white mark the seven scenes, ending with the question still open.
+Includes optional synthesized sound, pause, timeline scrubbing, keyboard frame stepping and reduced-motion support.
+
 The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand. Vesper received a correction that set the bell inside a belfry tower instead of in open air. Starshard needed two correction rounds: crash fixes (a palette key mismatch that crashed the game when splitters appeared, and a music-sequencer index bug that crashed the run seconds after launch), and a desktop-only gate that blocks the game on touch devices. Longhand received a correction that breaks stalemates: a runner wedged against a wall for five seconds is thrown back to the left of the screen and loses a heart (with a little ink back), so a stalled run now costs lives instead of freezing; the same round lowered early cliff heights, moved ink milestones closer together and made the warning sign blink over his head. Loaded received a correction so that selling a Joker frees its slot in the shop immediately, and so that Stars apply on purchase instead of taking a consumable slot.
 
 ## Viewing
@@ -88,6 +94,7 @@ AI-XPERIENCE/
     ├── longhand.html
     ├── mercurial.html
     ├── night-atlas.html
+    ├── replace-you.html
     ├── starshard.html
     ├── the-last-warm-window.html
     ├── umbralux.html

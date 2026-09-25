@@ -149,6 +149,8 @@
   .art-longhand .lh-drop.d3 { animation-duration: 2.2s; animation-delay: -0.6s; }
   .art-loaded { background: #0d3550; }
   .art-loaded svg { width: 100%; height: 100%; }
+  .art-replace { background: #ece9df; }
+  .art-replace svg { width: 100%; height: 100%; }
   .art-enough { background: #07070d; }
   .art-enough svg { width: 100%; height: 100%; }
   .art-enough .en-caret { animation: enblink 1s steps(2, jump-none) infinite; }
@@ -343,7 +345,7 @@
     <div class="meta">
       <span>Claude + Codex + GLM + DeepSeek</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">16 pieces</span>
+      <span class="live">17 pieces</span>
     </div>
   </header>
 
@@ -360,7 +362,7 @@
         <div><b>1 (+ 2 max.)</b><span class="mono">Prompt (+ fixes) per piece</span></div>
         <div><b>1</b><span class="mono">File per piece</span></div>
         <div><b>0</b><span class="mono">Dependencies</span></div>
-        <div><b>~1.52M</b><span class="mono">Tokens in total</span></div>
+        <div><b>~1.58M</b><span class="mono">Tokens in total</span></div>
       </div>
     </div>
   </section>
@@ -1165,10 +1167,42 @@
         <a class="open mono" href="pages/enough.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+    <article class="card" data-src="pages/replace-you.html" style="--accent: #d9ff43; animation-delay: 3.3s;">
+      <div class="preview">
+        <div class="art art-replace" aria-hidden="true">
+          <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <rect width="640" height="400" fill="#ece9df"/>
+            <g font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="63" fill="#111210">
+              <text x="35" y="100">AI WILL</text>
+              <text x="35" y="166">REPLACE YOU.</text>
+              <text x="35" y="232">WILL IT</text>
+              <text x="35" y="298" fill="#fa482e">KILL YOU?</text>
+            </g>
+            <rect y="330" width="640" height="70" fill="#111210"/>
+            <path d="M0 365H240L256 373 269 346 281 383 295 360 310 365H640" fill="none" stroke="#d9ff43" stroke-width="3"/>
+            <text x="36" y="34" font-family="monospace" font-size="10" letter-spacing="2" fill="#111210">HUMAN / MACHINE · 18 SECONDS</text>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · Motion graphic</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Replace you</h2><span class="num mono">Nº 18</span></div>
+        <p>An eighteen-second loop asking “AI will replace you. Will it kill you?” Human silhouettes pass through a scanner, oversized type fills the screen, and a pulse goes flat before beating again. The question stays open.</p>
+        <div class="chips mono"><span>18 s loop</span><span>Kinetic type</span><span>Scrubbable timeline</span><span>Reduced motion</span><span>Web Audio</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>GTP-5 Astra</dd></div>
+          <div><dt>Tokens</dt><dd>~51K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>15 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/replace-you.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts estimate input context plus generated output, including correction rounds. The 16 pieces shown here total roughly 1.52M tokens. Built with Claude Opus 5.5, GPT-6 models, GLM-5.3 and DeepSeek V4 Pro.</span>
+    <span class="note">Token counts estimate input context plus generated output, including correction rounds. The 17 pieces shown here total roughly 1.58M tokens. Built with Claude Opus 5.5, GPT-6 models, GTP-5 Astra, GLM-5.3 and DeepSeek V4 Pro.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>
