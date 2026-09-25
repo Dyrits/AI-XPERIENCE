@@ -13,19 +13,21 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 | Page | Technique | Model | Tokens (est.) | Prompts | Size |
 |---|---|---|---|---|---|
-| [Abyss](pages/abyss.html) | Canvas 2D | Claude Opus 5.5 | ~60K | 1 + 1 | 28 KB |
-| [Mercurial](pages/mercurial.html) | WebGL2 raymarching | Claude Opus 5.5 | ~55K | 1 + 1 | 37 KB |
-| [Night atlas](pages/night-atlas.html) | Canvas 2D, projected 3D mesh | GPT-6 Atra | ~57K | 1 + 1 | 21 KB |
-| [Foldwake](pages/foldwake.html) | Canvas 2D, mirror geometry | GPT-6 Atra | ~60K | 1 | 21 KB |
-| [Echoveil](pages/echoveil.html) | Canvas 2D, sonar reveal | GLM-5.3 | ~58K | 1 | 33 KB |
-| [Umbralux](pages/umbralux.html) | Canvas 2D, raycast optics | Gemini 3.8 Flash | ~52K | 1 | 46 KB |
-| [Estuary](pages/estuary.html) | Canvas 2D, curl-noise flow field | DeepSeek V4 Pro | ~55K | 1 | 28 KB |
-| [The last warm window](pages/the-last-warm-window.html) | Canvas 2D, animated narrative | GPT-6 Astra | ~58K | 1 + 2 | 23 KB |
-| [Lifeline](pages/lifeline.html) | Canvas 2D, single continuous line | Claude Opus 5.5 | ~150K | 1 | 34 KB |
-| [Starshard](pages/starshard.html) | Canvas 2D, roguelike shooter | GLM-5.3 | ~70K | 1 + 2 | 80 KB |
-| [Vesper](pages/vesper.html) | Canvas 2D, idle clicker | Claude Opus 5.5 | ~150K | 1 + 1 | 78 KB |
-| [Echo Ward](pages/echo-ward.html) | Canvas 2D, tower defense | Claude Opus 5.5 | ~170K | 1 + 1 | 71 KB |
-| [Until the tide](pages/until-the-tide.html) | Canvas 2D, escape game | GPT-6 | ~70K | 1 | 54 KB |
+| [Abyss](https://dyrits.github.io/AI-XPERIENCE/pages/abyss.html) | Canvas 2D | Claude Opus 5.5 | ~60K | 1 + 1 | 28 KB |
+| [Mercurial](https://dyrits.github.io/AI-XPERIENCE/pages/mercurial.html) | WebGL2 raymarching | Claude Opus 5.5 | ~55K | 1 + 1 | 37 KB |
+| [Night atlas](https://dyrits.github.io/AI-XPERIENCE/pages/night-atlas.html) | Canvas 2D, projected 3D mesh | GPT-6 Atra | ~57K | 1 + 1 | 21 KB |
+| [Foldwake](https://dyrits.github.io/AI-XPERIENCE/pages/foldwake.html) | Canvas 2D, mirror geometry | GPT-6 Atra | ~60K | 1 | 21 KB |
+| [Echoveil](https://dyrits.github.io/AI-XPERIENCE/pages/echoveil.html) | Canvas 2D, sonar reveal | GLM-5.3 | ~58K | 1 | 33 KB |
+| [Umbralux](https://dyrits.github.io/AI-XPERIENCE/pages/umbralux.html) | Canvas 2D, raycast optics | Gemini 3.8 Flash | ~52K | 1 | 46 KB |
+| [Estuary](https://dyrits.github.io/AI-XPERIENCE/pages/estuary.html) | Canvas 2D, curl-noise flow field | DeepSeek V4 Pro | ~55K | 1 | 28 KB |
+| [The last warm window](https://dyrits.github.io/AI-XPERIENCE/pages/the-last-warm-window.html) | Canvas 2D, animated narrative | GPT-6 Astra | ~58K | 1 + 2 | 23 KB |
+| [Lifeline](https://dyrits.github.io/AI-XPERIENCE/pages/lifeline.html) | Canvas 2D, single continuous line | Claude Opus 5.5 | ~150K | 1 | 34 KB |
+| [Starshard](https://dyrits.github.io/AI-XPERIENCE/pages/starshard.html) | Canvas 2D, roguelike shooter | GLM-5.3 | ~70K | 1 + 2 | 80 KB |
+| [Vesper](https://dyrits.github.io/AI-XPERIENCE/pages/vesper.html) | Canvas 2D, idle clicker | Claude Opus 5.5 | ~150K | 1 + 1 | 78 KB |
+| [Echo Ward](https://dyrits.github.io/AI-XPERIENCE/pages/echo-ward.html) | Canvas 2D, tower defense | Claude Opus 5.5 | ~170K | 1 + 1 | 71 KB |
+| [Until the tide](https://dyrits.github.io/AI-XPERIENCE/pages/until-the-tide.html) | Canvas 2D, escape game | GPT-6 | ~70K | 1 | 54 KB |
+| [Longhand](https://dyrits.github.io/AI-XPERIENCE/pages/longhand.html) | Canvas 2D, drawn-line runner | GLM-5.3 | ~65K | 1 + 1 | 34 KB |
+| [Loaded](https://dyrits.github.io/AI-XPERIENCE/pages/loaded.html) | Canvas 2D, dice roguelike | Claude Opus 5.5 | ~200K | 1 + 1 | 96 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -53,11 +55,15 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 **Until the tide.** An escape game set in your father's lighthouse after a storm floods the causeway. Search three illustrated rooms, decipher the keeper's tide notes, restore an electrical circuit, align the lantern's lens and signal a rescue launch. Animated rain and waves surround the tower, and the machinery responds as you repair it. Includes an automatic notebook, graduated hints, optional synthesized sound, local saves and reduced-motion support. There is no countdown.
 
-The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand. Vesper received a correction that set the bell inside a belfry tower instead of in open air. Starshard needed two correction rounds: crash fixes (a palette key mismatch that crashed the game when splitters appeared, and a music-sequencer index bug that crashed the run seconds after launch), and a desktop-only gate that blocks the game on touch devices.
+**Longhand.** A runner drawn in real time. A stickman sets out along a hand-inked road that keeps running out on him, and the longer he survives the faster he goes. You are the pen: draw lines to bridge chasms, ramp up cliffs and roof him against a gathering storm of falling ink — the rain punches holes in your lines, globs tear straight through several at once, and after a while tumbling erasers arrive to eat the road itself. Ink is limited but flows back with time, and faster when you block the rain, crumble an eraser or reach a milestone; he can even be caught mid-fall, and steep lines are walls while gentle slopes are roads. Staying wedged against a wall for five seconds throws him back to the left of the screen and costs a heart. A red scarf is the only colour he owns. Best distance saved locally, synthesized sound, pause and restart, reduced-motion support.
+
+**Loaded.** A Balatro-style roguelike played with dice. Roll five 3D dice that tumble across a felt table, mark the ones to reroll from a limited pool, then play the best hand they make, from High Die to Five of a Kind. Each hand type gives Chips and Mult, scored dice add their pips, and the total is Chips × Mult, tallied effect by effect. Beat a small, big and boss blind in each of eight antes, with bosses that debuff faces, hide dice, halve rerolls or punish repeated hands. The shop sells 34 Jokers (retriggers, scaling xMult, a Mirror that copies its neighbour, an extra sixth die), Stars that level up a hand the moment they are bought, and Glyphs that permanently rewrite the face showing on a die: Gold, Glass, Bonus, Mult, Wild or Steel, or one pip more or less. Your five dice become your deck. Endless mode after the final ante, synthesized sound and lounge music, adjustable game speed, best runs saved locally.
+
+The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand. Vesper received a correction that set the bell inside a belfry tower instead of in open air. Starshard needed two correction rounds: crash fixes (a palette key mismatch that crashed the game when splitters appeared, and a music-sequencer index bug that crashed the run seconds after launch), and a desktop-only gate that blocks the game on touch devices. Longhand received a correction that breaks stalemates: a runner wedged against a wall for five seconds is thrown back to the left of the screen and loses a heart (with a little ink back), so a stalled run now costs lives instead of freezing; the same round lowered early cliff heights, moved ink milestones closer together and made the warning sign blink over his head. Loaded received a correction so that selling a Joker frees its slot in the shop immediately, and so that Stars apply on purchase instead of taking a consumable slot.
 
 ## Viewing
 
-Open `index.html` in a recent browser. It is a portfolio page listing the pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
+The portfolio is live at https://dyrits.github.io/AI-XPERIENCE/. Locally, open `index.html` in a recent browser. It is a portfolio page listing the pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
 
 No build step or server is needed. Mercurial requires WebGL2 and runs best on a dedicated or recent integrated GPU.
 
@@ -74,6 +80,8 @@ AI-XPERIENCE/
     ├── estuary.html
     ├── foldwake.html
     ├── lifeline.html
+    ├── loaded.html
+    ├── longhand.html
     ├── mercurial.html
     ├── night-atlas.html
     ├── starshard.html
