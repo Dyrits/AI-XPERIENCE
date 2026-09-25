@@ -151,6 +151,10 @@
   .art-loaded svg { width: 100%; height: 100%; }
   .art-replace { background: #ece9df; }
   .art-replace svg { width: 100%; height: 100%; }
+  .art-tick { background: #070812; }
+  .art-tick svg { width: 100%; height: 100%; }
+  .art-tick .tk-ptr { transform-origin: 320px 200px; animation: tkspin 6s linear infinite; }
+  @keyframes tkspin { to { transform: rotate(360deg); } }
   .art-enough { background: #07070d; }
   .art-enough svg { width: 100%; height: 100%; }
   .art-enough .en-caret { animation: enblink 1s steps(2, jump-none) infinite; }
@@ -1199,10 +1203,46 @@
         <a class="open mono" href="pages/replace-you.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+    <article class="card" data-src="pages/tick.html" style="--accent: #d77cff; animation-delay: 3.45s;">
+      <div class="preview">
+        <div class="art art-tick" aria-hidden="true">
+          <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <rect width="640" height="400" fill="#070812"/>
+            <circle cx="320" cy="200" r="92" fill="none" stroke="#a3b3ff" stroke-opacity=".14" stroke-width="12"/>
+            <circle cx="320" cy="200" r="110" fill="none" stroke="#a3b3ff" stroke-opacity=".3" stroke-dasharray="2 8"/>
+            <g class="tk-ptr"><circle cx="320" cy="108" r="7" fill="#fff"/></g>
+            <circle cx="320" cy="108" r="10" fill="none" stroke="#ffb547" stroke-width="2.5"/>
+            <circle cx="400" cy="246" r="10" fill="#d77cff"/>
+            <circle cx="240" cy="246" r="10" fill="none" stroke="#5cf2a4" stroke-width="2.5"/>
+            <text x="320" y="206" text-anchor="middle" font-family="Helvetica Neue,Arial,sans-serif" font-weight="800" font-size="26" fill="#e8ebf7">Event loop</text>
+            <g font-family="ui-monospace,Menlo,monospace" font-size="12">
+              <rect x="40" y="70" width="150" height="28" rx="8" fill="#a3b3ff" fill-opacity=".13" stroke="#a3b3ff" stroke-opacity=".5"/><text x="56" y="89" fill="#cdd6ff">main()</text>
+              <rect x="460" y="300" width="140" height="28" rx="8" fill="#d77cff" fill-opacity=".13" stroke="#d77cff" stroke-opacity=".5"/><text x="476" y="319" fill="#ecc6ff">.then(cb)</text>
+              <rect x="40" y="300" width="150" height="28" rx="8" fill="#ffb547" fill-opacity=".13" stroke="#ffb547" stroke-opacity=".5"/><text x="56" y="319" fill="#ffe0ac">setTimeout(cb)</text>
+              <text x="36" y="34" font-size="10" letter-spacing="2" fill="#8189a9">STACK · TASKS · MICROTASKS · RENDER</text>
+            </g>
+          </svg>
+        </div>
+        <span class="tag mono">DOM + Canvas 2D · Scroll explainer</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Tick</h2><span class="num mono">Nº 19</span></div>
+        <p>The JavaScript event loop, explained by scrolling. Six chapters run real snippets step by step as calls fly between the call stack, Web APIs, the task and microtask queues and the render step. A live lab lets you freeze the main thread yourself.</p>
+        <div class="chips mono"><span>Scroll-scrubbed</span><span>6 chapters</span><span>Run for real</span><span>Live lab</span><span>Reduced motion</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
+          <div><dt>Tokens</dt><dd>~120K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>60 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/tick.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts estimate input context plus generated output, including correction rounds. The 17 pieces shown here total roughly 1.58M tokens. Built with Claude Opus 5.5, GPT-6 models, GTP-5 Astra, GLM-5.3 and DeepSeek V4 Pro.</span>
+    <span class="note">Token counts estimate input context plus generated output, including correction rounds. The 18 pieces shown here total roughly 1.70M tokens. Built with Claude Opus 5.5, GPT-6 models, GTP-5 Astra, GLM-5.3 and DeepSeek V4 Pro.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>

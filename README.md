@@ -30,6 +30,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Loaded](https://dyrits.github.io/AI-XPERIENCE/pages/loaded.html) | Canvas 2D, dice roguelike | Claude Opus 5.5 | ~200K | 1 + 1 | 96 KB |
 | [Enough](https://dyrits.github.io/AI-XPERIENCE/pages/enough.html) | Canvas 2D, motion graphic | Claude Opus 5.5 | ~100K | 1 | 32 KB |
 | [Replace you](https://dyrits.github.io/AI-XPERIENCE/pages/replace-you.html) | Canvas 2D, motion graphic | GTP-5 Astra | ~51K | 1 | 15 KB |
+| [Tick](https://dyrits.github.io/AI-XPERIENCE/pages/tick.html) | DOM + Canvas 2D, scroll-driven explainer | Claude Opus 5.5 | ~120K | 1 | 60 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -68,6 +69,8 @@ Human silhouettes pass through a scanner and are duplicated, oversized red typog
 Acid green, red and paper white mark the seven scenes, ending with the question still open.
 Includes optional synthesized sound, pause, timeline scrubbing, keyboard frame stepping and reduced-motion support.
 
+**Tick.** A scroll-driven explainer of the JavaScript event loop. Six chapters (call stack, Web APIs and the task queue, microtasks, draining the queue, rendering, async/await) step through real snippets as you scroll: each call flies from the highlighted line onto the call stack, timers count down in the Web APIs panel, callbacks travel into the task or microtask queue, and a pointer circles the event loop wheel through task, microtask and render phases while the console fills in. Scrolling back rewinds everything. A button runs each snippet for real and checks the predicted output, a recap lists the four rules with pseudo-code, and a live lab freezes a JavaScript-driven animation by blocking the stack or flooding microtasks, then shows the same work split into tasks staying smooth. Keyboard stepping, chapter rail, reduced-motion support.
+
 The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand. Vesper received a correction that set the bell inside a belfry tower instead of in open air. Starshard needed two correction rounds: crash fixes (a palette key mismatch that crashed the game when splitters appeared, and a music-sequencer index bug that crashed the run seconds after launch), and a desktop-only gate that blocks the game on touch devices. Longhand received a correction that breaks stalemates: a runner wedged against a wall for five seconds is thrown back to the left of the screen and loses a heart (with a little ink back), so a stalled run now costs lives instead of freezing; the same round lowered early cliff heights, moved ink milestones closer together and made the warning sign blink over his head. Loaded received a correction so that selling a Joker frees its slot in the shop immediately, and so that Stars apply on purchase instead of taking a consumable slot.
 
 ## Viewing
@@ -97,6 +100,7 @@ AI-XPERIENCE/
     ├── replace-you.html
     ├── starshard.html
     ├── the-last-warm-window.html
+    ├── tick.html
     ├── umbralux.html
     ├── until-the-tide.html
     └── vesper.html
