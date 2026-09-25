@@ -134,6 +134,8 @@
   .art-estuary svg { width: 100%; height: 100%; }
   .art-orders { background: radial-gradient(ellipse at 65% 30%, #809575, #142e28 80%); }
   .art-orders svg { width: 100%; height: 100%; }
+  .art-vesper { background: #2a1f47; }
+  .art-vesper svg { width: 100%; height: 100%; }
   .art-starshard { background: radial-gradient(ellipse at 50% 40%, #101a3a, #04060f 75%); }
   .art-starshard::before {
     content: ""; position: absolute; inset: 0;
@@ -338,7 +340,7 @@
         <div><b>1 (+ 2 max.)</b><span class="mono">Prompt (+ fixes) per piece</span></div>
         <div><b>1</b><span class="mono">File per piece</span></div>
         <div><b>0</b><span class="mono">Dependencies</span></div>
-        <div><b>~763K</b><span class="mono">Tokens in total</span></div>
+        <div><b>~913K</b><span class="mono">Tokens in total</span></div>
       </div>
     </div>
   </section>
@@ -357,7 +359,7 @@
         <p>A scroll-driven descent from the sunlit surface to 4000 metres. Bioluminescent plankton drift on a flow field and flare at your touch, while jellyfish with simulated tentacles pulse through the dark.</p>
         <div class="chips mono"><span>Verlet physics</span><span>Flow field</span><span>Parallax</span><span>Scroll-linked</span></div>
         <dl class="specs mono">
-          <div><dt>Model</dt><dd>Opus 5.5</dd></div>
+          <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
           <div><dt>Tokens</dt><dd>~60K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 1</dd></div>
           <div><dt>Size</dt><dd>28 <small>KB</small></dd></div>
@@ -377,7 +379,7 @@
         <p>A liquid-metal sculpture raymarched in real time. Drops fuse into a morphing core, a charge-and-release gesture detonates it, and four materials (chrome, soap film, dispersive glass, magma) crossfade on demand.</p>
         <div class="chips mono"><span>SDF raymarching</span><span>Soft shadows</span><span>Web Audio</span><span>Adaptive resolution</span></div>
         <dl class="specs mono">
-          <div><dt>Model</dt><dd>Opus 5.5</dd></div>
+          <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
           <div><dt>Tokens</dt><dd>~55K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 1</dd></div>
           <div><dt>Size</dt><dd>37 <small>KB</small></dd></div>
@@ -834,10 +836,64 @@
         <a class="open mono" href="pages/last-orders.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+    <article class="card" data-src="pages/vesper.html" style="--accent: #e8c07a; animation-delay: 2.4s;">
+      <div class="preview">
+        <div class="art art-vesper">
+          <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+              <linearGradient id="vs-sky" x2="0" y2="1"><stop stop-color="#2a1f47"/><stop offset=".55" stop-color="#6b3f63"/><stop offset="1" stop-color="#d98a6a"/></linearGradient>
+              <radialGradient id="vs-sun"><stop stop-color="#fff0cc" stop-opacity=".8"/><stop offset=".2" stop-color="#ffc98f" stop-opacity=".35"/><stop offset="1" stop-color="#ffc98f" stop-opacity="0"/></radialGradient>
+              <radialGradient id="vs-cor"><stop offset=".78" stop-color="#bea9eb" stop-opacity="0"/><stop offset=".86" stop-color="#bea9eb" stop-opacity=".28"/><stop offset="1" stop-color="#bea9eb" stop-opacity="0"/></radialGradient>
+              <linearGradient id="vs-bronze"><stop stop-color="#3a2412"/><stop offset=".3" stop-color="#b9793a"/><stop offset=".5" stop-color="#fbe0a6"/><stop offset=".7" stop-color="#9a6230"/><stop offset="1" stop-color="#2e1c0e"/></linearGradient>
+              <radialGradient id="vs-lamp"><stop stop-color="#ffd9a0" stop-opacity=".55"/><stop offset="1" stop-color="#ffb070" stop-opacity="0"/></radialGradient>
+            </defs>
+            <rect width="640" height="400" fill="url(#vs-sky)"/>
+            <circle cx="150" cy="300" r="190" fill="url(#vs-sun)"/>
+            <circle cx="500" cy="92" r="96" fill="url(#vs-cor)"/>
+            <circle cx="500" cy="92" r="80" fill="#030205"/>
+            <path d="M190 360Q205 150 262 130Q320 112 378 130Q435 150 450 360" fill="none" stroke="#f6dca8" stroke-opacity=".45" stroke-width="1.4" stroke-dasharray="3 5"/>
+            <path d="M0 400V318H30V296H56V340H86V274L100 248L114 274V318H146V286H186V334H206V312H236V400ZM410 400V352H436V318H466V340H500V292H522V332H550V318H590V344H640V400Z" fill="#0f0c18"/>
+            <g transform="translate(320 205)">
+              <path d="M-88 200L-72 92h144L88 200z" fill="#15101f"/>
+              <path d="M-76-110h152V92h-152zM-58 56V-60a58 32 0 0 1 116 0V56z" fill="#1a1424" fill-rule="evenodd"/>
+              <circle cx="0" cy="-51" r="120" fill="url(#vs-lamp)" opacity=".5"/>
+              <rect x="-84" y="-116" width="168" height="7" fill="#241c2e"/>
+              <path d="M-74-116L0-148l74 32z" fill="#150f1e"/>
+              <circle cx="0" cy="-156" r="2.5" fill="#e8c07a"/>
+              <circle cx="0" cy="-51" r="38" fill="none" stroke="#2e1f12" stroke-width="2.5"/>
+              <path d="M0-89V-13M-38-51h76M-27-78l54 54M27-78l-54 54" stroke="#2e1f12" stroke-width="1.5"/>
+              <rect x="-60" y="-55" width="120" height="7" fill="#2a1b10"/>
+              <path d="M-10-40c-12 0-13 18-14 32-1 17-7 29-15 36-2 3 0 5 3 5h72c3 0 5-2 3-5-8-7-14-19-15-36-1-14-2-32-14-32z" fill="url(#vs-bronze)"/>
+              <rect x="-58" y="40" width="116" height="3" fill="#120d1a"/>
+              <path d="M-50 44v12M-40 44v12M-30 44v12M-20 44v12M-10 44v12M0 44v12M10 44v12M20 44v12M30 44v12M40 44v12M50 44v12" stroke="#120d1a" stroke-width="3" stroke-linecap="round"/>
+              <rect x="-80" y="56" width="160" height="7" fill="#241c2e"/>
+              <circle cx="0" cy="118" r="20" fill="#e2c496" fill-opacity=".22" stroke="#f6dca8" stroke-opacity=".45"/>
+              <path d="M0 118l-8-7M0 118l9-10" stroke="#f4e6c8" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="-48" cy="-24" r="3" fill="#ffe8b8"/>
+              <circle cx="0" cy="-51" r="102" fill="none" stroke="#ffe2a0" stroke-opacity=".55" stroke-width="1.2"/>
+            </g>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · Idle clicker</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Vesper</h2><span class="num mono">Nº 12</span></div>
+        <p>A Hush is coming from beyond the sky, swallowing sound, then light. Ring a belfry bell in rhythm, raise idle chimes, catch moth-lanterns and cast a Great Bell in five stages before dusk. Five chapters force a choice each, and every run that fails carries echoes back into permanent recollections.</p>
+        <div class="chips mono"><span>Active + idle</span><span>Branching choices</span><span>Prestige runs</span><span>Web Audio</span><span>Saves locally</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
+          <div><dt>Tokens</dt><dd>~150K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1 + 1</dd></div>
+          <div><dt>Size</dt><dd>78 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/vesper.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts are estimates: input context plus generated output, correction rounds included. Eleven pages, twenty prompts, roughly 763K tokens in total: eleven prompts to build, nine to fix and refine. Built with Claude Opus 5.5, GPT-6 models, GLM-5.3, Gemini 3.8 Flash and DeepSeek V4 Pro.</span>
+    <span class="note">Token counts are estimates: input context plus generated output, correction rounds included. Twelve pages, twenty-two prompts, roughly 913K tokens in total: twelve prompts to build, ten to fix and refine. Built with Claude Opus 5.5, GPT-6 models, GLM-5.3, Gemini 3.8 Flash and DeepSeek V4 Pro.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>

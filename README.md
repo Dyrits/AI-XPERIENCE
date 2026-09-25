@@ -23,6 +23,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [The last warm window](pages/the-last-warm-window.html) | Canvas 2D, animated narrative | GPT-6 Astra | ~58K | 1 + 2 | 23 KB |
 | [Lifeline](pages/lifeline.html) | Canvas 2D, single continuous line | Claude Opus 5.5 | ~150K | 1 | 34 KB |
 | [Starshard](pages/starshard.html) | Canvas 2D, roguelike shooter | GLM-5.3 | ~70K | 1 + 2 | 80 KB |
+| [Vesper](pages/vesper.html) | Canvas 2D, idle clicker | Claude Opus 5.5 | ~150K | 1 + 1 | 78 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -44,7 +45,9 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 **Starshard.** A neon space-shooter roguelike. Fly against escalating waves of six enemy types — chasers, darts, gunners, splitters, orbiters and tanks — and bring down the multi-phase Dreadnought every fifth wave. Kills drop energy shards that charge an Overdrive meter for slow-motion overclocked fire, and clearing a wave lets you draft one of three upgrade modules: spread, pierce, ricochet, crits, homing missiles, a siege laser, orbiting drones, shields and more, stacking into a different build every run. Combos multiply score, dashes grant brief invulnerability, best runs persist locally, and sound and music are synthesized in the browser. The game needs a keyboard and mouse, and refuses to start on touch devices.
 
-The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand. Starshard needed two correction rounds: crash fixes (a palette key mismatch that crashed the game when splitters appeared, and a music-sequencer index bug that crashed the run seconds after launch), and a desktop-only gate that blocks the game on touch devices.
+**Vesper.** An idle clicker set on the last day before a Hush from beyond the sky swallows sound, then light. Strike a belfry bell as its halo closes for true strikes that build harmony and fill a city-wide Peal, raise nine kinds of chimes that ring on their own, catch drifting moth-lanterns for bursts and stolen minutes, and cast a Great Bell in five stages before dusk. Five chapters each force a choice with a visible effect and a hidden echo, and the choices change the ending. Each run ends when the Hush arrives and carries echoes back into permanent recollections, so every morning reaches further. A tower clock counts toward midnight, the synthesized bell dulls as the dark approaches, and progress saves locally.
+
+The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand. Vesper received a correction that set the bell inside a belfry tower instead of in open air. Starshard needed two correction rounds: crash fixes (a palette key mismatch that crashed the game when splitters appeared, and a music-sequencer index bug that crashed the run seconds after launch), and a desktop-only gate that blocks the game on touch devices.
 
 ## Viewing
 
@@ -68,7 +71,8 @@ AI-XPERIENCE/
     ├── night-atlas.html
     ├── starshard.html
     ├── the-last-warm-window.html
-    └── umbralux.html
+    ├── umbralux.html
+    └── vesper.html
 ```
 
 ## About the token figures
