@@ -132,6 +132,51 @@
   .card:nth-child(6) { animation-delay: 1.65s; --accent: #7ff6ff; }
   .art-estuary { background: radial-gradient(ellipse at 60% 45%, #0b1a2a, #04070c 75%); }
   .art-estuary svg { width: 100%; height: 100%; }
+  .art-starshard { background: radial-gradient(ellipse at 50% 40%, #101a3a, #04060f 75%); }
+  .art-starshard::before {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1.5px 1.5px at 15% 25%, #fff 60%, transparent),
+      radial-gradient(1px 1px at 80% 18%, #cfe 60%, transparent),
+      radial-gradient(2px 2px at 65% 72%, #fff 60%, transparent),
+      radial-gradient(1px 1px at 30% 82%, #9cf 60%, transparent),
+      radial-gradient(1.5px 1.5px at 90% 55%, #fff 60%, transparent),
+      radial-gradient(1px 1px at 45% 12%, #fff 60%, transparent),
+      radial-gradient(1px 1px at 8% 62%, #cfe 60%, transparent);
+    animation: tw 3.5s ease-in-out infinite;
+  }
+  .art-starshard .ss-ship {
+    position: absolute; left: 24%; top: 60%; width: 46px; height: 36px;
+    background: linear-gradient(100deg, #eaffff, #35e0ff 55%, #0b6f8f);
+    clip-path: polygon(100% 50%, 0 0, 24% 50%, 0 100%);
+    filter: drop-shadow(0 0 12px rgba(53,224,255,.8));
+    transform: rotate(-38deg); animation: ssdrift 5s ease-in-out infinite;
+  }
+  @keyframes ssdrift { 50% { translate: 16px -12px; } }
+  .art-starshard .ss-foe {
+    position: absolute; left: 64%; top: 26%; width: 36px; height: 40px;
+    background: rgba(255,77,109,.12); border: 1.5px solid #ff4d6d;
+    box-shadow: 0 0 22px rgba(255,77,109,.5), inset 0 0 12px rgba(255,77,109,.3);
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    animation: ssfoe 4s ease-in-out infinite;
+  }
+  @keyframes ssfoe { 50% { translate: 0 14px; rotate: 10deg; } }
+  .art-starshard .ss-b {
+    position: absolute; width: 16px; height: 3px; border-radius: 2px;
+    background: linear-gradient(90deg, transparent, #9ff8ff);
+    box-shadow: 0 0 8px #7ff6ff; animation: ssfly 1.15s linear infinite;
+  }
+  .ss-b.b1 { left: 36%; top: 50%; transform: rotate(-38deg); }
+  .ss-b.b2 { left: 33%; top: 55%; transform: rotate(-28deg); animation-delay: .18s; }
+  .ss-b.b3 { left: 39%; top: 44%; transform: rotate(-48deg); animation-delay: .36s; }
+  @keyframes ssfly { 0% { opacity: 0; translate: -14px 10px; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; translate: 46px -34px; } }
+  .art-starshard .ss-ring {
+    position: absolute; left: calc(64% + 18px); top: calc(26% + 20px);
+    width: 60px; height: 60px; margin: -30px 0 0 -30px;
+    border: 1px solid rgba(255,77,109,.75); border-radius: 50%;
+    animation: ssrip 2.2s ease-out infinite;
+  }
+  @keyframes ssrip { from { transform: scale(.2); opacity: .9; } to { transform: scale(2.4); opacity: 0; } }
   @keyframes tw { 50% { opacity: .25; } }
   @keyframes rise { to { opacity: 1; translate: 0 0; } }
   .card:hover { border-color: color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 30px 80px -30px color-mix(in srgb, var(--accent) 45%, transparent); }
@@ -274,7 +319,7 @@
     <div class="meta">
       <span>Claude + Codex + GLM + DeepSeek</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">8 pieces</span>
+      <span class="live">9 pieces</span>
     </div>
   </header>
 
@@ -288,10 +333,10 @@
     <div class="intro">
       <p>How far can an AI go when asked to build an <strong>advanced, animated web experience in a single prompt</strong>? Each piece here was generated from one request, with <strong>one follow-up allowed for minor corrections</strong>. No frameworks, no libraries, no assets: HTML, CSS and JavaScript in one self-contained file.</p>
       <div class="rules">
-        <div><b>1 (+ 2 max.)</b><span class="mono">Prompt (+ fixes)</span></div>
+        <div><b>1 (+ 2 max.)</b><span class="mono">Prompt (+ fixes) per piece</span></div>
         <div><b>1</b><span class="mono">File per piece</span></div>
         <div><b>0</b><span class="mono">Dependencies</span></div>
-        <div><b>~553K</b><span class="mono">Tokens in total</span></div>
+        <div><b>~675K</b><span class="mono">Tokens in total</span></div>
       </div>
     </div>
   </section>
@@ -360,7 +405,7 @@
         <p>A winged constellation drifts through an imaginary celestial chart. Draw your own constellation and release it into the sky, with a trail of stardust and optional generated chimes.</p>
         <div class="chips mono"><span>Procedural wings</span><span>Draw to create</span><span>Web Audio</span></div>
         <dl class="specs mono">
-          <div><dt>Model</dt><dd>GPT-6 Atra</dd></div>
+          <div><dt>Model</dt><dd>GPT-6 Astra</dd></div>
           <div><dt>Tokens</dt><dd>~57K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 1</dd></div>
           <div><dt>Size</dt><dd>21 <small>KB</small></dd></div>
@@ -379,7 +424,7 @@
         <p>Draw a crease in space and flip drifting sparks into their home. Line up the ghosts, catch several lights in one fold, and race the clock as tears open in the field.</p>
         <div class="chips mono"><span>Mirror geometry</span><span>90-second game</span><span>Web Audio</span></div>
         <dl class="specs mono">
-          <div><dt>Model</dt><dd>GPT-6 Atra</dd></div><div><dt>Tokens</dt><dd>~60K <small>est.</small></dd></div><div><dt>Prompts</dt><dd>1</dd></div><div><dt>Size</dt><dd>21 <small>KB</small></dd></div>
+          <div><dt>Model</dt><dd>GPT-6 Astra</dd></div><div><dt>Tokens</dt><dd>~60K <small>est.</small></dd></div><div><dt>Prompts</dt><dd>1</dd></div><div><dt>Size</dt><dd>21 <small>KB</small></dd></div>
         </dl>
         <a class="open mono" href="pages/foldwake.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
@@ -512,10 +557,35 @@
         <a class="open mono" href="pages/lifeline.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+
+    <article class="card" data-src="pages/starshard.html" style="--accent: #35e0ff; animation-delay: 2.1s;">
+      <div class="preview">
+        <div class="art art-starshard">
+          <i class="ss-ship"></i>
+          <i class="ss-foe"></i>
+          <i class="ss-b b1"></i><i class="ss-b b2"></i><i class="ss-b b3"></i>
+          <i class="ss-ring"></i>
+        </div>
+        <span class="tag mono">Canvas 2D · Roguelike shooter</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Starshard</h2><span class="num mono">Nº 10</span></div>
+        <p>A neon space-shooter roguelike. Survive escalating waves, harvest shards to trigger slow-motion Overdrive, and draft one of three upgrade modules after every wave — piercing rails, homing swarms, orbiting drones, a siege laser — into a build that can fell the Dreadnought. One life, best run saved.</p>
+        <div class="chips mono"><span>Wave roguelike</span><span>Upgrade drafts</span><span>Boss battles</span><span>Web Audio</span><span>Desktop only</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>GLM-5.3</dd></div>
+          <div><dt>Tokens</dt><dd>~70K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1 + 2</dd></div>
+          <div><dt>Size</dt><dd>80 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/starshard.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts are estimates: input context plus generated output, including the correction round. Built with Claude Opus 5.5, GPT-6 Atra, GPT-6 Astra, GLM-5.3 and Gemini 3.8 Flash.</span>
+    <span class="note">Token counts are estimates: input context plus generated output, correction rounds included. Ten pages, seventeen prompts, roughly 675K tokens in total — ten prompts to build, seven to fix and refine. Built with Claude Opus 5.5, GPT-6 Astra, GLM-5.3, Gemini 3.8 Flash and DeepSeek V4 Pro.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>

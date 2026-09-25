@@ -22,6 +22,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Estuary](pages/estuary.html) | Canvas 2D, curl-noise flow field | DeepSeek V4 Pro | ~55K | 1 | 28 KB |
 | [The last warm window](pages/the-last-warm-window.html) | Canvas 2D, animated narrative | GPT-6 Astra | ~58K | 1 + 2 | 23 KB |
 | [Lifeline](pages/lifeline.html) | Canvas 2D, single continuous line | Claude Opus 5.5 | ~150K | 1 | 34 KB |
+| [Starshard](pages/starshard.html) | Canvas 2D, roguelike shooter | GLM-5.3 | ~70K | 1 + 2 | 80 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -41,7 +42,9 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 **Lifeline.** A life told as a single ink line drawn on paper. The line gets a heartbeat, loops like a child at play, climbs mountains, then meets a red thread: they dance, draw a heart and build a house, and a small gold line appears between them and flies off as a kite. When the red thread comes to rest, the ink line circles it once and carries on with a thin red strand wound around it. At the end the camera steps back and the whole life appears as one drawing. Watercolour washes bloom behind each chapter, and optional synthesized music and heartbeats follow the pen. Hold the mouse or Space to hurry time.
 
-The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand.
+**Starshard.** A neon space-shooter roguelike. Fly against escalating waves of six enemy types — chasers, darts, gunners, splitters, orbiters and tanks — and bring down the multi-phase Dreadnought every fifth wave. Kills drop energy shards that charge an Overdrive meter for slow-motion overclocked fire, and clearing a wave lets you draft one of three upgrade modules: spread, pierce, ricochet, crits, homing missiles, a siege laser, orbiting drones, shields and more, stacking into a different build every run. Combos multiply score, dashes grant brief invulnerability, best runs persist locally, and sound and music are synthesized in the browser. The game needs a keyboard and mouse, and refuses to start on touch devices.
+
+The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand. Starshard needed two correction rounds: crash fixes (a palette key mismatch that crashed the game when splitters appeared, and a music-sequencer index bug that crashed the run seconds after launch), and a desktop-only gate that blocks the game on touch devices.
 
 ## Viewing
 
@@ -63,6 +66,7 @@ AI-XPERIENCE/
     ├── lifeline.html
     ├── mercurial.html
     ├── night-atlas.html
+    ├── starshard.html
     ├── the-last-warm-window.html
     └── umbralux.html
 ```
