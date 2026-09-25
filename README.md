@@ -28,6 +28,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Until the tide](https://dyrits.github.io/AI-XPERIENCE/pages/until-the-tide.html) | Canvas 2D, escape game | GPT-6 | ~70K | 1 | 54 KB |
 | [Longhand](https://dyrits.github.io/AI-XPERIENCE/pages/longhand.html) | Canvas 2D, drawn-line runner | GLM-5.3 | ~65K | 1 + 1 | 34 KB |
 | [Loaded](https://dyrits.github.io/AI-XPERIENCE/pages/loaded.html) | Canvas 2D, dice roguelike | Claude Opus 5.5 | ~200K | 1 + 1 | 96 KB |
+| [Enough](https://dyrits.github.io/AI-XPERIENCE/pages/enough.html) | Canvas 2D, motion graphic | Claude Opus 5.5 | ~100K | 1 | 32 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -59,6 +60,8 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 **Loaded.** A Balatro-style roguelike played with dice. Roll five 3D dice that tumble across a felt table, mark the ones to reroll from a limited pool, then play the best hand they make, from High Die to Five of a Kind. Each hand type gives Chips and Mult, scored dice add their pips, and the total is Chips × Mult, tallied effect by effect. Beat a small, big and boss blind in each of eight antes, with bosses that debuff faces, hide dice, halve rerolls or punish repeated hands. The shop sells 34 Jokers (retriggers, scaling xMult, a Mirror that copies its neighbour, an extra sixth die), Stars that level up a hand the moment they are bought, and Glyphs that permanently rewrite the face showing on a die: Gold, Glass, Bonus, Mult, Wild or Steel, or one pip more or less. Your five dice become your deck. Endless mode after the final ante, synthesized sound and lounge music, adjustable game speed, best runs saved locally.
 
+**Enough.** A ten-second looping motion graphic on the theme "One prompt is enough". A prompt is typed into an input box and squashed into a spark, which bursts into particles while CODE, MOTION, COLOR and SOUND slam across on diagonal bands. The particles settle into a tile grid that ripples and flips into rings of colour, then scatter into a spinning carousel of animated windows around a giant outlined ONE. Everything collapses into a coral disc that shrinks into the full stop of the title, and that full stop turns into the caret of the next loop. Every frame is computed from the time alone, so the timeline can be paused, scrubbed and stepped. Synthesized score in sync with the picture, reduced-motion support.
+
 The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand. Vesper received a correction that set the bell inside a belfry tower instead of in open air. Starshard needed two correction rounds: crash fixes (a palette key mismatch that crashed the game when splitters appeared, and a music-sequencer index bug that crashed the run seconds after launch), and a desktop-only gate that blocks the game on touch devices. Longhand received a correction that breaks stalemates: a runner wedged against a wall for five seconds is thrown back to the left of the screen and loses a heart (with a little ink back), so a stalled run now costs lives instead of freezing; the same round lowered early cliff heights, moved ink milestones closer together and made the warning sign blink over his head. Loaded received a correction so that selling a Joker frees its slot in the shop immediately, and so that Stars apply on purchase instead of taking a consumable slot.
 
 ## Viewing
@@ -77,6 +80,7 @@ AI-XPERIENCE/
     ├── abyss.html
     ├── echo-ward.html
     ├── echoveil.html
+    ├── enough.html
     ├── estuary.html
     ├── foldwake.html
     ├── lifeline.html

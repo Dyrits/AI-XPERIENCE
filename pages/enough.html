@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Enough — a ten-second motion piece</title>
+<style>
+:root{--bg:#07070d;--ink:#f4f1ea;--coral:#ff4d3d}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);overscroll-behavior:none}
+canvas{display:block;width:100vw;height:100vh;cursor:pointer}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#hud{position:fixed;inset:0;pointer-events:none;color:rgba(244,241,234,.62);font-size:11px;letter-spacing:.14em;text-transform:uppercase;transition:opacity .5s}
+body.idle #hud{opacity:0}
+body.idle canvas{cursor:none}
+.tl{position:absolute;top:18px;left:20px}
+.tl b{color:var(--ink);font-weight:600}
+.tr{position:absolute;top:18px;right:20px;text-align:right}
+.tr span{color:var(--coral)}
+#bar{position:absolute;left:0;right:0;bottom:0;height:18px;pointer-events:auto;cursor:ew-resize}
+#track{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(244,241,234,.12)}
+#fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--coral)}
+.tick{position:absolute;bottom:0;width:1px;height:7px;background:rgba(244,241,234,.35)}
+.ctrl{position:absolute;right:16px;bottom:26px;display:flex;gap:8px;pointer-events:auto}
+.ctrl button{font:inherit;letter-spacing:inherit;text-transform:inherit;color:var(--ink);background:rgba(7,7,13,.55);border:1px solid rgba(244,241,234,.28);border-radius:4px;padding:7px 11px;cursor:pointer;backdrop-filter:blur(6px)}
+.ctrl button:hover{border-color:var(--coral);color:#fff}
+.ctrl button[aria-pressed="true"]{border-color:var(--coral)}
+.keys{position:absolute;left:20px;bottom:30px;opacity:.7}
+@media (max-width:760px){.keys{display:none}}@media (max-width:560px){.tl span{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c" role="img" aria-label="A ten-second looping motion graphic: a typed prompt collapses into a spark, explodes into words, particles, tiles and windows, then settles on the title One prompt is enough."></canvas>
+<div id="hud" class="mono">
+  <div class="tl"><b>AI-XPERIENCE</b> <span>/ one prompt is enough</span></div>
+  <div class="tr"><div id="tc">00:00.00 / 00:10.00</div><div><span id="scene">PROMPT</span></div></div>
+  <div class="keys">Space pause · M sound · ← → seek · R restart</div>
+  <div class="ctrl">
+    <button id="bPlay" type="button">Pause</button>
+    <button id="bSound" type="button" aria-pressed="false">Sound off</button>
+    <button id="bRestart" type="button">Restart</button>
+  </div>
+  <div id="bar"><div id="track"><div id="fill"></div></div></div>
+</div>
+<script>
+(() => {
+'use strict';
+
+// Timing, easing and seeded randomness.
+const TAU = Math.PI * 2, DUR = 10;
+const clamp = (x, a = 0, b = 1) => x < a ? a : x > b ? b : x;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, u) => a + (b - a) * u;
+const eOutExpo = u => u >= 1 ? 1 : 1 - Math.pow(2, -10 * u);
+const eInExpo = u => u <= 0 ? 0 : Math.pow(2, 10 * u - 10);
+const eInOut = u => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+const eOutCubic = u => 1 - Math.pow(1 - u, 3);
+const eOutBack = u => { const c = 1.9; return 1 + (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2); };
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const rnd = mulberry(20260925);
+
+const BG = '#07070d', INK = '#f4f1ea';
+const PAL = ['#ff4d3d', '#ffb627', '#2de2ff', '#8c5cff', '#c6ff3d'];
+const SANS = '"Inter","Helvetica Neue",Helvetica,Arial,sans-serif';
+const MONO = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+
+// The script of the piece: every moment below is a fixed time in seconds, so any frame can be rendered from t alone.
+const PROMPT = 'one prompt';
+const CHAR_T = [...PROMPT].map((_, i) => 0.2 + i * 0.066 + (i === 3 ? 0.05 : 0) + (i > 3 ? 0.05 : 0));
+const ENTER_T = 0.92, PRESS_T = 1.02, BURST_T = 1.4;
+const WORDS = ['CODE', 'MOTION', 'COLOR', 'SOUND'];
+const WORD_T = WORDS.map((_, i) => 1.6 + i * 0.45);
+const WORD_C = [PAL[0], PAL[1], PAL[2], PAL[3]];
+const FINAL_T = 7.4, DOT_T = 8.3, EXIT_T = 9.4;
+const TITLE = ['One prompt', 'is enough'];
+const TAG = 'one prompt · one file · ten seconds';
+const SCENES = [[0, 'Prompt'], [BURST_T, 'Burst'], [3.45, 'Build'], [5.5, 'Multiply'], [FINAL_T, 'Enough']];
+
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let W = 0, H = 0, S = 0, cx = 0, cy = 0, dpr = 1, vignette = null, grainPat = null;
+const L = {};
+
+// Particles: they burst out of the prompt spark, settle into a tiled grid, then leave for the windows.
+const N = 680;
+const P = [];
+for (let i = 0; i < N; i++) {
+  P.push({
+    a: rnd() * TAU, v: 0.22 + Math.pow(rnd(), 0.6) * 1.15, spin: (rnd() - .5) * 1.4,
+    size: 0.004 + rnd() * 0.007, col: PAL[i % 5], tx: 0, ty: 0, d: 0, band: 0, cell: 0
+  });
+}
+const order = [...Array(N).keys()];
+for (let i = N - 1; i > 0; i--) { const j = (rnd() * (i + 1)) | 0; [order[i], order[j]] = [order[j], order[i]]; }
+
+const LINES = [];
+for (let i = 0; i < 110; i++) LINES.push({ a: rnd() * TAU, j: rnd(), c: PAL[i % 5], w: 0.5 + rnd() * 1.5 });
+
+const M = 12;
+const CARDS = [...Array(M).keys()].map(k => ({ k, z: 0 }));
+
+function makeGrain() {
+  const g = document.createElement('canvas'); g.width = g.height = 180;
+  const gx = g.getContext('2d'), img = gx.createImageData(180, 180);
+  for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+  gx.putImageData(img, 0, 0);
+  return ctx.createPattern(g, 'repeat');
+}
+
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight; S = Math.min(W, H); cx = W / 2; cy = H / 2;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  vignette = ctx.createRadialGradient(cx, cy, S * 0.35, cx, cy, Math.hypot(W, H) * 0.62);
+  vignette.addColorStop(0, 'rgba(0,0,0,0)'); vignette.addColorStop(1, 'rgba(0,0,0,.62)');
+  grainPat = makeGrain();
+
+  // Prompt field.
+  ctx.font = `600 100px ${MONO}`;
+  const cwr = ctx.measureText('m').width / 100;
+  L.fsT = Math.min(S * 0.085, W * 0.8 / (cwr * 11 + 1.1));
+  L.cw = cwr * L.fsT;
+  L.x0 = cx - L.cw * 11 / 2;
+  L.caretW = L.cw * 0.84; L.caretH = L.fsT * 1.12;
+  L.caretY = cy - L.caretH / 2;
+
+  // Word slams.
+  ctx.font = `900 100px ${SANS}`;
+  L.wordFs = WORDS.map(w => Math.min(S * 0.24, W * 0.8 / (ctx.measureText(w).width / 100)));
+
+  // Title block.
+  const w1 = ctx.measureText(TITLE[0]).width / 100, w2 = ctx.measureText(TITLE[1]).width / 100 + 0.3;
+  const fs = L.fs = Math.min(S * 0.2, W * 0.84 / Math.max(w1, w2));
+  ctx.font = `900 ${fs}px ${SANS}`;
+  L.base = [cy - fs * 0.3, cy + fs * 0.62];
+  L.chars = TITLE.map((line, li) => {
+    const lw = ctx.measureText(line).width + (li === 1 ? fs * 0.3 : 0), x = cx - lw / 2;
+    return [...line].map((ch, i) => ({ ch, x: x + ctx.measureText(line.slice(0, i)).width }));
+  });
+  const endX = cx - (ctx.measureText(TITLE[1]).width + fs * 0.3) / 2 + ctx.measureText(TITLE[1]).width;
+  L.dotR = fs * 0.095; L.dotX = endX + fs * 0.16; L.dotY = L.base[1] - L.dotR;
+  L.tagFs = Math.max(10, Math.min(S * 0.024, W * 0.9 / (TAG.length * 0.62)));
+
+  // Tile grid sized to the screen shape.
+  const cols = Math.max(8, Math.round(Math.sqrt(N * W / H))), rows = Math.ceil(N / cols);
+  const cell = Math.max(W / cols, H / rows) / S * 0.98;
+  L.cell = cell;
+  let maxd = 0;
+  for (let i = 0; i < N; i++) {
+    const c = order[i], gx = c % cols, gy = (c / cols) | 0, p = P[i];
+    p.tx = (gx - (cols - 1) / 2) * cell; p.ty = (gy - (rows - 1) / 2) * cell;
+    p.d = Math.hypot(p.tx, p.ty * 1.1); maxd = Math.max(maxd, p.d);
+  }
+  for (const p of P) { p.d /= maxd; p.band = ((p.d * 6) | 0) % 5; }
+}
+
+// Camera shake and flashes, both summed from fixed impulses.
+const IMPULSES = [...CHAR_T.map(t => [t, 0.004]), [PRESS_T, 0.008], [BURST_T, 0.035], ...WORD_T.map(t => [t, 0.014]), [FINAL_T, 0.03], [DOT_T, 0.008]];
+function shake(t) {
+  let x = 0, y = 0;
+  for (const [ti, a] of IMPULSES) {
+    const d = t - ti; if (d < 0 || d > 0.5) continue;
+    const e = a * S * Math.exp(-d * 11);
+    x += e * Math.sin(d * 71 + ti * 13); y += e * Math.cos(d * 63 + ti * 7);
+  }
+  return [x, y];
+}
+function flashAt(t) {
+  let f = 0;
+  const add = (ti, dur, a) => { const d = t - ti; if (d >= 0 && d < dur) f += a * (1 - d / dur) * (1 - d / dur); };
+  add(BURST_T, 0.4, 0.95); add(FINAL_T, 0.45, 0.9);
+  WORD_T.forEach(ti => add(ti, 0.14, 0.18));
+  return Math.min(1, f);
+}
+function glowColor(t) {
+  if (t < BURST_T) return [PAL[0], 0.08 * seg(t, 0.2, 1.2)];
+  if (t < 3.45) { const i = clamp(Math.floor((t - 1.6) / 0.45), 0, 3); return [WORD_C[i], 0.2]; }
+  if (t < 5.5) return [PAL[2], 0.13];
+  if (t < FINAL_T) return [PAL[3], 0.18];
+  return [PAL[0], 0.16 * (1 - seg(t, 9.5, 10))];
+}
+
+function rr(x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+// Scene 1: the prompt is typed, then squashed into a single spark.
+function scenePrompt(t) {
+  const fs = L.fsT, cw = L.cw;
+  const grid = 1 - seg(t, 1.1, 1.4);
+  if (grid > 0) {
+    let pulse = 0;
+    for (const ti of CHAR_T) if (t >= ti) pulse += Math.exp(-(t - ti) * 9);
+    const sp = S * 0.055;
+    ctx.fillStyle = INK;
+    for (let y = (cy % sp); y < H; y += sp) for (let x = (cx % sp); x < W; x += sp) {
+      const d = Math.hypot(x - cx, y - cy) / S;
+      ctx.globalAlpha = grid * (0.06 + pulse * 0.22 * Math.max(0, 1 - d * 1.4));
+      ctx.fillRect(x - 1, y - 1, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  const ant = Math.sin(Math.PI * seg(t, PRESS_T - 0.04, PRESS_T + 0.1)) * 0.05;
+  const u = eInExpo(seg(t, 1.08, BURST_T));
+  if (u < 1) {
+    ctx.save();
+    ctx.translate(cx, cy); ctx.scale(Math.max(0.001, (1 + ant) * (1 - u)), Math.max(0.001, (1 + ant) * (1 - u * 0.9))); ctx.translate(-cx, -cy);
+
+    const bw = cw * 11 + fs * 1.1, bh = fs * 1.9, bx = cx - bw / 2, by = cy - bh / 2;
+    const prog = eOutExpo(seg(t, 0.02, 0.7)), per = 2 * (bw + bh);
+    rr(bx, by, bw, bh, bh * 0.22);
+    ctx.fillStyle = 'rgba(244,241,234,.035)'; ctx.globalAlpha = prog; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.setLineDash([per * prog, per]); ctx.lineWidth = Math.max(1, S * 0.0025); ctx.strokeStyle = 'rgba(244,241,234,.55)'; ctx.stroke(); ctx.setLineDash([]);
+
+    ctx.font = `600 ${Math.max(9, fs * 0.2)}px ${MONO}`; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = 'rgba(244,241,234,.5)'; ctx.globalAlpha = seg(t, 0.15, 0.45);
+    ctx.fillText('PROMPT  1/1', bx + bh * 0.22, by - fs * 0.22); ctx.globalAlpha = 1;
+
+    ctx.font = `600 ${fs}px ${MONO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    let n = 0;
+    for (let i = 0; i < PROMPT.length; i++) {
+      const ti = CHAR_T[i]; if (t < ti) break; n++;
+      const p = eOutBack(seg(t, ti, ti + 0.16));
+      ctx.save(); ctx.translate(L.x0 + i * cw + cw / 2, cy + (1 - p) * fs * 0.3); ctx.scale(p, p);
+      ctx.fillStyle = INK; ctx.fillText(PROMPT[i], 0, fs * 0.04); ctx.restore();
+    }
+    const typing = t >= CHAR_T[0];
+    if (typing || ((t * 5) | 0) % 2 === 0) {
+      ctx.fillStyle = PAL[0];
+      ctx.fillRect(L.x0 + n * cw + (cw - L.caretW) / 2, L.caretY, L.caretW, L.caretH);
+    }
+
+    const ea = eOutBack(seg(t, ENTER_T, ENTER_T + 0.18)), press = 1 - 0.25 * Math.sin(Math.PI * seg(t, PRESS_T, PRESS_T + 0.12));
+    if (ea > 0) {
+      const r = bh * 0.3 * ea * press, ex = bx + bw + bh * 0.45;
+      ctx.beginPath(); ctx.arc(ex, cy, r, 0, TAU); ctx.fillStyle = t >= PRESS_T ? PAL[0] : 'rgba(244,241,234,.12)'; ctx.fill();
+      ctx.font = `700 ${r * 1.1}px ${SANS}`; ctx.fillStyle = INK; ctx.fillText('↵', ex, cy + r * 0.05);
+    }
+    ctx.restore();
+  }
+  if (t > 1.08) {
+    const r = S * (0.004 + 0.022 * u);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 5);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.2, 'rgba(255,120,90,.8)'); g.addColorStop(1, 'rgba(255,77,61,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r * 5, 0, TAU); ctx.fill(); ctx.restore();
+  }
+}
+
+function shockwave(t, t0, cols) {
+  for (let i = 0; i < 3; i++) {
+    const u = seg(t, t0 + i * 0.06, t0 + 0.9 + i * 0.12); if (u <= 0 || u >= 1) continue;
+    const r = eOutExpo(u) * Math.hypot(W, H) * (0.35 + i * 0.18);
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU);
+    ctx.strokeStyle = cols[i]; ctx.globalAlpha = (1 - u) * 0.9; ctx.lineWidth = S * (0.02 - i * 0.005) * (1 - u) + 1; ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// Scenes 2 to 4: particle burst, tile grid, departure.
+function burstPos(p, t) {
+  const dt = Math.max(0, t - BURST_T), k = 1 - Math.exp(-3.4 * dt);
+  const a = p.a + p.spin * k + dt * 0.06 * p.spin, r = p.v * k + dt * 0.02;
+  return [Math.cos(a) * r, Math.sin(a) * r];
+}
+function gatherOf(p, t) { const s = 3.45 + p.d * 0.45; return eInOut(seg(t, s, s + 0.65)); }
+
+function sceneParticles(t) {
+  const z = 1 + 0.2 * eInOut(seg(t, 3.5, 5.8)), rot = 0.14 * eInOut(seg(t, 3.6, 5.9));
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(S * z, S * z);
+
+  ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+  const fade = 1 - 0.35 * seg(t, 2.2, 3.4);
+  for (const p of P) {
+    if (gatherOf(p, t) > 0) continue;
+    const [x, y] = burstPos(p, t), [x0, y0] = burstPos(p, t - 0.045);
+    ctx.strokeStyle = p.col; ctx.globalAlpha = fade; ctx.lineWidth = p.size;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x, y); ctx.stroke();
+  }
+
+  ctx.globalCompositeOperation = 'source-over';
+  const wave = seg(t, 4.0, 4.5);
+  for (const p of P) {
+    const g = gatherOf(p, t); if (g <= 0) continue;
+    const [bx, by] = burstPos(p, t);
+    const ls = 5.45 + p.d * 0.3, q = eInExpo(seg(t, ls, ls + 0.45));
+    if (q >= 1) continue;
+    const x = lerp(bx, p.tx, g) * (1 + q * 1.8), y = lerp(by, p.ty, g) * (1 + q * 1.8);
+    const sc = 1 - wave * (0.22 + 0.2 * Math.sin(p.d * 11 - (t - 4) * 7));
+    const fs0 = 4.55 + p.d * 0.5, f = eInOut(seg(t, fs0, fs0 + 0.4));
+    const sx = Math.abs(Math.cos(f * Math.PI));
+    const s = lerp(p.size * 2.2, L.cell * 0.84, g) * sc * (1 - q * 0.5);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(lerp(p.a * 2, 0, g));
+    ctx.globalAlpha = 1 - q;
+    ctx.fillStyle = f < 0.5 ? p.col : PAL[p.band];
+    ctx.fillRect(-s * sx / 2, -s / 2, s * sx, s);
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+// Scene 2: four words slam across on diagonal bands.
+function sceneWords(t) {
+  for (let i = 0; i < WORDS.length; i++) {
+    const u = (t - WORD_T[i]) / 0.5; if (u < 0 || u > 1) continue;
+    const dir = i % 2 ? 1 : -1, span = Math.hypot(W, H) * 1.3;
+    const xo = dir * span * (1 - eOutExpo(seg(u, 0, 0.32))) - dir * span * eInExpo(seg(u, 0.74, 1));
+    const hb = S * 0.3, fs = L.wordFs[i];
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(dir * 0.17);
+
+    ctx.save(); ctx.translate(xo * 1.35, 0);
+    ctx.fillStyle = INK; ctx.globalAlpha = 0.8;
+    ctx.fillRect(-span, -hb / 2 - S * 0.03, span * 2, S * 0.006);
+    ctx.fillRect(-span, hb / 2 + S * 0.024, span * 2, S * 0.006);
+    ctx.restore(); ctx.globalAlpha = 1;
+
+    ctx.translate(xo, 0);
+    ctx.fillStyle = WORD_C[i]; ctx.fillRect(-span, -hb / 2, span * 2, hb);
+
+    ctx.font = `900 ${fs}px ${SANS}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = Math.max(1, S * 0.002); ctx.strokeStyle = WORD_C[i]; ctx.globalAlpha = 0.45;
+    ctx.strokeText(WORDS[i], -xo * 0.3, -hb * 0.98); ctx.strokeText(WORDS[i], xo * 0.3, hb * 0.98);
+    ctx.globalAlpha = 1;
+    const sc = lerp(1.3, 1, eOutExpo(seg(u, 0.05, 0.45)));
+    ctx.save(); ctx.scale(sc, sc);
+    const ab = S * 0.008 * (1 - seg(u, 0.1, 0.4));
+    if (ab > 0.2) {
+      ctx.fillStyle = PAL[2]; ctx.fillText(WORDS[i], -ab, fs * 0.04);
+      ctx.fillStyle = '#fff'; ctx.fillText(WORDS[i], ab, fs * 0.04);
+    }
+    ctx.fillStyle = BG; ctx.fillText(WORDS[i], 0, fs * 0.04);
+    ctx.restore();
+    ctx.restore();
+  }
+}
+
+function rings(t) {
+  const c = eInExpo(seg(t, 6.75, 7.38));
+  ctx.lineWidth = Math.max(1, S * 0.003);
+  for (let i = 0; i < 3; i++) {
+    const grow = eOutExpo(seg(t, 3.9 + i * 0.12, 4.8 + i * 0.12)); if (grow <= 0) continue;
+    const R = S * (0.34 + i * 0.1) * (1 - c) * lerp(0.6, 1, grow);
+    const n = 24 + i * 12, step = TAU / n, rot = t * (i % 2 ? -0.7 : 0.9) + c * (i % 2 ? -8 : 8);
+    ctx.strokeStyle = i === 1 ? PAL[0] : INK; ctx.globalAlpha = (i === 1 ? 0.8 : 0.35) * (1 - c * 0.5);
+    ctx.beginPath();
+    for (let j = 0; j < n * grow; j++) { const a = rot + j * step; ctx.moveTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.arc(cx, cy, R, a, a + step * 0.55); }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// Scene 5: one prompt multiplies into a carousel of windows.
+function cardArt(kind, w, h, t, col) {
+  ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = Math.max(1, S * 0.003);
+  switch (kind) {
+    case 0: {
+      const r = h * 0.3; ctx.beginPath(); ctx.arc(0, h * 0.2 - Math.sin(t * 3) * h * 0.1, r, 0, TAU); ctx.fill();
+      ctx.fillStyle = BG; for (let j = 0; j < 4; j++) ctx.fillRect(-w, h * (0.08 + j * 0.1), w * 2, h * 0.035 * (1 + j * 0.4));
+      break;
+    }
+    case 1: {
+      ctx.beginPath();
+      for (let j = 0; j <= 40; j++) { const x = -w / 2 + w * j / 40, y = Math.sin(j * 0.45 + t * 7) * h * 0.25 * Math.sin(j / 40 * Math.PI); j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      ctx.stroke(); break;
+    }
+    case 2: {
+      for (let j = 0; j < 8; j++) { const bh = h * (0.15 + 0.7 * Math.abs(Math.sin(t * 5 + j * 0.9))); ctx.fillRect(-w * 0.42 + j * w * 0.11, h / 2 - bh, w * 0.07, bh); }
+      break;
+    }
+    case 3: {
+      for (let gy = 0; gy < 3; gy++) for (let gx = 0; gx < 7; gx++) {
+        const r = h * 0.07 * (0.5 + 0.5 * Math.sin(t * 6 - gx * 0.7 - gy));
+        ctx.beginPath(); ctx.arc(-w * 0.36 + gx * w * 0.12, -h * 0.26 + gy * h * 0.26, Math.max(0.5, r), 0, TAU); ctx.fill();
+      }
+      break;
+    }
+    case 4: {
+      const o = (t * 0.3) % 1;
+      ctx.beginPath(); ctx.moveTo(-w, h / 2);
+      for (let j = -1; j < 4; j++) { const x = -w / 2 + (j + o) * w * 0.34; ctx.lineTo(x, -h * (0.05 + (j & 1) * 0.2)); ctx.lineTo(x + w * 0.17, h * 0.2); }
+      ctx.lineTo(w, h / 2); ctx.closePath(); ctx.globalAlpha *= 0.9; ctx.fill(); break;
+    }
+    default: {
+      ctx.beginPath(); ctx.arc(0, 0, h * 0.1, 0, TAU); ctx.fill();
+      for (let j = 0; j < 3; j++) {
+        const R = h * (0.2 + j * 0.12), a = t * (3 - j) * (j % 2 ? -1 : 1);
+        ctx.globalAlpha *= 1; ctx.beginPath(); ctx.ellipse(0, 0, R * 1.6, R, 0, 0, TAU); ctx.stroke();
+        ctx.beginPath(); ctx.arc(Math.cos(a) * R * 1.6, Math.sin(a) * R, h * 0.045, 0, TAU); ctx.fill();
+      }
+    }
+  }
+}
+function drawCard(k, x, y, sc, rot, dim, t) {
+  const w = S * 0.26, h = S * 0.18, col = PAL[k % 5], bar = h * 0.17, pad = h * 0.08;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(sc, sc);
+  rr(-w / 2, -h / 2, w, h, S * 0.012); ctx.fillStyle = '#12121c'; ctx.fill();
+  ctx.lineWidth = Math.max(1, S * 0.0025); ctx.strokeStyle = col; ctx.stroke();
+  ctx.fillStyle = 'rgba(244,241,234,.14)'; ctx.fillRect(-w / 2, -h / 2 + bar, w, 1);
+  for (let j = 0; j < 3; j++) { ctx.beginPath(); ctx.arc(-w / 2 + bar * (0.55 + j * 0.45), -h / 2 + bar / 2, bar * 0.14, 0, TAU); ctx.fillStyle = j ? 'rgba(244,241,234,.3)' : col; ctx.fill(); }
+  ctx.fillStyle = 'rgba(244,241,234,.22)'; ctx.fillRect(w / 2 - w * 0.3, -h / 2 + bar * 0.4, w * 0.24, bar * 0.2);
+  ctx.save();
+  const iw = w - pad * 2, ih = h - bar - pad * 2;
+  ctx.beginPath(); ctx.rect(-iw / 2, -h / 2 + bar + pad, iw, ih); ctx.clip();
+  ctx.translate(0, -h / 2 + bar + pad + ih / 2);
+  cardArt(k % 6, iw, ih, t + k * 0.37, col);
+  ctx.restore();
+  if (dim > 0.01) { rr(-w / 2, -h / 2, w, h, S * 0.012); ctx.globalAlpha = 1; ctx.fillStyle = `rgba(7,7,13,${dim.toFixed(3)})`; ctx.fill(); }
+  ctx.restore();
+}
+function sceneCards(t) {
+  const c = eInExpo(seg(t, 6.75, 7.38));
+  const rot = (t - 5.5) * 1.1 + c * 5;
+  const Rx = Math.min(W * 0.36, S * 0.74) * (1 - c), Ry = S * 0.2 * (1 - c);
+
+  const oneA = seg(t, 5.6, 5.95) * (1 - c);
+  if (oneA > 0) {
+    let beat = 0; for (let b = 3.4; b < t; b += 0.45) beat = Math.exp(-(t - b) * 8);
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(1 + beat * 0.04 - c * 0.3, 1 + beat * 0.04 - c * 0.3);
+    ctx.font = `900 ${Math.min(S * 0.55, W * 0.62)}px ${SANS}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = Math.max(1, S * 0.003); ctx.strokeStyle = INK; ctx.globalAlpha = oneA * 0.22; ctx.strokeText('ONE', 0, 0);
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
+
+  for (const cd of CARDS) cd.z = (Math.sin(cd.k / M * TAU + rot) + 1) / 2;
+  const sorted = CARDS.slice().sort((a, b) => a.z - b.z);
+  for (const cd of sorted) {
+    const k = cd.k, ts = 5.55 + k * 0.045, a = seg(t, ts, ts + 0.5); if (a <= 0) continue;
+    const th = k / M * TAU + rot, o = eOutExpo(a);
+    const x = cx + Math.cos(th) * Rx * o, y = cy + Math.sin(th) * Ry * o - S * 0.02;
+    const sc = (0.55 + 0.5 * cd.z) * eOutBack(a) * (1 - c * 0.85);
+    drawCard(k, x, y, sc, -Math.cos(th) * 0.12, (1 - cd.z) * 0.6, t);
+  }
+
+  const la = seg(t, 5.7, 6.0) * (1 - seg(t, 6.8, 7.0));
+  if (la > 0) {
+    const n = Math.min(999, Math.floor(Math.pow(seg(t, 5.6, 6.8), 2) * 999) + 1);
+    ctx.font = `600 ${Math.max(10, S * 0.02)}px ${MONO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.globalAlpha = la; ctx.fillStyle = 'rgba(244,241,234,.75)';
+    ctx.fillText(`PROMPTS 1   ·   IDEAS ${String(n).padStart(3, '0')}`, cx, cy + S * 0.4);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function speedLines(t) {
+  const maxR = Math.hypot(W, H) * 0.62;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+  for (const l of LINES) {
+    const u = eInExpo(seg(t, 6.8 + l.j * 0.25, 7.38)); if (u <= 0 || u >= 1) continue;
+    const r = lerp(maxR, 0, u), len = S * (0.04 + 0.3 * u), ca = Math.cos(l.a), sa = Math.sin(l.a);
+    ctx.strokeStyle = l.c; ctx.globalAlpha = u; ctx.lineWidth = Math.max(1, S * 0.002 * l.w);
+    ctx.beginPath(); ctx.moveTo(cx + ca * r, cy + sa * r); ctx.lineTo(cx + ca * (r + len), cy + sa * (r + len)); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Scene 6: a coral disk floods the frame, shrinks into the full stop, and the full stop becomes the next loop's caret.
+function sceneTitle(t) {
+  const fs = L.fs;
+  const dA = eOutExpo(seg(t, FINAL_T, FINAL_T + 0.3)), dB = eInOut(seg(t, 7.72, DOT_T));
+  ctx.fillStyle = PAL[0];
+  if (t < DOT_T) {
+    const big = Math.hypot(W, H) * 0.62 * dA;
+    const r = lerp(big, L.dotR, dB);
+    ctx.beginPath(); ctx.arc(lerp(cx, L.dotX, dB), lerp(cy, L.dotY, dB), Math.max(0.1, r), 0, TAU); ctx.fill();
+  }
+
+  drawTitleText(t);
+  if (t >= DOT_T) {
+    const d = t - DOT_T, sq = 1 + 0.4 * Math.exp(-d * 9) * Math.sin(d * 34);
+    const e = eInOut(seg(t, 9.5, 9.95));
+    const cxT = L.x0 + (L.cw - L.caretW) / 2 + L.caretW / 2, cyT = L.caretY + L.caretH / 2;
+    const w = lerp(L.dotR * 2 * sq, L.caretW, e), h = lerp(L.dotR * 2 / sq, L.caretH, e);
+    const x = lerp(L.dotX, cxT, e), y = lerp(L.dotY, cyT, e);
+    ctx.fillStyle = PAL[0]; rr(x - w / 2, y - h / 2, w, h, lerp(L.dotR, 0, e)); ctx.fill();
+  }
+}
+
+function drawTitleText(t) {
+  const fs = L.fs;
+  ctx.font = `900 ${fs}px ${SANS}`; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  const ab = S * 0.007 * Math.exp(-(t - FINAL_T) * 3.5);
+  let gi = 0;
+  for (let li = 0; li < 2; li++) {
+    const b = L.base[li];
+    ctx.save(); ctx.beginPath(); ctx.rect(0, b - fs * 0.86, W, fs * 1.12); ctx.clip();
+    for (let i = 0; i < L.chars[li].length; i++, gi++) {
+      const c = L.chars[li][i];
+      const ts = FINAL_T + 0.05 + li * 0.1 + i * 0.03, u = eOutExpo(seg(t, ts, ts + 0.5));
+      const xs = EXIT_T + gi * 0.012, v = eInExpo(seg(t, xs, xs + 0.3));
+      if (u <= 0 || v >= 1) continue;
+      const y = b + (1 - u) * fs * 1.1 - v * fs * 1.15;
+      if (ab > 0.3) {
+        ctx.fillStyle = PAL[2]; ctx.fillText(c.ch, c.x - ab, y);
+        ctx.fillStyle = PAL[1]; ctx.fillText(c.ch, c.x + ab, y);
+      }
+      ctx.fillStyle = INK; ctx.fillText(c.ch, c.x, y);
+    }
+    ctx.restore();
+  }
+
+  const ta = 1 - seg(t, EXIT_T, EXIT_T + 0.2);
+  if (ta > 0 && t > 8.35) {
+    const n = Math.min(TAG.length, Math.floor((t - 8.35) / 0.014));
+    ctx.font = `600 ${L.tagFs}px ${MONO}`; ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(244,241,234,.6)'; ctx.globalAlpha = ta;
+    ctx.fillText(TAG.slice(0, n).toUpperCase().padEnd(TAG.length, ' '), cx, L.base[1] + fs * 0.62);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function render(t) {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+
+  const [gc, ga] = glowColor(t);
+  if (ga > 0) {
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.hypot(W, H) * 0.55);
+    g.addColorStop(0, gc); g.addColorStop(1, BG);
+    ctx.globalAlpha = ga; ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+  }
+
+  const [sx, sy] = shake(t);
+  ctx.save(); ctx.translate(sx, sy);
+  if (t < BURST_T + 0.05) scenePrompt(t);
+  if (t >= BURST_T && t < 6.3) sceneParticles(t);
+  if (t >= BURST_T && t < 2.6) shockwave(t, BURST_T, [INK, PAL[0], PAL[2]]);
+  if (t >= 1.55 && t < 3.5) sceneWords(t);
+  if (t >= 3.9 && t < FINAL_T) rings(t);
+  if (t >= 5.5 && t < FINAL_T) sceneCards(t);
+  if (t >= 6.75 && t < FINAL_T) speedLines(t);
+  if (t >= FINAL_T) { sceneTitle(t); if (t < 8.6) shockwave(t, FINAL_T, [INK, PAL[1], PAL[3]]); }
+  ctx.restore();
+
+  const f = flashAt(t);
+  if (f > 0) { ctx.globalAlpha = f; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+  ctx.fillStyle = vignette; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.globalAlpha = 0.05; ctx.translate(-((t * 997) % 180), -((t * 613) % 180)); ctx.fillStyle = grainPat; ctx.fillRect(0, 0, W + 180, H + 180); ctx.restore();
+}
+
+// Synthesized score, fired from the same timeline as the picture.
+let AC = null, master = null, noiseBuf = null, soundOn = false;
+function initAudio() {
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+  master = AC.createGain(); master.gain.value = 0.5;
+  const comp = AC.createDynamicsCompressor(); master.connect(comp); comp.connect(AC.destination);
+  noiseBuf = AC.createBuffer(1, AC.sampleRate * 1.5, AC.sampleRate);
+  const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+}
+function noise(dur, type, f0, f1, q, g0, att = 0.002) {
+  const w = AC.currentTime, s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+  s.buffer = noiseBuf; f.type = type; f.Q.value = q;
+  f.frequency.setValueAtTime(f0, w); if (f1) f.frequency.exponentialRampToValueAtTime(f1, w + dur);
+  g.gain.setValueAtTime(0.0001, w); g.gain.exponentialRampToValueAtTime(g0, w + att); g.gain.exponentialRampToValueAtTime(0.0001, w + dur);
+  s.connect(f); f.connect(g); g.connect(master); s.start(w); s.stop(w + dur + 0.05);
+}
+function tone(type, f0, f1, dur, g0, att = 0.003) {
+  const w = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f0, w); if (f1 && f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, w + dur);
+  g.gain.setValueAtTime(0.0001, w); g.gain.exponentialRampToValueAtTime(g0, w + att); g.gain.exponentialRampToValueAtTime(0.0001, w + dur);
+  o.connect(g); g.connect(master); o.start(w); o.stop(w + dur + 0.05);
+}
+const click = () => { noise(0.03, 'highpass', 3500, 0, 0.7, 0.3); tone('square', 1500 + Math.random() * 500, 0, 0.02, 0.025); };
+const kick = (a = 1) => tone('sine', 160, 42, 0.32, 0.9 * a);
+const snare = () => { noise(0.16, 'bandpass', 1900, 0, 0.8, 0.35); tone('triangle', 200, 150, 0.1, 0.18); };
+const hat = () => noise(0.04, 'highpass', 7500, 0, 0.5, 0.1);
+const riser = d => { noise(d, 'bandpass', 350, 6000, 2, 0.35, d * 0.95); tone('sawtooth', 110, 660, d, 0.05, d * 0.9); };
+const boom = () => { tone('sine', 120, 34, 1.1, 1); noise(0.9, 'lowpass', 1200, 90, 0.7, 0.45); };
+const stab = f => { tone('sawtooth', f, 0, 0.28, 0.07); tone('triangle', f * 2, 0, 0.22, 0.05); };
+const chord = () => [220, 277.18, 329.63, 415.3, 554.37].forEach((f, i) => { tone('triangle', f, 0, 1.9, 0.06, 0.01 + i * 0.01); tone('sine', f / 2, 0, 1.6, 0.05); });
+const pluck = () => { tone('triangle', 880, 0, 0.45, 0.14); tone('sine', 1320, 0, 0.3, 0.06); };
+const whoosh = (a = 0.25) => noise(0.55, 'bandpass', 300, 3200, 1.2, a, 0.4);
+
+const EV = [];
+const ev = (t, fn) => EV.push({ t, fn });
+CHAR_T.forEach(ti => ev(ti, click));
+ev(ENTER_T, () => tone('sine', 660, 0, 0.09, 0.07));
+ev(PRESS_T, () => { kick(0.5); riser(BURST_T - PRESS_T); });
+ev(BURST_T, boom);
+const STABS = [220, 261.63, 329.63, 392];
+WORD_T.forEach((ti, i) => ev(ti, () => { kick(1); snare(); stab(STABS[i]); }));
+for (let b = 3.4; b < 6.75; b += 0.45) { ev(b, () => kick(0.75)); ev(b + 0.225, hat); }
+const PENTA = [440, 523.25, 587.33, 659.25, 783.99, 880];
+for (let j = 0, x = 3.5; x < 5.5; j++, x += 0.1125) { const f = PENTA[[0, 2, 4, 5, 3, 1, 4, 2][j % 8]] * (j >= 8 ? 1.5 : 1); ev(x, () => tone('triangle', f, 0, 0.12, 0.06)); }
+ev(5.5, () => whoosh(0.3));
+for (let k = 0; k < M; k++) ev(5.55 + k * 0.045, () => tone('sine', 700 + k * 70, 0, 0.06, 0.035));
+ev(6.75, () => riser(FINAL_T - 6.75));
+ev(FINAL_T, () => { boom(); chord(); });
+ev(DOT_T, pluck);
+ev(9.45, () => whoosh(0.12));
+EV.sort((a, b) => a.t - b.t);
+function fire(a, b) { if (!soundOn || !AC) return; for (const e of EV) if (e.t >= a && e.t < b) e.fn(); }
+
+// Playback, HUD and controls.
+let t = 0, playing = true, last = performance.now();
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (reduce) { t = 8.9; playing = false; }
+
+const $ = id => document.getElementById(id);
+const tcEl = $('tc'), sceneEl = $('scene'), fillEl = $('fill'), bPlay = $('bPlay'), bSound = $('bSound');
+for (const [s] of SCENES.slice(1)) { const d = document.createElement('div'); d.className = 'tick'; d.style.left = (s / DUR * 100) + '%'; $('track').appendChild(d); }
+const fmt = x => { const s = Math.floor(x), cs = Math.floor((x - s) * 100); return `00:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`; };
+function hud() {
+  tcEl.textContent = `${fmt(t)} / 00:10.00`;
+  let name = SCENES[0][1]; for (const [s, n] of SCENES) if (t >= s) name = n;
+  sceneEl.textContent = name;
+  fillEl.style.width = (t / DUR * 100) + '%';
+  bPlay.textContent = playing ? 'Pause' : 'Play';
+}
+function setPlaying(p) { playing = p; last = performance.now(); if (p) wake(); hud(); }
+function seek(x) { t = ((x % DUR) + DUR) % DUR; hud(); }
+function toggleSound() {
+  soundOn = !soundOn;
+  if (soundOn) { if (!AC) initAudio(); AC.resume(); }
+  bSound.textContent = soundOn ? 'Sound on' : 'Sound off';
+  bSound.setAttribute('aria-pressed', String(soundOn));
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (playing) {
+    let nt = t + dt;
+    if (nt >= DUR) { fire(t, DUR); nt -= DUR; fire(0, nt); } else fire(t, nt);
+    t = nt;
+  }
+  render(t); hud();
+  requestAnimationFrame(frame);
+}
+
+let idleTimer = 0;
+function wake() {
+  document.body.classList.remove('idle'); clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => { if (playing) document.body.classList.add('idle'); }, 2200);
+}
+addEventListener('pointermove', wake);
+cv.addEventListener('click', () => { setPlaying(!playing); wake(); });
+bPlay.addEventListener('click', () => setPlaying(!playing));
+bSound.addEventListener('click', toggleSound);
+$('bRestart').addEventListener('click', () => { seek(0); setPlaying(true); });
+
+const bar = $('bar');
+let scrubbing = false;
+const scrubTo = e => { const r = bar.getBoundingClientRect(); seek(clamp((e.clientX - r.left) / r.width) * DUR * 0.9999); };
+bar.addEventListener('pointerdown', e => { scrubbing = true; bar.setPointerCapture(e.pointerId); scrubTo(e); });
+bar.addEventListener('pointermove', e => { if (scrubbing) scrubTo(e); });
+bar.addEventListener('pointerup', () => { scrubbing = false; });
+
+addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); setPlaying(!playing); }
+  else if (e.code === 'KeyM') toggleSound();
+  else if (e.code === 'KeyR') { seek(0); setPlaying(true); }
+  else if (e.code === 'ArrowRight') seek(t + (e.shiftKey ? 1 : 0.25));
+  else if (e.code === 'ArrowLeft') seek(t - (e.shiftKey ? 1 : 0.25));
+  else return;
+  wake();
+});
+addEventListener('resize', resize);
+
+resize(); hud(); wake();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

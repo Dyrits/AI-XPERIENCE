@@ -149,6 +149,12 @@
   .art-longhand .lh-drop.d3 { animation-duration: 2.2s; animation-delay: -0.6s; }
   .art-loaded { background: #0d3550; }
   .art-loaded svg { width: 100%; height: 100%; }
+  .art-enough { background: #07070d; }
+  .art-enough svg { width: 100%; height: 100%; }
+  .art-enough .en-caret { animation: enblink 1s steps(2, jump-none) infinite; }
+  .art-enough .en-band { animation: enband 3.2s cubic-bezier(.7,0,.3,1) infinite; }
+  @keyframes enblink { 50% { opacity: 0; } }
+  @keyframes enband { 0% { translate: -760px 0; } 30%, 60% { translate: 0 0; } 100% { translate: 760px 0; } }
   @keyframes lhfall { 0% { transform: translateY(-60px); opacity: 0; } 12% { opacity: 1; } 82% { opacity: 1; } 100% { transform: translateY(150px); opacity: 0; } }
   .art-starshard { background: radial-gradient(ellipse at 50% 40%, #101a3a, #04060f 75%); }
   .art-starshard::before {
@@ -337,7 +343,7 @@
     <div class="meta">
       <span>Claude + Codex + GLM + DeepSeek</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">14 pieces</span>
+      <span class="live">16 pieces</span>
     </div>
   </header>
 
@@ -354,7 +360,7 @@
         <div><b>1 (+ 2 max.)</b><span class="mono">Prompt (+ fixes) per piece</span></div>
         <div><b>1</b><span class="mono">File per piece</span></div>
         <div><b>0</b><span class="mono">Dependencies</span></div>
-        <div><b>~1.16M</b><span class="mono">Tokens in total</span></div>
+        <div><b>~1.52M</b><span class="mono">Tokens in total</span></div>
       </div>
     </div>
   </section>
@@ -1116,10 +1122,53 @@
         <a class="open mono" href="pages/loaded.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+    <article class="card" data-src="pages/enough.html" style="--accent: #ff4d3d; animation-delay: 3.15s;">
+      <div class="preview">
+        <div class="art art-enough" aria-hidden="true">
+          <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="en-glow" cx="50%" cy="50%" r="60%"><stop offset="0" stop-color="#ff4d3d" stop-opacity=".22"/><stop offset="1" stop-color="#07070d" stop-opacity="0"/></radialGradient>
+            </defs>
+            <rect width="640" height="400" fill="url(#en-glow)"/>
+            <g transform="rotate(-10 320 200)" opacity=".9">
+              <g class="en-band">
+                <rect x="-200" y="40" width="1040" height="56" fill="#ffb627"/>
+                <text x="320" y="84" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="900" font-size="46" fill="#07070d">MOTION</text>
+              </g>
+            </g>
+            <g fill="none" stroke="#f4f1ea" stroke-opacity=".35" stroke-width="2" stroke-dasharray="10 12">
+              <circle cx="320" cy="222" r="150"/>
+            </g>
+            <circle cx="320" cy="222" r="118" fill="none" stroke="#ff4d3d" stroke-width="2" stroke-dasharray="6 10" opacity=".7"/>
+            <g font-family="'Helvetica Neue',Arial,sans-serif" font-weight="900" fill="#f4f1ea" text-anchor="middle">
+              <text x="320" y="214" font-size="64">One prompt</text>
+              <text x="306" y="278" font-size="64">is enough</text>
+            </g>
+            <circle cx="462" cy="270" r="7" fill="#ff4d3d"/>
+            <rect class="en-caret" x="478" y="234" width="18" height="46" fill="#ff4d3d"/>
+            <text x="320" y="318" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" letter-spacing="2" fill="#f4f1ea" fill-opacity=".55">ONE PROMPT · ONE FILE · TEN SECONDS</text>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · Motion graphic</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Enough</h2><span class="num mono">Nº 17</span></div>
+        <p>A ten-second motion piece on its own premise. A typed prompt collapses into a spark that bursts into slammed words, particles, a flipping tile grid and a carousel of windows, then settles on one line. The last full stop becomes the caret of the next loop.</p>
+        <div class="chips mono"><span>10 s loop</span><span>Kinetic type</span><span>Scrubbable timeline</span><span>Seamless loop</span><span>Web Audio</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
+          <div><dt>Tokens</dt><dd>~100K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>32 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/enough.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts estimate input context plus generated output, including correction rounds. The 15 pieces shown here total roughly 1.42M tokens. Built with Claude Opus 5.5, GPT-6 models, GLM-5.3 and DeepSeek V4 Pro.</span>
+    <span class="note">Token counts estimate input context plus generated output, including correction rounds. The 16 pieces shown here total roughly 1.52M tokens. Built with Claude Opus 5.5, GPT-6 models, GLM-5.3 and DeepSeek V4 Pro.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>
