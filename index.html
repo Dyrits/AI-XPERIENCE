@@ -155,6 +155,10 @@
   .art-tick svg { width: 100%; height: 100%; }
   .art-tick .tk-ptr { transform-origin: 320px 200px; animation: tkspin 6s linear infinite; }
   @keyframes tkspin { to { transform: rotate(360deg); } }
+  .art-murmur { background: #2a2450; }
+  .art-murmur svg { width: 100%; height: 100%; }
+  .art-murmur .mm-flock { animation: mmdrift 7s ease-in-out infinite alternate; transform-origin: 400px 120px; }
+  @keyframes mmdrift { 0% { transform: translate(-40px, 6px) scale(1, .9) rotate(-4deg); } 100% { transform: translate(30px, -10px) scale(1.12, 1.05) rotate(5deg); } }
   .art-enough { background: #07070d; }
   .art-enough svg { width: 100%; height: 100%; }
   .art-enough .en-caret { animation: enblink 1s steps(2, jump-none) infinite; }
@@ -1239,10 +1243,45 @@
         <a class="open mono" href="pages/tick.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+    <article class="card" data-src="pages/murmur.html" style="--accent: #ffb070; animation-delay: 3.6s;">
+      <div class="preview">
+        <div class="art art-murmur" aria-hidden="true">
+          <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="mmsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3668"/><stop offset=".6" stop-color="#b2647c"/><stop offset="1" stop-color="#f8b470"/></linearGradient>
+              <linearGradient id="mmwater" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c77f78"/><stop offset="1" stop-color="#2a1e36"/></linearGradient>
+              <radialGradient id="mmsun"><stop offset="0" stop-color="#ffe2a8" stop-opacity=".8"/><stop offset="1" stop-color="#ffd696" stop-opacity="0"/></radialGradient>
+            </defs>
+            <rect width="640" height="280" fill="url(#mmsky)"/>
+            <circle cx="205" cy="240" r="170" fill="url(#mmsun)"/>
+            <circle cx="205" cy="236" r="15" fill="#fff0cf"/>
+            <path d="M0 280V262Q120 246 250 258T520 250 640 258V280Z" fill="#9a6478"/>
+            <rect y="280" width="640" height="120" fill="url(#mmwater)"/>
+            <rect x="196" y="292" width="18" height="40" rx="9" fill="#ffe8c0" opacity=".35"/>
+            <g class="mm-flock" fill="none" stroke="#1a0f1c" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"><path d="M375.1 130.1l2.2 1 2.2-1M324.5 111.3l2.2 1 2.2-1M486.0 132.8l2.2 1 2.2-1M432.5 125.7l2.2 1 2.2-1M304.8 140.5l2.2 1 2.2-1M320.4 90.0l2.2 1 2.2-1M333.4 103.9l2.2 1 2.2-1M438.1 102.9l2.2 1 2.2-1M417.9 129.3l2.2 1 2.2-1M450.1 140.6l2.2 1 2.2-1M348.0 100.7l2.2 1 2.2-1M447.6 128.0l2.2 1 2.2-1M360.4 100.5l2.2 1 2.2-1M344.7 127.9l2.2 1 2.2-1M425.8 96.7l2.2 1 2.2-1M297.4 110.5l2.2 1 2.2-1M393.5 105.3l2.2 1 2.2-1M306.4 140.7l2.2 1 2.2-1M457.8 139.8l2.2 1 2.2-1M409.0 99.8l2.2 1 2.2-1M441.8 102.4l2.2 1 2.2-1M316.6 102.4l2.2 1 2.2-1M448.6 90.4l2.2 1 2.2-1M493.0 135.9l2.2 1 2.2-1M328.6 89.3l2.2 1 2.2-1M318.0 142.8l2.2 1 2.2-1M480.5 124.6l2.2 1 2.2-1M499.3 136.3l2.2 1 2.2-1M426.3 133.8l2.2 1 2.2-1M478.4 135.5l2.2 1 2.2-1M297.1 103.0l2.2 1 2.2-1M369.6 135.7l2.2 1 2.2-1M331.0 147.1l2.2 1 2.2-1M422.4 132.8l2.2 1 2.2-1M401.2 136.7l2.2 1 2.2-1M472.1 120.0l2.2 1 2.2-1M348.0 141.5l2.2 1 2.2-1M300.4 114.5l2.2 1 2.2-1M396.6 112.4l2.2 1 2.2-1M465.1 92.5l2.2 1 2.2-1M347.7 137.0l2.2 1 2.2-1M433.5 124.3l2.2 1 2.2-1M408.8 129.7l2.2 1 2.2-1M446.7 119.0l2.2 1 2.2-1M472.0 135.8l2.2 1 2.2-1M365.5 107.8l2.2 1 2.2-1M394.1 133.9l2.2 1 2.2-1M470.5 89.4l2.2 1 2.2-1M319.4 127.5l2.2 1 2.2-1M365.8 134.2l2.2 1 2.2-1M440.2 107.4l2.2 1 2.2-1M355.4 115.1l2.2 1 2.2-1M357.0 116.5l2.2 1 2.2-1M459.3 94.0l2.2 1 2.2-1M399.6 134.3l2.2 1 2.2-1M306.0 108.7l2.2 1 2.2-1M379.3 132.6l2.2 1 2.2-1M441.1 92.2l2.2 1 2.2-1M442.2 94.7l2.2 1 2.2-1M394.8 124.1l2.2 1 2.2-1M459.5 124.3l2.2 1 2.2-1M487.3 108.8l2.2 1 2.2-1M515.2 98.4l2.2 1 2.2-1M406.2 131.3l2.2 1 2.2-1M403.4 131.3l2.2 1 2.2-1M430.4 98.6l2.2 1 2.2-1M346.5 92.4l2.2 1 2.2-1M493.3 95.7l2.2 1 2.2-1M404.0 101.6l2.2 1 2.2-1M357.3 145.0l2.2 1 2.2-1M456.3 112.6l2.2 1 2.2-1M401.2 108.4l2.2 1 2.2-1M442.3 130.6l2.2 1 2.2-1M455.9 146.2l2.2 1 2.2-1M488.4 113.2l2.2 1 2.2-1M415.7 122.6l2.2 1 2.2-1M474.5 110.5l2.2 1 2.2-1M292.2 139.1l2.2 1 2.2-1M423.1 105.8l2.2 1 2.2-1M409.9 138.4l2.2 1 2.2-1M405.2 135.4l2.2 1 2.2-1M361.4 139.2l2.2 1 2.2-1M283.3 95.0l2.2 1 2.2-1M318.8 118.6l2.2 1 2.2-1M376.8 117.8l2.2 1 2.2-1M506.9 120.3l2.2 1 2.2-1M434.9 138.8l2.2 1 2.2-1M348.0 139.7l2.2 1 2.2-1M306.0 102.4l2.2 1 2.2-1M404.7 132.3l2.2 1 2.2-1M397.2 100.8l2.2 1 2.2-1M460.8 101.7l2.2 1 2.2-1M320.7 98.4l2.2 1 2.2-1M313.1 131.0l2.2 1 2.2-1M277.3 126.8l2.2 1 2.2-1M439.4 109.1l2.2 1 2.2-1M291.6 99.7l2.2 1 2.2-1M451.7 138.7l2.2 1 2.2-1M461.3 130.3l2.2 1 2.2-1M427.1 94.3l2.2 1 2.2-1M452.8 144.1l2.2 1 2.2-1M481.5 90.2l2.2 1 2.2-1M412.6 144.3l2.2 1 2.2-1M512.6 115.6l2.2 1 2.2-1M432.2 138.3l2.2 1 2.2-1M419.7 134.4l2.2 1 2.2-1M386.8 115.4l2.2 1 2.2-1M463.6 122.8l2.2 1 2.2-1M358.0 97.8l2.2 1 2.2-1M435.1 93.0l2.2 1 2.2-1M460.2 133.6l2.2 1 2.2-1M395.7 128.2l2.2 1 2.2-1M299.2 142.0l2.2 1 2.2-1M460.2 147.6l2.2 1 2.2-1M309.4 100.1l2.2 1 2.2-1M369.6 100.9l2.2 1 2.2-1M492.7 141.3l2.2 1 2.2-1M483.1 142.4l2.2 1 2.2-1M492.7 139.1l2.2 1 2.2-1M290.7 101.6l2.2 1 2.2-1M387.2 128.2l2.2 1 2.2-1M434.1 130.5l2.2 1 2.2-1M446.4 126.8l2.2 1 2.2-1M408.0 105.4l2.2 1 2.2-1M346.3 119.0l2.2 1 2.2-1M399.0 122.1l2.2 1 2.2-1M391.7 100.1l2.2 1 2.2-1M442.1 112.0l2.2 1 2.2-1M415.7 100.4l2.2 1 2.2-1M331.4 139.3l2.2 1 2.2-1M344.1 91.4l2.2 1 2.2-1M384.7 97.8l2.2 1 2.2-1M343.3 135.0l2.2 1 2.2-1M492.5 138.5l2.2 1 2.2-1M409.3 129.2l2.2 1 2.2-1M473.1 94.6l2.2 1 2.2-1M383.7 131.8l2.2 1 2.2-1M450.3 138.7l2.2 1 2.2-1M397.9 143.9l2.2 1 2.2-1M400.2 143.8l2.2 1 2.2-1M379.5 135.5l2.2 1 2.2-1M313.8 125.5l2.2 1 2.2-1M429.9 138.2l2.2 1 2.2-1M462.1 135.6l2.2 1 2.2-1M413.2 121.2l2.2 1 2.2-1M328.3 100.4l2.2 1 2.2-1M394.6 98.6l2.2 1 2.2-1M329.1 135.5l2.2 1 2.2-1M442.1 116.8l2.2 1 2.2-1M492.0 133.0l2.2 1 2.2-1M470.3 96.3l2.2 1 2.2-1M438.9 140.7l2.2 1 2.2-1M293.2 117.5l2.2 1 2.2-1M285.8 95.1l2.2 1 2.2-1M357.1 95.6l2.2 1 2.2-1M448.1 137.0l2.2 1 2.2-1M474.0 144.9l2.2 1 2.2-1M324.3 94.5l2.2 1 2.2-1M394.8 119.2l2.2 1 2.2-1M297.3 118.2l2.2 1 2.2-1M380.7 111.4l2.2 1 2.2-1M446.9 131.1l2.2 1 2.2-1M389.4 107.4l2.2 1 2.2-1M301.9 120.4l2.2 1 2.2-1M300.6 125.3l2.2 1 2.2-1M365.9 110.7l2.2 1 2.2-1M433.8 134.0l2.2 1 2.2-1M378.8 116.6l2.2 1 2.2-1M449.8 129.4l2.2 1 2.2-1M357.8 103.6l2.2 1 2.2-1"/></g>
+            <g fill="none" stroke="#0e0912" stroke-width="1.6" stroke-linecap="round"><path d="M584 402q-0.8 -40 -2.8 -73M6 402q0.4 -56 1.2 -103M495 402q-0.0 -58 -0.1 -106M47 402q1.7 -54 5.8 -97M595 402q-0.4 -32 -1.3 -59M138 402q1.0 -30 3.5 -55M632 402q-1.7 -42 -5.7 -77M7 402q0.9 -54 3.1 -97M515 402q-0.4 -49 -1.4 -89M128 402q0.0 -41 0.1 -74M640 402q-0.8 -41 -2.7 -74M25 402q0.6 -27 2.1 -50M613 402q-0.0 -54 -0.0 -99M98 402q0.2 -54 0.7 -99M506 402q-1.6 -49 -5.4 -90M23 402q0.7 -36 2.4 -66M490 402q-0.6 -45 -2.2 -81M42 402q0.1 -33 0.3 -59M635 402q-0.5 -54 -1.7 -98M136 402q0.5 -32 1.6 -57M585 402q-0.7 -29 -2.2 -53M140 402q1.5 -56 4.9 -102M565 402q-1.7 -57 -5.6 -104M61 402q0.1 -50 0.3 -90M546 402q-1.4 -39 -4.5 -72M78 402q0.1 -33 0.3 -60M506 402q-0.8 -27 -2.8 -49M30 402q1.3 -33 4.4 -61M495 402q-1.2 -32 -3.9 -58M25 402q0.7 -43 2.4 -79M630 402q-0.4 -28 -1.2 -51M129 402q0.4 -41 1.3 -75M511 402q-0.8 -60 -2.7 -110M8 402q0.2 -29 0.5 -53M610 402q-0.4 -26 -1.4 -46M20 402q1.6 -44 5.3 -80M543 402q-0.7 -38 -2.5 -69M57 402q0.6 -37 2.0 -66M638 402q-1.7 -33 -5.8 -59M7 402q1.1 -41 3.8 -75M520 402q-0.5 -30 -1.6 -55M19 402q0.8 -37 2.7 -68M500 402q-1.6 -55 -5.2 -99M0 402q1.3 -23 4.3 -42M513 402q-1.1 -40 -3.5 -73M0 402q1.7 -37 5.6 -67"/></g>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · 3D flocking</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Murmur</h2><span class="num mono">Nº 20</span></div>
+        <p>A poem written by a murmuration of starlings over a lake at dusk. Thousands of birds gather into each line and scatter again while the sun sets, then come down into the reeds for the night and rise at dawn. Be the wind or the hawk, call them to you, or give them your own words to write.</p>
+        <div class="chips mono"><span>3D flocking</span><span>Flock-written type</span><span>Your words</span><span>Lake reflection</span><span>Web Audio</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
+          <div><dt>Tokens</dt><dd>~90K <small>est.</small></dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>44 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/murmur.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts estimate input context plus generated output, including correction rounds. The 18 pieces shown here total roughly 1.70M tokens. Built with Claude Opus 5.5, GPT-6 models, GTP-5 Astra, GLM-5.3 and DeepSeek V4 Pro.</span>
+    <span class="note">Token counts estimate input context plus generated output, including correction rounds. The 19 pieces shown here total roughly 1.79M tokens. Built with Claude Opus 5.5, GPT-6 models, GTP-5 Astra, GLM-5.3 and DeepSeek V4 Pro.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>

@@ -31,6 +31,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Enough](https://dyrits.github.io/AI-XPERIENCE/pages/enough.html) | Canvas 2D, motion graphic | Claude Opus 5.5 | ~100K | 1 | 32 KB |
 | [Replace you](https://dyrits.github.io/AI-XPERIENCE/pages/replace-you.html) | Canvas 2D, motion graphic | GTP-5 Astra | ~51K | 1 | 15 KB |
 | [Tick](https://dyrits.github.io/AI-XPERIENCE/pages/tick.html) | DOM + Canvas 2D, scroll-driven explainer | Claude Opus 5.5 | ~120K | 1 | 60 KB |
+| [Murmur](https://dyrits.github.io/AI-XPERIENCE/pages/murmur.html) | Canvas 2D, 3D flocking | Claude Opus 5.5 | ~90K | 1 | 44 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -71,6 +72,8 @@ Includes optional synthesized sound, pause, timeline scrubbing, keyboard frame s
 
 **Tick.** A scroll-driven explainer of the JavaScript event loop. Six chapters (call stack, Web APIs and the task queue, microtasks, draining the queue, rendering, async/await) step through real snippets as you scroll: each call flies from the highlighted line onto the call stack, timers count down in the Web APIs panel, callbacks travel into the task or microtask queue, and a pointer circles the event loop wheel through task, microtask and render phases while the console fills in. Scrolling back rewinds everything. A button runs each snippet for real and checks the predicted output, a recap lists the four rules with pseudo-code, and a live lab freezes a JavaScript-driven animation by blocking the stack or flooding microtasks, then shows the same work split into tasks staying smooth. Keyboard stepping, chapter rail, reduced-motion support.
 
+**Murmur.** A poem written by a murmuration of starlings over a lake at dusk. Thousands of birds fly as a 3D flock, each one following its seven nearest neighbours inside a roaming soft envelope that stretches, folds and sometimes splits in two, and every so often the flock streams into a line of the poem, written from left to right, then lets it go. Nine lines play while the sun sets, stars come out and the moon rises; after the last line the flock pours down into the reeds for the night and rises again at dawn to write "your turn". Move to be the wind, move fast to be the hawk and send panic waves through the flock (even through a finished line), hold to gather the birds into a swirling ball, touch the water to make ripples, or type a word and press Enter for the flock to write it. Left alone after the poem, the flock rewrites your earlier words. The sky and flock are mirrored in a rippling lake between swaying reeds, and optional synthesized wind, wing rush, pads and bells follow the flock.
+
 The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand. Vesper received a correction that set the bell inside a belfry tower instead of in open air. Starshard needed two correction rounds: crash fixes (a palette key mismatch that crashed the game when splitters appeared, and a music-sequencer index bug that crashed the run seconds after launch), and a desktop-only gate that blocks the game on touch devices. Longhand received a correction that breaks stalemates: a runner wedged against a wall for five seconds is thrown back to the left of the screen and loses a heart (with a little ink back), so a stalled run now costs lives instead of freezing; the same round lowered early cliff heights, moved ink milestones closer together and made the warning sign blink over his head. Loaded received a correction so that selling a Joker frees its slot in the shop immediately, and so that Stars apply on purchase instead of taking a consumable slot.
 
 ## Viewing
@@ -96,6 +99,7 @@ AI-XPERIENCE/
     ├── loaded.html
     ├── longhand.html
     ├── mercurial.html
+    ├── murmur.html
     ├── night-atlas.html
     ├── replace-you.html
     ├── starshard.html
