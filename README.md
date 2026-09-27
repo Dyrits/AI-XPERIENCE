@@ -33,6 +33,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Tick](https://dyrits.github.io/AI-XPERIENCE/pages/tick.html) | DOM + Canvas 2D, scroll-driven explainer | Claude Opus 5.5 | ~120K | 1 | 60 KB |
 | [Murmur](https://dyrits.github.io/AI-XPERIENCE/pages/murmur.html) | Canvas 2D, 3D flocking | Claude Opus 5.5 | ~90K | 1 | 44 KB |
 | [Somewhere, softly](https://dyrits.github.io/AI-XPERIENCE/pages/somewhere-softly.html) | Canvas 2D, projected 3D mobile | GTP-6 Astra | ~62K | 1 | 33 KB |
+| [Paperborough](https://dyrits.github.io/AI-XPERIENCE/pages/paperborough.html) | Canvas 2D, isometric city builder | GTP-6 Astra | ~83K | 1 | 59 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -79,6 +80,8 @@ The Abyss and Mercurial correction rounds fixed small issues: tentacles glitchin
 
 **Somewhere, softly.** Five miniature places hang from a wooden mobile: a village, an orchard, a lighthouse, a small sea with a sailboat and a solitary house. Drag to turn the sculpture, select an island to look closer and read its story, send a breeze through the hanging islands, or move the light from morning to night. Includes optional synthesized chimes, PNG postcard export, pause and reset controls, touch and keyboard input, and reduced-motion support. Everything is drawn in the file, with no external assets.
 
+**Paperborough.** A city builder drawn as a folded-paper town, with pencil outlines, lavender roofs, sage trees and a paper river. Lay roads and bridges to connect homes, markets and paper mills to the town hall. Residents arrive as days pass, jobs and gardens affect happiness, and taxes and mills supply paper for construction. Seven buildable pieces, building upgrades and six town goals let the settlement grow at your own pace. Includes local saves, undo, pause and manual day advancement, optional synthesized sound, PNG postcard export, mouse and keyboard controls, touch panning and pinch zoom, and reduced-motion support. All artwork is generated in the file, with no external assets.
+
 ## Viewing
 
 The portfolio is live at https://dyrits.github.io/AI-XPERIENCE/. Locally, open `index.html` in a recent browser. It is a portfolio page listing the pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
@@ -104,6 +107,7 @@ AI-XPERIENCE/
     ├── mercurial.html
     ├── murmur.html
     ├── night-atlas.html
+    ├── paperborough.html
     ├── replace-you.html
     ├── somewhere-softly.html
     ├── starshard.html

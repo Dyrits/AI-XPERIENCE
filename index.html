@@ -159,6 +159,8 @@
   .art-murmur svg { width: 100%; height: 100%; }
   .art-somewhere { background: #e4e5f2; }
   .art-somewhere svg { width: 100%; height: 100%; }
+  .art-paperborough { background: #e8ece3; }
+  .art-paperborough svg { width: 100%; height: 100%; }
   .art-murmur .mm-flock { animation: mmdrift 7s ease-in-out infinite alternate; transform-origin: 400px 120px; }
   @keyframes mmdrift { 0% { transform: translate(-40px, 6px) scale(1, .9) rotate(-4deg); } 100% { transform: translate(30px, -10px) scale(1.12, 1.05) rotate(5deg); } }
   .art-enough { background: #07070d; }
@@ -303,7 +305,7 @@
   .chips { display: flex; flex-wrap: wrap; gap: .45rem; }
   .chips span { font-size: .6rem; letter-spacing: .16em; text-transform: uppercase; padding: .4rem .65rem; border: 1px solid var(--faint); border-radius: 99px; color: var(--dim); }
 
-  .specs { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--faint); margin-top: auto; }
+  .specs { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--faint); margin-top: auto; }
   .specs div { padding: 1rem 0 0; }
   .specs div + div { padding-left: 1rem; border-left: 1px solid var(--faint); }
   .specs dt { font-size: .56rem; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); margin-bottom: .35rem; }
@@ -355,7 +357,7 @@
     <div class="meta">
       <span>Claude + Codex + GLM + DeepSeek</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">20 pieces</span>
+      <span class="live">21 pieces</span>
     </div>
   </header>
 
@@ -372,7 +374,6 @@
         <div><b>1 (+ 2 max.)</b><span class="mono">Prompt (+ fixes) per piece</span></div>
         <div><b>1</b><span class="mono">File per piece</span></div>
         <div><b>0</b><span class="mono">Dependencies</span></div>
-        <div><b>~1.85M</b><span class="mono">Tokens in total</span></div>
       </div>
     </div>
   </section>
@@ -392,7 +393,6 @@
         <div class="chips mono"><span>Verlet physics</span><span>Flow field</span><span>Parallax</span><span>Scroll-linked</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
-          <div><dt>Tokens</dt><dd>~60K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 1</dd></div>
           <div><dt>Size</dt><dd>28 <small>KB</small></dd></div>
         </dl>
@@ -412,7 +412,6 @@
         <div class="chips mono"><span>SDF raymarching</span><span>Soft shadows</span><span>Web Audio</span><span>Adaptive resolution</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
-          <div><dt>Tokens</dt><dd>~55K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 1</dd></div>
           <div><dt>Size</dt><dd>37 <small>KB</small></dd></div>
         </dl>
@@ -442,7 +441,6 @@
         <div class="chips mono"><span>Procedural wings</span><span>Draw to create</span><span>Web Audio</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>GPT-6 Astra</dd></div>
-          <div><dt>Tokens</dt><dd>~57K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 1</dd></div>
           <div><dt>Size</dt><dd>21 <small>KB</small></dd></div>
         </dl>
@@ -460,7 +458,7 @@
         <p>Draw a crease in space and flip drifting sparks into their home. Line up the ghosts, catch several lights in one fold, and race the clock as tears open in the field.</p>
         <div class="chips mono"><span>Mirror geometry</span><span>90-second game</span><span>Web Audio</span></div>
         <dl class="specs mono">
-          <div><dt>Model</dt><dd>GPT-6 Astra</dd></div><div><dt>Tokens</dt><dd>~60K <small>est.</small></dd></div><div><dt>Prompts</dt><dd>1</dd></div><div><dt>Size</dt><dd>21 <small>KB</small></dd></div>
+          <div><dt>Model</dt><dd>GPT-6 Astra</dd></div><div><dt>Prompts</dt><dd>1</dd></div><div><dt>Size</dt><dd>21 <small>KB</small></dd></div>
         </dl>
         <a class="open mono" href="pages/foldwake.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
@@ -482,7 +480,6 @@
         <div class="chips mono"><span>Sonar reveal</span><span>Procedural cave</span><span>Stealth</span><span>Web Audio</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>GLM-5.3</dd></div>
-          <div><dt>Tokens</dt><dd>~58K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1</dd></div>
           <div><dt>Size</dt><dd>33 <small>KB</small></dd></div>
         </dl>
@@ -521,7 +518,6 @@
         <div class="chips mono"><span>Curl-noise flow</span><span>Particle tracing</span><span>Tileable export</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>DeepSeek V4 Pro</dd></div>
-          <div><dt>Tokens</dt><dd>~55K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1</dd></div>
           <div><dt>Size</dt><dd>28 <small>KB</small></dd></div>
         </dl>
@@ -557,7 +553,6 @@
         <div class="chips mono"><span>Six chapters</span><span>Living memories</span><span>Synthesized music</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>GPT-6 Astra</dd></div>
-          <div><dt>Tokens</dt><dd>~58K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 2</dd></div>
           <div><dt>Size</dt><dd>23 <small>KB</small></dd></div>
         </dl>
@@ -586,7 +581,6 @@
         <div class="chips mono"><span>One continuous line</span><span>Watercolour washes</span><span>Synthesized music</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
-          <div><dt>Tokens</dt><dd>~150K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1</dd></div>
           <div><dt>Size</dt><dd>34 <small>KB</small></dd></div>
         </dl>
@@ -611,7 +605,6 @@
         <div class="chips mono"><span>Wave roguelike</span><span>Upgrade drafts</span><span>Boss battles</span><span>Web Audio</span><span>Desktop only</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>GLM-5.3</dd></div>
-          <div><dt>Tokens</dt><dd>~70K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 2</dd></div>
           <div><dt>Size</dt><dd>80 <small>KB</small></dd></div>
         </dl>
@@ -861,7 +854,6 @@
         <div class="chips mono"><span>Projected 3D</span><span>Upgrade drafts</span><span>Three bosses</span><span>Web Audio</span><span>Desktop only</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>GPT-6 Astra</dd></div>
-          <div><dt>Tokens</dt><dd>~150K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 2</dd></div>
           <div><dt>Size</dt><dd>65 <small>KB</small></dd></div>
         </dl>
@@ -915,7 +907,6 @@
         <div class="chips mono"><span>Active + idle</span><span>Branching choices</span><span>Prestige runs</span><span>Web Audio</span><span>Saves locally</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
-          <div><dt>Tokens</dt><dd>~150K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 1</dd></div>
           <div><dt>Size</dt><dd>78 <small>KB</small></dd></div>
         </dl>
@@ -966,7 +957,6 @@
         <div class="chips mono"><span>Causal graph</span><span>Three time layers</span><span>Echo effects</span><span>Growing map</span><span>Web Audio</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
-          <div><dt>Tokens</dt><dd>~170K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 1</dd></div>
           <div><dt>Size</dt><dd>71 <small>KB</small></dd></div>
         </dl>
@@ -1011,7 +1001,6 @@
         <div class="chips mono"><span>Linked puzzles</span><span>Three rooms</span><span>Notebook &amp; hints</span><span>Local saves</span><span>Web Audio</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>GPT-6 Astra</dd></div>
-          <div><dt>Tokens</dt><dd>~70K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1</dd></div>
           <div><dt>Size</dt><dd>54 <small>KB</small></dd></div>
         </dl>
@@ -1053,7 +1042,6 @@
         <div class="chips mono"><span>Draw to build</span><span>Ink economy</span><span>Falling hazards</span><span>Procedural stickman</span><span>Web Audio</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>GLM-5.3</dd></div>
-          <div><dt>Tokens</dt><dd>~65K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 1</dd></div>
           <div><dt>Size</dt><dd>34 <small>KB</small></dd></div>
         </dl>
@@ -1127,7 +1115,6 @@
         <div class="chips mono"><span>3D dice</span><span>34 Jokers</span><span>Editable faces</span><span>Boss blinds</span><span>Web Audio</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
-          <div><dt>Tokens</dt><dd>~200K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1 + 1</dd></div>
           <div><dt>Size</dt><dd>96 <small>KB</small></dd></div>
         </dl>
@@ -1170,7 +1157,6 @@
         <div class="chips mono"><span>10 s loop</span><span>Kinetic type</span><span>Scrubbable timeline</span><span>Seamless loop</span><span>Web Audio</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
-          <div><dt>Tokens</dt><dd>~100K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1</dd></div>
           <div><dt>Size</dt><dd>32 <small>KB</small></dd></div>
         </dl>
@@ -1202,7 +1188,6 @@
         <div class="chips mono"><span>18 s loop</span><span>Kinetic type</span><span>Scrubbable timeline</span><span>Reduced motion</span><span>Web Audio</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>GTP-5 Astra</dd></div>
-          <div><dt>Tokens</dt><dd>~51K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1</dd></div>
           <div><dt>Size</dt><dd>15 <small>KB</small></dd></div>
         </dl>
@@ -1238,7 +1223,6 @@
         <div class="chips mono"><span>Scroll-scrubbed</span><span>6 chapters</span><span>Run for real</span><span>Live lab</span><span>Reduced motion</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
-          <div><dt>Tokens</dt><dd>~120K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1</dd></div>
           <div><dt>Size</dt><dd>60 <small>KB</small></dd></div>
         </dl>
@@ -1273,7 +1257,6 @@
         <div class="chips mono"><span>3D flocking</span><span>Flock-written type</span><span>Your words</span><span>Lake reflection</span><span>Web Audio</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>Claude Opus 5.5</dd></div>
-          <div><dt>Tokens</dt><dd>~90K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1</dd></div>
           <div><dt>Size</dt><dd>44 <small>KB</small></dd></div>
         </dl>
@@ -1310,17 +1293,57 @@
         <div class="chips mono"><span>3D paper islands</span><span>Wind &amp; light</span><span>Postcard export</span><span>Touch &amp; keyboard</span><span>Web Audio</span></div>
         <dl class="specs mono">
           <div><dt>Model</dt><dd>GTP-6 Astra</dd></div>
-          <div><dt>Tokens</dt><dd>~62K <small>est.</small></dd></div>
           <div><dt>Prompts</dt><dd>1</dd></div>
           <div><dt>Size</dt><dd>33 <small>KB</small></dd></div>
         </dl>
         <a class="open mono" href="pages/somewhere-softly.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+    <article class="card" data-src="pages/paperborough.html" style="--accent: #b3c79d; animation-delay: 3.9s;">
+      <div class="preview">
+        <div class="art art-paperborough" aria-hidden="true">
+          <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="pbDots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r=".6" fill="#a4b39b" opacity=".4"/></pattern>
+              <g id="pbHouse" stroke="#52634f" stroke-width=".8" stroke-linejoin="round"><path d="m-21-24 24 12v31L-21 7Z" fill="#f6edd9"/><path d="m3-12 23-12V7L3 19Z" fill="#d5dac4"/><path d="m-25-25 22-25 29 24L3-14Z" fill="#aaa0c5"/><path d="m-3-50 24-12 29 24-24 12Z" fill="#8885ac"/><path d="m-15-13 6 3v8l-6-3Zm10 5 6 3v8l-6-3Z" fill="#728e80"/><path d="m12-9 7-4v8l-7 4Z" fill="#698578"/><path d="m-5 15 8 4V5l-8-4Z" fill="#9b9f79"/><path d="m-23-23 24 11m2 30 23-11" fill="none" opacity=".4"/></g>
+              <g id="pbTree" stroke="#64765a" stroke-width=".7" stroke-linejoin="round"><path d="M0 0v-21" stroke-width="2"/><path d="m-13-13 14-34-1 42Z" fill="#acc097"/><path d="m1-47 13 34-14 8Z" fill="#7f9c76"/><path d="m-13-13 13 8 14-8" fill="none"/></g>
+            </defs>
+            <rect width="640" height="400" fill="#e8ece3"/><rect width="640" height="400" fill="url(#pbDots)"/>
+            <path d="m67 218 264-135 260 133-259 146Z" fill="#617554" opacity=".08"/>
+            <g stroke="#96a783" stroke-width=".7" stroke-linejoin="round"><path d="m73 205 257 132v10L73 215Z" fill="#b8c2a3"/><path d="m330 337 251-132v10L330 347Z" fill="#99ad91"/><path d="m73 205 257-132 251 132-251 132Z" fill="#d6ddbc"/></g>
+            <g fill="none" stroke="#9dac88" stroke-width=".55" opacity=".4"><path d="m116 183 257 131M159 161l257 131M202 139l257 131M245 117l257 131M288 95l257 131M116 227 257-132M159 249l257-132M202 271l257-132M245 293l257-132M288 315l257-132"/></g>
+            <path d="m423 121 52 27-255 132-51-27Z" fill="#a6c5c0"/>
+            <g fill="none" stroke="#e4eddb" stroke-width="1"><path d="m404 148 11-5m-52 29 13-6m-53 27 10-5m-55 30 14-7m-51 27 13-5m-53 26 10-5"/></g>
+            <path d="m195 168 18-9 221 114-18 9Z" fill="#e9e1c9"/><path d="m289 208 14 7-75 38-14-7Z" fill="#e9e1c9"/>
+            <g stroke="#8d9476" stroke-width=".9"><path d="m279 204 45 23-17 9-45-23Z" fill="#d8c79f"/><path d="m268 202 45 23m-45-23v10m45 13v10m-36-28v10m18-1v10" fill="none"/></g>
+            <use href="#pbTree" transform="translate(330 112) scale(.75)"/><use href="#pbTree" transform="translate(382 139) scale(.65)"/>
+            <use href="#pbHouse" transform="translate(262 168) scale(.85)"/>
+            <g stroke="#52634f" stroke-width=".8" stroke-linejoin="round"><path d="m306 161 22 12v42l-22-12Z" fill="#f5edd5"/><path d="m328 173 19-10v42l-19 10Z" fill="#d6dbc2"/><path d="m300 161 19-21 34 21-24 14Z" fill="#9aada7"/><path d="m315 153 13 7V99l-13-6Z" fill="#f6edd5"/><path d="m328 160 12-7V92l-12 7Z" fill="#c6cfb6"/><path d="m310 95 16-24 18 23-16 9Z" fill="#aaa0c6"/><path d="M326 71V53l17 4-3 8-14-3" fill="#d8b87e"/><ellipse cx="322" cy="116" rx="4" ry="6" fill="#fff7dc"/><path d="M322 112v4l3 3M314 207v-17l8 4v18" fill="#7f947c"/></g>
+            <use href="#pbTree" transform="translate(155 198) scale(.78)"/><use href="#pbTree" transform="translate(190 217) scale(.63)"/>
+            <use href="#pbHouse" transform="translate(359 231) scale(.86)"/><use href="#pbHouse" transform="translate(411 254) scale(.72)"/>
+            <use href="#pbTree" transform="translate(492 210) scale(.9)"/><use href="#pbTree" transform="translate(451 244) scale(.72)"/><use href="#pbTree" transform="translate(287 297) scale(.85)"/><use href="#pbTree" transform="translate(330 307) scale(.65)"/>
+            <g transform="translate(229 251)" stroke="#69785f" stroke-width=".7"><path d="m-12 0 24 1-7 7-11-2Z" fill="#f7f0da"/><path d="M0 2v-26L-10-4 0-6" fill="#f6eed9"/><path d="m2-19 9 17-9-2Z" fill="#b7a8c7"/></g>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · Isometric city builder</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Paperborough</h2><span class="num mono">Nº 22</span></div>
+        <p>Build a town from folded paper, with pencil outlines, lavender roofs and a river crossed by little bridges. Connect homes, markets and paper mills to the town hall, welcome new residents and complete six town goals. Expand buildings, plant gardens, undo a misplaced piece or save your town as a postcard.</p>
+        <div class="chips mono"><span>Origami city builder</span><span>Daily economy</span><span>Local saves &amp; undo</span><span>Postcard export</span><span>Touch &amp; keyboard</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>GTP-6 Astra</dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>59 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/paperborough.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Token counts estimate input context plus generated output, including correction rounds. The 20 pieces shown here total roughly 1.85M tokens. Built with Claude Opus 5.5, GPT-6 models, GTP-5 Astra, GTP-6 Astra, GLM-5.3 and DeepSeek V4 Pro.</span>
+    <span class="note">Built with Claude Opus 5.5, GPT-6 models, GTP-5 Astra, GTP-6 Astra, GLM-5.3 and DeepSeek V4 Pro.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>
