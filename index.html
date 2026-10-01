@@ -161,6 +161,12 @@
   .art-somewhere svg { width: 100%; height: 100%; }
   .art-paperborough { background: #e8ece3; }
   .art-paperborough svg { width: 100%; height: 100%; }
+  .art-nodal { background: #140f0a; }
+  .art-nodal svg { width: 100%; height: 100%; }
+  .art-nodal .nd-sand { animation: ndshift 9s ease-in-out infinite alternate; }
+  .art-nodal .nd-glow { animation: ndpulse 4.2s ease-in-out infinite; }
+  @keyframes ndpulse { 0%, 100% { opacity: .38; } 50% { opacity: .72; } }
+  @keyframes ndshift { from { transform: translate(0, 0); } to { transform: translate(-2px, 1.5px); } }
   .art-murmur .mm-flock { animation: mmdrift 7s ease-in-out infinite alternate; transform-origin: 400px 120px; }
   @keyframes mmdrift { 0% { transform: translate(-40px, 6px) scale(1, .9) rotate(-4deg); } 100% { transform: translate(30px, -10px) scale(1.12, 1.05) rotate(5deg); } }
   .art-enough { background: #07070d; }
@@ -357,7 +363,7 @@
     <div class="meta">
       <span>Claude + Codex + GLM + DeepSeek</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">21 pieces</span>
+      <span class="live">22 pieces</span>
     </div>
   </header>
 
@@ -1340,10 +1346,77 @@
         <a class="open mono" href="pages/paperborough.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+    <article class="card" data-src="pages/nodal.html" style="--accent: #e0b26a; animation-delay: 4.3s;">
+      <div class="preview">
+        <div class="art art-nodal" aria-hidden="true">
+          <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="ndBench" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#241a11"/><stop offset=".55" stop-color="#171009"/><stop offset="1" stop-color="#0a0705"/>
+              </linearGradient>
+              <linearGradient id="ndSteel" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#3a414b"/><stop offset=".42" stop-color="#1d222a"/><stop offset="1" stop-color="#0d1014"/>
+              </linearGradient>
+              <linearGradient id="ndSheen" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#bcd8ff" stop-opacity=".12"/><stop offset=".55" stop-color="#fff" stop-opacity=".02"/><stop offset="1" stop-color="#000" stop-opacity=".14"/>
+              </linearGradient>
+              <radialGradient id="ndMirror" cx=".36" cy=".32" r=".8">
+                <stop offset="0" stop-color="#f4f8ff"/><stop offset=".5" stop-color="#9aa6b6"/><stop offset="1" stop-color="#2b323c"/>
+              </radialGradient>
+              <radialGradient id="ndVig" cx=".5" cy=".46" r=".72">
+                <stop offset=".35" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/>
+              </radialGradient>
+              <filter id="ndBlur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5"/></filter>
+              <filter id="ndBlur2" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.6"/></filter>
+              <path id="ndLines" fill="none" d="M202.4 29.5L184.5 32.6L179.6 35.6L177.0 40.2L177.1 44.8L179.6 50.9L191.7 66.2L190.2 67.7L179.5 58.7L171.9 54.1L167.3 52.9L162.7 53.5L158.1 57.5L155.7 63.1L153.1 84.5L152.8 130.3L154.6 145.6L156.6 148.0L159.6 149.3L180.3 151.7L158.1 153.3L155.1 155.4L153.4 160.9L152.5 208.2L154.0 234.2L155.6 237.2L159.6 239.1L180.3 240.3L159.6 242.7L155.6 244.9L154.1 247.9L152.9 258.6L152.7 283.1L154.4 322.8L158.1 334.5L161.2 337.6L165.7 339.2L170.3 338.5L176.4 335.5L191.7 322.9L193.1 324.3L191.7 325.8L190.2 324.3 M202.4 29.5L251.3 28.8L269.6 30.6L272.0 32.6L273.3 35.6L275.7 56.3L277.3 34.1L279.4 31.1L284.9 29.4L332.2 28.5L358.2 30.0L361.2 31.6L363.1 35.6L364.3 56.3L366.7 35.6L368.9 31.6L371.9 30.1L382.6 28.9L407.1 28.7L446.8 30.4L458.5 34.1L461.6 37.2L463.2 41.7L462.5 46.3L459.5 52.4L446.9 67.7L448.3 69.1L449.8 67.7L448.3 66.2 M469.7 53.5L462.0 57.5L449.8 67.7 M469.7 53.5L474.3 52.8L478.8 54.4L482.5 58.5L485.1 66.2L487.2 93.7L486.7 139.5L485.4 145.6L482.3 148.7L472.7 150.7L459.7 151.7L480.4 152.9L484.4 154.8L486.0 157.8L487.4 176.1L487.2 225.0L486.0 234.2L483.4 238.0L477.3 239.6L459.7 240.3L480.4 242.7L483.4 244.0L485.4 246.4L486.7 252.5L487.3 266.3L486.5 314.7L483.4 331.5L480.4 336.4L475.8 339.0L471.2 338.9L465.1 336.4L448.3 322.9L446.9 324.3L448.3 325.8L449.8 324.3 M191.7 66.2L193.1 67.7L191.7 69.1L190.2 67.7 M446.8 67.9L444.1 70.8L445.2 71.9L446.5 70.8L445.5 69.2 M446.8 67.9L448.1 69.2L446.8 70.5 M194.8 69.5L195.9 70.8L194.8 71.9L193.5 70.8 M287.9 96.6L287.9 98.3L288.0 96.7 M352.1 96.6L352.1 98.3L352.0 96.7 M448.3 153.2L454.7 153.2L448.3 153.3 M417.7 163.9L419.4 163.9L417.7 163.9 M333.7 181.0L330.7 183.8L332.2 185.3L333.5 183.8L332.4 182.3 M333.7 181.0L335.0 182.3L333.7 183.6 M307.8 182.5L309.3 183.8L307.8 185.3L306.5 183.8 M307.8 206.7L305.0 209.7L306.3 211.0L307.6 209.7L306.5 208.2 M307.8 206.7L309.3 208.2L307.8 209.5 M333.7 208.4L335.0 209.7L333.7 211.0L332.4 209.7 M220.7 228.0L222.3 228.1L220.6 228.1 M448.3 238.7L454.7 238.8L448.3 238.8 M287.9 293.7L288.0 295.3L287.9 293.7 M352.1 293.7L352.1 295.4L352.1 293.7 M194.8 320.1L191.9 322.8L193.2 324.1L194.5 322.8L193.5 321.2 M194.8 320.1L195.9 321.2L194.8 322.5 M446.8 321.5L448.1 322.8L446.8 324.1L445.5 322.8 M277.2 324.0L277.2 330.7L277.3 324.3 M362.8 324.0L362.8 330.7L362.8 324.3 M191.7 325.8L180.5 339.6L176.9 348.7L177.5 353.3L179.5 356.2L187.1 360.3L199.3 362.3L219.2 363.2L254.3 363.2L268.1 361.9L271.1 360.4L273.3 356.4L275.7 335.7L276.6 354.8L279.4 360.9L289.5 363.1L320.0 363.6L350.5 363.1L360.6 360.9L363.4 354.8L364.3 335.7L366.7 356.4L368.9 360.4L371.9 361.9L385.7 363.2L420.8 363.2L440.7 362.3L452.9 360.3L460.5 356.2L462.5 353.3L463.1 348.7L459.5 339.6L448.3 325.8"/>
+              <path id="ndSand" fill="none" d="M466.8 141.6h.01M442.7 239.9h.01M192.0 74.8h.01M352.5 304.5h.01M408.5 215.2h.01M278.4 49.9h.01M284.4 164.0h.01M243.6 117.4h.01M237.1 115.8h.01M451.5 324.0h.01M453.2 332.3h.01M249.1 121.9h.01M365.4 74.4h.01M439.4 313.2h.01M420.3 226.9h.01M434.8 83.1h.01M361.8 155.2h.01M369.7 146.2h.01M398.8 114.4h.01M204.7 234.8h.01M288.3 93.9h.01M324.8 283.0h.01M411.6 169.3h.01M334.3 281.8h.01M456.2 65.4h.01M277.3 148.2h.01M225.3 294.9h.01M362.9 307.6h.01M406.8 217.0h.01M446.3 326.9h.01M293.6 288.2h.01M327.9 111.0h.01M320.5 189.1h.01M201.9 77.7h.01M364.0 324.8h.01M279.7 61.1h.01M466.2 326.1h.01M284.0 97.7h.01M404.9 116.4h.01M331.2 280.5h.01M281.4 83.6h.01M175.5 68.4h.01M359.2 79.4h.01M264.6 251.5h.01M443.7 49.2h.01M197.2 68.8h.01M228.1 218.5h.01M278.3 74.3h.01M406.8 219.7h.01M288.4 293.0h.01M348.6 231.7h.01M291.8 172.1h.01M302.2 108.3h.01M439.5 351.3h.01M412.6 221.9h.01M440.7 44.7h.01M414.6 165.8h.01M210.9 83.4h.01M283.6 294.6h.01M314.2 280.3h.01M341.0 109.7h.01M462.0 239.4h.01M260.7 146.1h.01M231.9 223.4h.01M250.2 122.8h.01M443.2 154.1h.01M192.0 151.8h.01M355.3 165.9h.01M277.3 240.5h.01M409.9 211.9h.01M325.5 190.7h.01M356.9 162.4h.01M236.3 200.1h.01M410.0 182.0h.01M429.6 308.7h.01M395.0 270.6h.01M316.5 188.0h.01M406.1 206.3h.01M164.2 158.4h.01M333.0 115.1h.01M187.9 46.7h.01M353.1 167.1h.01M326.2 280.3h.01M418.6 221.5h.01M267.7 143.9h.01M408.2 182.1h.01M200.7 81.8h.01M241.3 119.2h.01M411.1 108.2h.01M481.2 310.5h.01M213.8 303.8h.01M407.8 212.8h.01M418.2 96.4h.01M300.8 180.6h.01M276.5 248.1h.01M363.5 56.6h.01M338.7 174.4h.01M283.9 230.5h.01M196.1 153.7h.01M449.1 67.1h.01M233.1 173.6h.01M276.9 77.9h.01M200.1 57.3h.01M337.6 103.9h.01M338.2 182.7h.01M188.9 330.6h.01M300.9 208.7h.01M448.0 318.7h.01M341.1 215.9h.01M278.0 316.7h.01M397.2 278.3h.01M356.4 311.8h.01M336.7 214.6h.01M257.0 129.2h.01M347.4 108.7h.01M201.3 40.3h.01M377.0 247.8h.01M468.4 151.8h.01M466.4 63.7h.01M266.0 241.4h.01M261.0 248.4h.01M282.9 292.3h.01M195.6 322.5h.01M232.3 284.5h.01M449.6 56.6h.01M407.5 283.8h.01M440.2 339.0h.01M410.1 179.7h.01M463.9 154.0h.01M407.8 182.6h.01M221.5 100.5h.01M187.4 240.8h.01M346.1 175.1h.01M235.0 106.6h.01M357.7 230.9h.01M167.3 146.6h.01M367.2 145.3h.01M457.1 333.0h.01M438.4 240.4h.01M286.3 93.5h.01M255.9 132.8h.01M356.4 76.4h.01M451.7 346.4h.01M226.7 165.5h.01M168.3 239.4h.01M447.7 309.0h.01M421.6 298.3h.01M268.1 145.2h.01M361.2 306.7h.01M422.3 88.9h.01M355.2 94.5h.01M408.6 172.7h.01M314.6 282.9h.01M436.0 314.1h.01M195.9 235.3h.01M236.0 280.3h.01M344.8 169.9h.01M232.5 177.8h.01M338.1 212.3h.01M291.5 222.0h.01M340.4 105.9h.01M357.3 232.9h.01M263.5 250.2h.01M401.7 183.3h.01M199.5 152.4h.01M236.2 189.2h.01M432.1 157.8h.01M352.1 102.1h.01M413.7 292.4h.01M429.0 85.3h.01M186.7 64.8h.01M305.5 207.2h.01M446.8 50.5h.01M229.8 112.2h.01M297.0 175.7h.01M280.9 69.9h.01M283.1 232.3h.01M340.4 104.0h.01M416.7 164.9h.01M431.2 239.3h.01M247.1 273.5h.01M192.9 330.9h.01M346.8 293.7h.01M285.0 96.4h.01M298.6 287.0h.01M236.1 177.5h.01M277.0 63.7h.01M400.6 286.1h.01M264.2 256.3h.01M277.0 51.2h.01M303.1 107.9h.01M329.1 177.8h.01M273.5 57.4h.01M455.6 152.1h.01M216.4 91.9h.01M452.4 330.5h.01M366.6 237.2h.01M360.8 329.5h.01M255.0 131.3h.01M284.9 69.8h.01M342.6 167.0h.01M330.3 108.0h.01M281.5 80.5h.01M281.5 159.9h.01M428.3 234.2h.01M236.3 207.8h.01M413.7 224.3h.01M280.3 242.4h.01M292.9 293.7h.01M291.4 106.2h.01M276.3 57.5h.01M449.1 155.3h.01M395.4 114.6h.01M223.7 225.0h.01M349.8 102.5h.01M204.6 94.9h.01M231.8 184.2h.01M276.1 238.9h.01M192.4 150.7h.01M266.9 137.3h.01M418.5 355.3h.01M363.2 345.3h.01M216.6 156.8h.01M353.5 347.1h.01M322.7 278.1h.01M277.3 339.9h.01M199.8 233.7h.01M369.0 341.5h.01M236.9 281.9h.01M360.9 152.4h.01M227.9 98.7h.01M299.2 285.2h.01M390.8 270.1h.01M364.1 59.4h.01M372.2 144.9h.01M437.8 311.0h.01M349.6 106.4h.01M321.6 193.7h.01M470.6 309.0h.01M194.6 348.7h.01M225.7 222.6h.01M292.5 99.3h.01M451.3 152.5h.01M415.5 228.4h.01M238.2 282.4h.01M399.4 112.8h.01M291.6 223.6h.01M420.1 87.4h.01M409.7 179.6h.01M402.6 274.7h.01M258.8 129.9h.01M293.7 104.0h.01M440.9 346.3h.01M412.0 171.2h.01M198.1 241.5h.01M320.1 276.0h.01M373.2 343.1h.01M288.2 102.7h.01M358.3 82.6h.01M342.5 175.7h.01M204.5 80.6h.01M391.6 123.5h.01M235.8 112.5h.01M215.5 90.4h.01M288.5 161.9h.01M339.1 216.1h.01M401.6 277.2h.01M240.7 279.2h.01M339.5 287.9h.01M276.1 71.9h.01M235.8 181.2h.01M432.4 230.4h.01M406.8 181.2h.01M435.5 151.7h.01M193.5 155.8h.01M177.1 72.8h.01M423.4 223.8h.01M204.8 235.4h.01M403.5 184.7h.01M279.4 341.8h.01M234.1 181.0h.01M221.9 294.7h.01M196.1 70.7h.01M356.9 229.4h.01M354.0 229.0h.01M246.4 121.3h.01M277.7 71.7h.01M168.5 307.8h.01M318.9 277.5h.01M208.4 310.9h.01M171.1 244.4h.01M417.1 90.7h.01M329.4 191.2h.01M281.6 156.0h.01M333.5 280.1h.01M402.9 196.0h.01M272.6 150.9h.01M429.8 158.4h.01M314.3 283.1h.01M390.1 338.5h.01M403.0 178.0h.01M302.7 210.1h.01M231.3 212.6h.01M420.3 93.9h.01M173.6 149.0h.01M405.6 192.3h.01M227.5 221.7h.01M415.2 169.4h.01M402.5 114.7h.01M174.7 240.2h.01M360.9 238.4h.01M368.4 149.2h.01M414.9 221.1h.01M168.6 54.9h.01M365.7 337.5h.01M201.3 313.2h.01M463.3 152.8h.01M413.3 216.2h.01M367.6 314.1h.01M442.1 239.9h.01M235.2 280.2h.01M343.2 173.2h.01M296.9 177.0h.01M239.5 271.8h.01M434.4 84.3h.01M423.6 231.7h.01M234.2 212.6h.01M263.6 259.7h.01M364.5 58.9h.01M238.2 282.4h.01M353.0 300.9h.01M407.4 199.4h.01M417.5 227.8h.01M287.1 163.2h.01M358.9 312.9h.01M247.7 269.0h.01M204.2 313.7h.01M231.5 100.1h.01M168.4 339.6h.01M455.9 61.1h.01M359.8 319.8h.01M314.6 115.9h.01M237.0 200.3h.01M340.3 108.0h.01M245.8 121.9h.01M360.9 76.8h.01M290.7 221.8h.01M203.1 320.6h.01M424.0 163.0h.01M249.3 134.4h.01M406.5 187.1h.01M356.5 298.7h.01M243.1 270.2h.01M216.8 44.3h.01M233.3 199.5h.01M279.7 319.4h.01M415.6 93.2h.01M293.7 107.3h.01M263.9 139.7h.01M379.9 129.9h.01M221.9 101.4h.01M298.8 100.8h.01M452.7 239.2h.01M429.0 79.3h.01M277.8 82.1h.01M383.5 133.7h.01M392.4 118.7h.01M284.2 290.7h.01M199.3 77.0h.01M371.1 248.9h.01M429.6 159.7h.01M414.5 290.2h.01M364.4 240.5h.01M410.0 171.6h.01M404.4 205.5h.01M420.6 226.4h.01M323.4 198.5h.01M284.3 160.2h.01M177.3 326.5h.01M279.1 319.9h.01M268.3 146.4h.01M230.7 172.8h.01M290.9 89.6h.01M223.3 40.1h.01M410.0 173.7h.01M393.6 114.5h.01M174.3 63.6h.01M301.5 216.0h.01M238.7 117.5h.01M211.2 161.4h.01M324.1 280.7h.01M228.3 104.2h.01M203.7 243.6h.01M249.8 271.6h.01M262.7 151.7h.01M278.9 298.6h.01M279.4 160.8h.01M238.4 192.8h.01M447.7 236.7h.01M381.5 256.7h.01M422.5 300.2h.01M453.1 153.2h.01M226.1 291.8h.01M265.7 352.5h.01M272.1 45.4h.01M358.0 93.2h.01M345.9 176.7h.01M311.0 203.4h.01M286.0 152.9h.01M235.5 108.7h.01M394.8 122.4h.01M224.7 165.3h.01M222.1 158.0h.01M239.0 277.1h.01M447.2 238.6h.01M312.3 197.1h.01M279.4 229.5h.01M355.1 96.0h.01M351.2 100.7h.01M434.0 232.3h.01M189.2 333.9h.01M315.0 199.4h.01M188.5 46.9h.01M306.5 285.8h.01M432.0 311.9h.01M387.9 229.9h.01M441.8 160.0h.01M290.1 225.8h.01M274.3 333.5h.01M421.0 162.3h.01M184.7 330.0h.01M323.7 111.0h.01M257.9 263.0h.01M280.6 304.9h.01M361.7 301.2h.01M405.3 207.4h.01M468.5 248.0h.01M231.8 178.3h.01M302.1 279.9h.01M330.2 196.6h.01M347.5 106.1h.01M362.4 68.5h.01M459.4 337.6h.01M194.5 61.4h.01M444.2 339.8h.01M272.0 249.4h.01M258.0 129.5h.01M237.2 276.3h.01M428.9 304.8h.01M394.8 272.7h.01M301.4 287.2h.01M280.7 84.6h.01M337.5 283.5h.01M285.6 303.4h.01M229.7 211.8h.01M292.5 284.0h.01M207.9 156.8h.01M233.9 194.6h.01M316.7 204.4h.01M226.8 172.9h.01"/>
+            </defs>
+            <rect width="640" height="400" fill="url(#ndBench)"/>
+            <g stroke-linecap="round" fill="none">
+              <path d="M64 92q90-8 180 4t180 2M40 268q120 12 250-2t220 6M120 340q140-10 300 4" stroke="#ffd8a0" stroke-opacity=".05" stroke-width="6"/>
+              <path d="M150 44q120 10 260-4M96 208q180-8 320 4" stroke="#000" stroke-opacity=".22" stroke-width="10"/>
+            </g>
+            <rect x="152" y="28" width="336" height="336" rx="15" fill="#000" opacity=".55" transform="translate(4 8)"/>
+            <rect x="152" y="28" width="336" height="336" rx="15" fill="url(#ndSteel)" stroke="#cddcf5" stroke-opacity=".18"/>
+            <rect x="152" y="28" width="336" height="336" rx="15" fill="url(#ndSheen)"/>
+            <g stroke="#fff" stroke-opacity=".05">
+              <path d="M156 44h328M156 92h328M156 140h328M156 188h328M156 236h328M156 284h328M156 332h328"/>
+            </g>
+            <use class="nd-glow" href="#ndLines" stroke="#ffbe6a" stroke-width="4.5" opacity=".5" filter="url(#ndBlur)"/>
+            <use href="#ndLines" stroke="#ffe6bd" stroke-width="1.5" opacity=".85" filter="url(#ndBlur2)"/>
+            <use class="nd-sand" href="#ndSand" stroke="#efe3c6" stroke-width="2.1" opacity=".62"/>
+            <use href="#ndSand" stroke="#fff8e8" stroke-width="3.4" opacity=".13"/>
+            <rect x="152" y="28" width="336" height="336" rx="15" fill="url(#ndVig)"/>
+            <g fill="#2b3138" stroke="#0a0c0f">
+              <circle cx="172" cy="48" r="5"/><circle cx="468" cy="48" r="5"/>
+              <circle cx="172" cy="344" r="5"/><circle cx="468" cy="344" r="5"/>
+            </g>
+            <g stroke="#cddcf5" stroke-opacity=".35"><path d="M169 45l6 6M465 45l6 6M169 341l6 6M465 341l6 6"/></g>
+            <circle cx="320" cy="196" r="13" fill="url(#ndMirror)" stroke="#000" stroke-opacity=".6"/>
+            <circle cx="320" cy="196" r="5.5" fill="none" stroke="#fff" stroke-opacity=".4"/>
+            <path d="M320 196l84 42" stroke="#181009" stroke-width="6" stroke-linecap="round"/>
+            <path d="M320 196l84 42" stroke="#d6b67c" stroke-opacity=".6" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · Wave simulation</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Nodal</h2><span class="num mono">Nº 23</span></div>
+        <p>Chladni's experiment, rebuilt: sand on a vibrating plate, finding the lines where the metal does not move. Thousands of grains are pushed down the gradient of the squared displacement until they crawl into the nodal figures on their own, over a damped wave equation. Tune the drive to a resonance, rake the sand with a drag, strike the plate and send ripples across it.</p>
+        <div class="chips mono"><span>Sand transport</span><span>Modal resonance</span><span>Wave equation</span><span>PNG export</span><span>Web Audio</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Space Bunny</dd></div>
+          <div><dt>Prompts</dt><dd>1 + 1</dd></div>
+          <div><dt>Size</dt><dd>52 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/nodal.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Built with Claude Opus 5.5, GPT-6 models, GTP-5 Astra, GTP-6 Astra, GLM-5.3 and DeepSeek V4 Pro.</span>
+    <span class="note">Built with Claude Opus 5.5, GPT-6 models, GTP-5 Astra, GTP-6 Astra, GLM-5.3, DeepSeek V4 Pro and Space Bunny.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>
