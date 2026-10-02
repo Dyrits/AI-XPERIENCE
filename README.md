@@ -41,6 +41,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Elsewhere](https://dyrits.github.io/AI-XPERIENCE/pages/elsewhere.html) | Canvas 2D, recursive zoom worlds (incomplete, untested) | GPT-6 Astra | 1 | 52 KB |
 | [Needle](https://dyrits.github.io/AI-XPERIENCE/pages/needle.html) | DOM + Canvas 2D, regex workbench | Space Bunny | 1 | 73 KB |
 | [Palimpsest](https://dyrits.github.io/AI-XPERIENCE/pages/palimpsest.html) | Canvas 2D, ink recognition + time scrubbing | Space Bunny | 1 + 2 | 96 KB |
+| [Rewind](https://dyrits.github.io/AI-XPERIENCE/pages/rewind.html) | DOM + SVG, deckbuilder roguelike | Claude Opus 5.5 | 1 | 130 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -100,6 +101,8 @@ Includes optional synthesized sound, pause, timeline scrubbing, keyboard frame s
 
 **Needle.** A workbench for regular expressions, and the one page here you would open on purpose. Write a pattern and see what it catches in the text, why it catches it, and what it does when you replace it. The pattern is parsed rather than only compiled: every token is coloured where it sits, the breakdown names each construct in plain English, and a mistake reports the column it is in. Matches light up in the text with their capture groups tinted inside, a map shows where the matches fall across the passage, and a suite of test cases says at a glance whether a change broke anything. A pattern that backtracks forever is abandoned after a second and a half instead of freezing the tab. Seventeen ready-made patterns, shareable links, local saves, keyboard stepping and reduced-motion support.
 
+**Rewind.** A Slay the Spire-style deckbuilder where time is a resource. Every turn is saved as a frame on a film strip, and Sand, gained one grain a turn, pays for the time tricks. Rewinding the turn goes back to the start of the previous one: your HP, hand, piles, tonics and the enemies all return, enemies repeat what they did unless something changes, and a note shows what they did in the erased timeline. Cards sent into the Time Capsule beforehand arrive in the past as free Ghosts, and every rewind slips a Paradox into the draw pile. Forty cards rewind just yourself to undo damage, Unmake an enemy to strip the Strength and Block it built or erase a minion summoned later, step plans back, freeze foes in Stasis, echo cards into the next turn and set delayed bombs. Two acts on a branching map of fights, elites, shops, events, nap spots and treasure, with cartoon blobs drawn in SVG: cuckoos that wind up a big BONG, a fog blob whose plans are hidden until you rewind, a pickpocket, a knight that turns its own HP back, and Old Pip, an older you, as the final boss. Relics, tonics, synthesized sound and music, keyboard controls, local saves and reduced-motion support.
+
 ## Correction rounds
 
 Most pieces needed none. The ones that did:
@@ -141,6 +144,7 @@ AI-XPERIENCE/
     ├── paperborough.html
     ├── percy.html
     ├── replace-you.html
+    ├── rewind.html
     ├── somewhere-softly.html
     ├── starshard.html
     ├── the-last-warm-window.html
