@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#183f48">
+<meta name="description" content="An endless, reversible journey through illustrated worlds within worlds.">
+<title>Elsewhere · an endless little journey</title>
+<style>
+  :root { color-scheme: dark; --paper: #fff1d3; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #183f48; }
+  body { color: var(--paper); font-family: "Avenir Next", Avenir, "Trebuchet MS", sans-serif; }
+  button, select { font: inherit; }
+  button { color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  button:focus-visible, select:focus-visible { outline: 2px solid #ffe3a5; outline-offset: 5px; }
+  button:disabled { opacity: .45; cursor: default; }
+  #world { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  #world.dragging { cursor: grabbing; }
+  .shade { position: fixed; inset: 0; pointer-events: none; background: linear-gradient(180deg, #102b3559, transparent 28%, transparent 70%, #102330b8); }
+  .masthead { position: fixed; top: max(34px, env(safe-area-inset-top)); left: max(40px, env(safe-area-inset-left)); pointer-events: none; }
+  h1 { font: 400 clamp(42px, 5vw, 72px)/1.05 "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif; letter-spacing: -3px; margin: 0; text-shadow: 0 2px 22px #142c3540; }
+  .masthead p { font-size: 13px; line-height: 1.65; margin: 11px 0 0 3px; color: #edf0d9; max-width: 220px; }
+  .top-actions { position: fixed; right: max(34px, env(safe-area-inset-right)); top: max(36px, env(safe-area-inset-top)); display: flex; gap: 10px; }
+  .round { display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 1px solid #eee5cd45; border-radius: 50%; background: #132d3673; backdrop-filter: blur(12px); }
+  .round:hover { background: #34515a; border-color: #eee5cd9c; }
+  svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .place { position: fixed; left: max(40px, env(safe-area-inset-left)); bottom: max(37px, env(safe-area-inset-bottom)); pointer-events: none; }
+  .depth { display: flex; align-items: center; gap: 9px; font-size: 11px; color: #d0dace; letter-spacing: .4px; margin-bottom: 7px; }
+  .depth svg { width: 21px; height: 21px; }
+  #layer { font-variant-numeric: tabular-nums; display: inline-block; max-width: 130px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+  #place-name { font: 400 21px/1.3 Palatino, "Book Antiqua", Georgia, serif; margin: 0; }
+  .dock { position: fixed; left: 50%; bottom: max(30px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; align-items: center; gap: 5px; background: #132d37ed; border: 1px solid #e2eac033; border-radius: 50px; padding: 7px; box-shadow: 0 5px 30px #06182338; backdrop-filter: blur(16px); }
+  .dock button { display: flex; align-items: center; justify-content: center; gap: 8px; height: 42px; border: 0; border-radius: 25px; background: transparent; font-size: 12px; padding: 0 13px; white-space: nowrap; }
+  .dock button:hover { background: #ffffff12; }
+  .dock .step { width: 42px; padding: 0; }
+  .dock #drift { min-width: 91px; background: #f2d89d; color: #173c42; font-weight: 600; }
+  .dock #drift:hover { background: #ffe7b2; }
+  #drift[aria-pressed="true"] { background: #a9d3c2; }
+  .divider { height: 22px; width: 1px; background: #f6e8c526; margin: 0 2px; }
+  .hint { position: fixed; left: 50%; bottom: 102px; transform: translateX(-50%); color: #edf0d9; font-size: 11px; text-align: center; white-space: nowrap; pointer-events: none; transition: opacity 1s; }
+  .hint.used { opacity: 0; }
+  .ruler { position: fixed; right: 41px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 12px; pointer-events: none; color: #f1ebd2bc; }
+  .ruler span { writing-mode: vertical-rl; font-size: 10px; letter-spacing: 1px; }
+  .track { width: 1px; height: 96px; background: #f5ecd74d; position: relative; }
+  #needle { width: 11px; height: 2px; position: absolute; left: -5px; top: 0; background: #ffe9b4; box-shadow: 0 0 8px #ffe9b455; }
+  #quiet { position: fixed; right: max(35px, env(safe-area-inset-right)); bottom: max(35px, env(safe-area-inset-bottom)); opacity: .8; }
+  body.quiet .chrome { visibility: hidden; }
+  body.quiet #quiet { opacity: .3; }
+  body.quiet #quiet:hover, body.quiet #quiet:focus-visible { opacity: 1; }
+  #notice { position: fixed; left: 50%; top: 28px; transform: translateX(-50%); max-width: min(80vw, 400px); padding: 10px 19px; border-radius: 20px; background: #142e37ed; color: #fff1d3; font-size: 12px; text-align: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  #notice.visible { opacity: 1; }
+  dialog { color: #f5ebd0; background: #183b43; border: 1px solid #d4e6ca45; border-radius: 24px; padding: 33px; width: min(430px, calc(100% - 30px)); max-height: calc(100% - 40px); box-shadow: 0 24px 100px #03121b80; }
+  dialog::backdrop { background: #0b202a99; backdrop-filter: blur(9px); }
+  dialog h2 { font: 400 35px/1.1 Palatino, Georgia, serif; margin: 0 0 17px; letter-spacing: -1px; }
+  dialog p { font-size: 13px; line-height: 1.8; color: #d6e1d3; }
+  .dialog-close { position: absolute; top: 20px; right: 20px; width: 30px; height: 30px; background: none; border: 0; }
+  dl { margin: 24px 0; display: grid; grid-template-columns: 1fr auto; gap: 12px; font-size: 12px; }
+  dt, dd { margin: 0; }
+  dd { color: #d1ddc9; text-align: right; }
+  kbd { font: inherit; border: 1px solid #aebfb14d; border-radius: 4px; padding: 2px 5px; }
+  .settings { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding-top: 18px; border-top: 1px solid #d4e6ca30; font-size: 12px; }
+  select { color: #fff1d3; background: #17333d; border: 1px solid #a9c3b14d; border-radius: 7px; padding: 7px; max-width: 160px; }
+  .footnote { font-size: 11px; color: #b2c8bc; margin-bottom: 0; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  @media (max-width: 1100px) {
+    .place { bottom: 110px; left: 28px; }
+    #place-name { font-size: 19px; }
+    .hint { bottom: 111px; left: auto; right: 29px; transform: none; text-align: right; max-width: 180px; white-space: normal; line-height: 1.6; }
+    .ruler { right: 28px; }
+    .masthead { left: 27px; top: 27px; }
+    .top-actions { right: 25px; top: 28px; }
+    #quiet { right: 26px; bottom: 38px; }
+  }
+  @media (max-width: 560px) {
+    .masthead { left: 23px; top: max(25px, env(safe-area-inset-top)); }
+    h1 { font-size: 44px; letter-spacing: -2px; }
+    .masthead p { font-size: 11px; max-width: 170px; margin-top: 8px; }
+    .top-actions { right: 19px; top: max(26px, env(safe-area-inset-top)); gap: 7px; }
+    .top-actions .round { width: 35px; height: 35px; }
+    .ruler { right: 22px; }
+    .ruler .track { height: 65px; }
+    .dock { bottom: max(23px, env(safe-area-inset-bottom)); padding: 5px; gap: 1px; }
+    .dock button { padding: 0 10px; }
+    .dock .step { width: 38px; }
+    .dock #drift { min-width: 84px; }
+    .sound-label { display: none; }
+    .place { left: 23px; bottom: max(103px, calc(env(safe-area-inset-bottom) + 80px)); }
+    #place-name { font-size: 19px; }
+    .hint { left: 23px; right: auto; bottom: 156px; text-align: left; max-width: 230px; font-size: 10px; }
+    #quiet { bottom: 108px; right: 20px; width: 33px; height: 33px; }
+    .depth { font-size: 10px; }
+  }
+  @media (max-height: 520px) and (min-width: 561px) {
+    h1 { font-size: 38px; letter-spacing: -1.5px; }
+    .masthead { top: 20px; }
+    .masthead p { display: none; }
+    .place { bottom: 30px; }
+    #place-name { font-size: 16px; }
+    .hint, .ruler { display: none; }
+    .dock { bottom: 19px; }
+    #quiet { bottom: 24px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<canvas id="world" role="img" aria-label="An illustrated garden with a doorway into a moonlit observatory. Zoom in or out to travel through an endless series of worlds.">This experience needs Canvas 2D in a recent browser.</canvas>
+<div class="shade chrome"></div>
+<header class="masthead chrome">
+  <h1>Elsewhere.</h1>
+  <p>There is always<br>another somewhere.</p>
+</header>
+<div class="top-actions chrome">
+  <button class="round" id="capture" title="Save a postcard" aria-label="Save a postcard">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h4l2-2h4l2 2h4v14H4z"/><circle cx="12" cy="12" r="4"/></svg>
+  </button>
+  <button class="round" id="help" title="About and controls" aria-label="About and controls">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 8a3 3 0 0 1 6 0c0 3-3 2-3 5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>
+  </button>
+</div>
+<div class="place chrome">
+  <div class="depth">
+    <svg viewBox="0 0 26 26" aria-hidden="true"><path d="M3 23V13a10 10 0 0 1 20 0v10M7 23V13a6 6 0 0 1 12 0v10M11 23V13a2 2 0 0 1 4 0v10"/></svg>
+    <span>Somewhere <span id="layer">0</span></span>
+  </div>
+  <h2 id="place-name">The garden after rain</h2>
+</div>
+<div class="ruler chrome" aria-hidden="true">
+  <span>closer</span><div class="track"><i id="needle"></i></div><span>further</span>
+</div>
+<p class="hint chrome" id="hint">Scroll to go closer. Scroll back to return.</p>
+<nav class="dock chrome" aria-label="Journey controls">
+  <button class="step" id="out" title="Zoom out (Down arrow)" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+  <button id="drift" aria-pressed="false" title="Travel automatically (Space)">
+    <svg viewBox="0 0 24 24" aria-hidden="true" id="drift-icon"><path d="m9 5 10 7-10 7z"/></svg><span id="drift-label">Drift</span>
+  </button>
+  <button class="step" id="in" title="Zoom in (Up arrow)" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+  <span class="divider"></span>
+  <button id="sound" aria-pressed="false" title="Turn sound on (M)" aria-label="Turn sound on">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m11 5-5 4H3v6h3l5 4z"/><path id="sound-waves" d="m16 9 5 6m0-6-5 6"/></svg><span class="sound-label">Sound</span>
+  </button>
+  <button class="step" id="home" title="Return to the first garden (R)" aria-label="Return to the first garden"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></svg></button>
+</nav>
+<button class="round" id="quiet" aria-label="Hide labels" aria-pressed="false" title="Hide labels (H)">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+</button>
+<div id="notice" role="status" aria-live="polite"></div>
+<dialog id="about" aria-labelledby="about-title">
+  <button class="dialog-close" id="close-help" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+  <h2 id="about-title">A little further.</h2>
+  <p>Every doorway holds another place. Gardens, moons, oceans, rooms. Keep going in either direction. There is no last door.</p>
+  <p>Scroll, drag upward, or spread two fingers to go closer. Reverse the gesture to come back. The worlds you leave are still there.</p>
+  <dl>
+    <dt>Closer / further</dt><dd><kbd>↑</kbd> <kbd>↓</kbd> or <kbd>+</kbd> <kbd>−</kbd></dd>
+    <dt>Start / pause drifting</dt><dd><kbd>Space</kbd></dd>
+    <dt>Sound on / off</dt><dd><kbd>M</kbd></dd>
+    <dt>Return to the first garden</dt><dd><kbd>R</kbd></dd>
+    <dt>Hide / show labels</dt><dd><kbd>H</kbd></dd>
+  </dl>
+  <div class="settings"><label for="pace">Drifting pace</label><select id="pace"><option value="0.035">Unhurried</option><option value="0.07" selected>Wandering</option><option value="0.14">Daydreaming</option></select></div>
+  <p class="footnote">Six kinds of somewhere, endlessly reseeded. Drawn and played by your browser. No images, recordings, or destination.</p>
+  <p class="footnote" id="motion-note" hidden>Reduced motion is on. Ambient motion is still; zoom responds directly to your input. Drifting only starts if you ask.</p>
+</dialog>
+<noscript><p style="position:fixed;top:40%;left:10%;right:10%">Enable JavaScript to open the first doorway.</p></noscript>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const canvas = $('world');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  if (!ctx) { $('notice').textContent = 'Canvas 2D is unavailable in this browser.'; $('notice').classList.add('visible'); return; }
+  const TAU = Math.PI * 2, PI = Math.PI, RATIO = 7.4;
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  let reduced = motion.matches;
+  // Only the local fraction is floating point. Rebase it at every doorway;
+  // BigInt addresses never overflow, and neither does the camera's scale.
+  let address = 0n, position = 0, target = 0, drifting = false;
+  let width = 0, height = 0, dpr = 1, base = 1, cx = 0, cy = 0;
+  let clock = 0, last = 0, dirty = true, raf = 0, lastLabel = '';
+  let screenScale = 1, detail = true;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const mod = (n, d) => ((n % d) + d) % d;
+  const worlds = [
+    { name: 'The garden after rain', sky: '#25545a', haze: '#598d87', ground: '#244f4d', ink: '#143c42', leaf: '#75b6a1', light: '#f7dc9c', stone: '#e8aa91', shade: '#b86d73', accent: '#e9817d' },
+    { name: 'A moon of your own', sky: '#202b53', haze: '#5b6488', ground: '#3a4267', ink: '#222d50', leaf: '#9cacc5', light: '#ffe0a0', stone: '#b7afd0', shade: '#727598', accent: '#e8b895' },
+    { name: 'The hour of apricots', sky: '#e9af87', haze: '#f2c396', ground: '#c67565', ink: '#653f57', leaf: '#567776', light: '#ffe7ae', stone: '#9bc4b1', shade: '#548f8c', accent: '#d98078' },
+    { name: 'The sea behind the sea', sky: '#225873', haze: '#55989d', ground: '#244d69', ink: '#1d3d5d', leaf: '#75c8ba', light: '#fce4b0', stone: '#e5c29b', shade: '#b7898d', accent: '#ef9497' },
+    { name: 'A forest in a seed', sky: '#223f3d', haze: '#537c63', ground: '#2c4e44', ink: '#183e3b', leaf: '#9abf86', light: '#f5d694', stone: '#b7886b', shade: '#78545c', accent: '#e9a08d' },
+    { name: 'The room that remembers', sky: '#363448', haze: '#6c5260', ground: '#614958', ink: '#302f42', leaf: '#9faf96', light: '#f9d494', stone: '#cb9f7a', shade: '#976879', accent: '#c7787b' }
+  ];
+  const cache = new Map();
+  function random(seed) {
+    return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t ^= t + Math.imul(t ^ t >>> 7, 61 | t); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  }
+  function worldAt(n) {
+    const key = n.toString();
+    if (cache.has(key)) return cache.get(key);
+    let seed = 2166136261;
+    for (const ch of key) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619);
+    const rng = random(seed), type = Number(mod(n, 6n));
+    const w = { ...worlds[type], type, seed, numbers: Array.from({ length: 360 }, rng) };
+    cache.set(key, w);
+    if (cache.size > 18) cache.delete(cache.keys().next().value);
+    return w;
+  }
+  function fill(color) { ctx.fillStyle = color; ctx.fill(); }
+  function stroke(color, size = 1) { ctx.strokeStyle = color; ctx.lineWidth = size; ctx.stroke(); }
+  function rect(x, y, w, h, color) { ctx.fillStyle = color; ctx.fillRect(x, y, w, h); }
+  function ellipse(x, y, rx, ry, color, angle = 0) { ctx.beginPath(); ctx.ellipse(x, y, Math.abs(rx), Math.abs(ry), angle, 0, TAU); fill(color); }
+  function line(points, color, size = 1) {
+    ctx.beginPath(); ctx.moveTo(points[0], points[1]);
+    for (let i = 2; i < points.length; i += 2) ctx.lineTo(points[i], points[i + 1]);
+    stroke(color, size);
+  }
+  function polygon(points, color) {
+    ctx.beginPath(); ctx.moveTo(points[0], points[1]);
+    for (let i = 2; i < points.length; i += 2) ctx.lineTo(points[i], points[i + 1]);
+    ctx.closePath(); fill(color);
+  }
+  function curve(path, color, outline, size = 1) {
+    const p = new Path2D(path);
+    if (color) { ctx.fillStyle = color; ctx.fill(p); }
+    if (outline) { ctx.strokeStyle = outline; ctx.lineWidth = size; ctx.stroke(p); }
+  }
+  // Every child shares this exact aperture and transform with its parent.
+  // Clipping ancestors remain in place until all four viewport corners fit.
+  function arch(w = 208, top = -159, bottom = 159) {
+    const p = new Path2D(), r = w / 2;
+    p.moveTo(-r, bottom); p.lineTo(-r, top + r);
+    p.arc(0, top + r, r, PI, TAU); p.lineTo(r, bottom); p.closePath();
+    return p;
+  }
+  const doorway = arch();
+  function paintPath(p, color, outline, size = 1) {
+    if (color) { ctx.fillStyle = color; ctx.fill(p); }
+    if (outline) { ctx.strokeStyle = outline; ctx.lineWidth = size; ctx.stroke(p); }
+  }
+  function leaf(x, y, len, breadth, angle, color, vein = false) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(-breadth, -len * .3, -breadth * .65, -len * .84, 0, -len);
+    ctx.bezierCurveTo(breadth * .85, -len * .73, breadth, -len * .2, 0, 0);
+    fill(color);
+    if (vein && detail) {
+      line([0, -3, 0, -len * .92], '#173f424f', 1);
+      for (let j = 1; j < 5; j++) {
+        const y1 = -len * j / 6, b = Math.sin(j / 6 * PI) * breadth * .55;
+        line([-b, y1 - len * .13, 0, y1, b, y1 - len * .13], '#173f4235', .8);
+      }
+    }
+    ctx.restore();
+  }
+  function frond(x, y, size, bend, color, time, phase = 0) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(size, size);
+    const sway = Math.sin(time * .5 + phase) * .045;
+    ctx.rotate(bend + sway);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-10, -95, 15, -210); stroke(color, 3);
+    for (let i = 0; i < 8; i++) {
+      const q = i / 8, stemX = 15 * q * q - 8 * Math.sin(q * PI), yy = -q * 185 - 10;
+      const l = 64 * (1 - q * .6);
+      leaf(stemX, yy, l, 17 * (1 - q * .5), -.94 + q * .28, color, true);
+      leaf(stemX, yy - 8, l * .86, 16 * (1 - q * .5), .95 - q * .3, color, true);
+    }
+    leaf(12, -184, 41, 12, .08, color, true);
+    ctx.restore();
+  }
+  function cloud(x, y, size, color) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(size, size);
+    curve('M-100 13Q-124-12-95-23Q-92-55-50-46Q-18-77 11-40Q50-52 65-18Q113-24 117 13Z', color);
+    line([-96, 23, 142, 23], color, 2);
+    ctx.restore();
+  }
+  function star(x, y, r, color) {
+    ctx.beginPath(); ctx.moveTo(x - r, y); ctx.quadraticCurveTo(x, y, x, y - r);
+    ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r);
+    ctx.quadraticCurveTo(x, y, x - r, y); fill(color);
+  }
+  function steps(w) {
+    for (let j = 6; j >= 0; j--) {
+      const y = 159 + j * 22, half = 119 + j * 30;
+      rect(-half, y, half * 2, 21, w.shade);
+      rect(-half - 3, y, half * 2 + 6, 6, w.stone);
+      line([-half + 8, y + 9, half - 8, y + 9], w.ink + '45', 1);
+    }
+    polygon([-298, 315, 298, 315, 414, 1200, -414, 1200], w.shade);
+    for (let j = 0; j < 9; j++) line([-302 - j * 7, 333 + j * 47, 302 + j * 7, 333 + j * 47], w.stone + '70', 2);
+  }
+  function lantern(x, y, s, w, time) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    line([0, -50, 0, -23], w.ink, 2);
+    ellipse(0, 0, 27, 38, w.light + '13');
+    ellipse(0, 0, 17, 27, w.light + '1c');
+    polygon([-13, -19, 13, -19, 11, 18, -11, 18], w.light);
+    rect(-15, -22, 30, 5, w.ink); rect(-12, 18, 24, 4, w.ink);
+    line([0, -17, 0, 17], w.accent, 2);
+    ellipse(0, 0, 4 + Math.sin(time * 2 + x) * .5, 10, '#fff1cd');
+    ctx.restore();
+  }
+  function sky(w, time) {
+    // This fill covers the viewport even on ultrawide and portrait screens.
+    rect(-width / screenScale - 200, -height / screenScale - 200, width * 2 / screenScale + 400, height * 2 / screenScale + 400, w.sky);
+    const grad = ctx.createLinearGradient(0, -420, 0, 360);
+    grad.addColorStop(0, w.sky); grad.addColorStop(1, w.haze);
+    rect(-1800, -1000, 3600, 2000, grad);
+    if (w.type !== 5) {
+      const moonX = 330 + w.numbers[1] * 70, moonY = -300 - w.numbers[2] * 60;
+      ellipse(moonX, moonY, 73, 73, w.light + '08');
+      ellipse(moonX, moonY, 61, 61, w.light + '0b');
+      ellipse(moonX, moonY, 48, 48, w.light);
+      if (w.type === 1) {
+        ctx.beginPath(); ctx.ellipse(moonX, moonY, 86, 19, -.38, 0, TAU); stroke(w.accent, 3);
+        for (let i = 0; i < 4; i++) ellipse(moonX - 17 + i * 10, moonY - 15 + i * 13, 8 - i, 3, w.shade + '50');
+      }
+      if (w.type !== 3 && w.type !== 4) {
+        cloud(-363 + Math.sin(time * .03) * 9, -274, .87, w.haze);
+        cloud(505, -190, .53, w.haze);
+        cloud(-112, -415, .49, w.haze + '90');
+      }
+    }
+    if (w.type !== 2) {
+      for (let i = 0; i < 48; i++) {
+        const x = (w.numbers[i * 3] - .5) * 1550, y = -510 + w.numbers[i * 3 + 1] * 590;
+        const r = 1 + w.numbers[i * 3 + 2] * 2;
+        ctx.globalAlpha = .24 + .36 * (.5 + .5 * Math.sin(time * .7 + i));
+        if (i % 8 === 0) star(x, y, r * 2.2, w.light);
+        else ellipse(x, y, r * .5, r * .5, w.light);
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+  function hills(w) {
+    curve('M-1700 40Q-850-160-440 45Q-215 165 50 60Q420-120 780 35Q1110-70 1700 30V1300H-1700Z', w.haze);
+    curve('M-1700 115Q-720-40-410 160Q-105 225 160 112Q480-15 820 174Q1180 3 1700 123V1300H-1700Z', w.ground);
+    for (let side = -1; side <= 1; side += 2) {
+      ctx.save(); ctx.scale(side, 1);
+      curve('M155 200Q370 99 699 166L1100 238V284Q502 167 178 267Z', w.ink);
+      curve('M175 275Q424 215 880 289V316Q444 246 183 299Z', w.leaf + '50');
+      curve('M206 340Q570 270 1200 360V470Q520 358 220 377Z', w.ink);
+      ctx.restore();
+    }
+  }
+  function garden(w, time) {
+    hills(w);
+    // A long reflecting pool between the terraces.
+    polygon([-560, 292, -331, 307, -392, 760, -920, 760], '#5a9e9b');
+    polygon([560, 292, 331, 307, 392, 760, 920, 760], '#5a9e9b');
+    for (let side = -1; side <= 1; side += 2) {
+      ctx.save(); ctx.scale(side, 1);
+      for (let j = 0; j < 23; j++) {
+        const y = 315 + j * 18, x = 366 + j * 2;
+        line([x + Math.sin(j + time) * 5, y, x + 65 + w.numbers[j] * 130, y], '#bee0bc60', 1.3);
+      }
+      // Cypress silhouettes and terraced clipped shrubs.
+      for (let j = 0; j < 5; j++) {
+        const x = 240 + j * 103, y = 110 + j * 20;
+        rect(x - 3, y - 95, 6, 117, w.ink);
+        leaf(x, y - 10, 201 + j * 12, 32 + j * 2, .06, j % 2 ? '#315f57' : '#3d7567', true);
+        ellipse(x + 38, y + 25, 42, 23, w.leaf);
+        ellipse(x + 55, y + 24, 24, 21, '#528d78');
+      }
+      frond(412, 323, 1.1, -.32, w.leaf, time, side);
+      frond(585, 434, 1.6, -.24, '#376c60', time, side + 3);
+      frond(307, 218, .6, -.6, '#9cccac', time, 5);
+      for (let j = 0; j < 8; j++) {
+        const x = 215 + j * 64, y = 350 + w.numbers[j + 70] * 100;
+        leaf(x, y, 48 + w.numbers[j + 60] * 53, 27, -.55 + j * .17, j % 2 ? '#e5aa8f' : '#7caf88', true);
+      }
+      ctx.restore();
+    }
+    steps(w);
+    // Two small companions make the scale of the architecture readable.
+    cat(-220, 237, w.ink, time);
+  }
+  function cat(x, y, color, time) {
+    ellipse(x, y - 12, 10, 17, color);
+    ellipse(x - 2, y - 31, 10, 8, color);
+    polygon([x - 11, y - 35, x - 10, y - 45, x - 3, y - 37, x + 2, y - 43, x + 7, y - 35], color);
+    ctx.beginPath(); ctx.moveTo(x + 5, y - 1); ctx.bezierCurveTo(x + 40, y + 2, x + 22, y - 24, x + 34, y - 22 + Math.sin(time) * 2); stroke(color, 5);
+    ellipse(x - 5, y - 31, 1.1, 1.1, '#ffdda0');
+  }
+  function observatory(w, time) {
+    curve('M-1700 60Q-840-62-590 103Q-335 227-90 92Q267-7 496 153Q974-118 1700 108V1300H-1700Z', '#353d63');
+    for (let j = 0; j < 4; j++) {
+      const y = 155 + j * 71;
+      ellipse(0, y + 35, 680 - j * 35, 85, '#242f52');
+      ellipse(0, y + 21, 680 - j * 35, 83, j % 2 ? '#586080' : '#74758e');
+      ctx.beginPath(); ctx.ellipse(0, y + 21, 630 - j * 35, 66, 0, 0, PI); stroke('#c1b3b078', 2);
+    }
+    for (let side = -1; side <= 1; side += 2) {
+      ctx.save(); ctx.scale(side, 1);
+      rect(353, -94, 147, 281, '#555d80');
+      rect(356, -90, 24, 270, '#737d9b');
+      ctx.beginPath(); ctx.arc(426, -94, 86, PI, TAU); fill(w.stone);
+      ctx.beginPath(); ctx.ellipse(426, -94, 54, 86, 0, PI, TAU); stroke(w.shade, 2);
+      rect(340, -99, 173, 9, w.accent);
+      for (let j = 0; j < 3; j++) {
+        ctx.save(); ctx.translate(426, -44 + j * 61); ctx.scale(.19, .14);
+        paintPath(doorway, '#263455', w.accent, 5); ctx.restore();
+      }
+      // Brass telescope and its tripod.
+      line([247, 192, 276, 114, 314, 192, 276, 114, 274, 201], w.ink, 4);
+      ctx.save(); ctx.translate(276, 114); ctx.rotate(-.4);
+      rect(-41, -15, 119, 28, w.accent); rect(61, -20, 21, 38, w.light);
+      rect(-49, -9, 14, 16, w.ink); line([-25, -9, 59, -9], w.light, 2); ctx.restore();
+      frond(570, 305, .7, -.4, '#a1acbd', time, side);
+      ctx.restore();
+    }
+    steps(w);
+    // An orrery turning above the doorway.
+    ctx.save(); ctx.translate(0, -318);
+    ellipse(0, 0, 7, 7, w.light);
+    for (let i = 0; i < 3; i++) {
+      const r = 26 + i * 15;
+      ctx.beginPath(); ctx.ellipse(0, 0, r, r * .45, -.45 + i * .35, 0, TAU); stroke(w.accent, 1.5);
+      const a = time * .07 * (i + 1) + i * 2;
+      ellipse(Math.cos(a) * r, Math.sin(a) * r * .5, 3 + i, 3 + i, w.light);
+    }
+    ctx.restore();
+  }
+  function palm(x, y, s, w, time) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    curve('M-9 0Q18-119-7-239L1-244Q42-118 10 0Z', w.ink);
+    for (let i = 0; i < 8; i++) {
+      ctx.save(); ctx.translate(-3, -238); ctx.rotate(i * .64 - 2.25 + Math.sin(time * .4 + i) * .025);
+      curve('M0 0Q-67-138 7-172Q-13-94 0 0Z', i % 2 ? w.leaf : w.ink);
+      line([1, -9, -12, -96, 7, -171], w.haze + '70', 1.2);
+      ctx.restore();
+    }
+    ellipse(-3, -228, 9, 12, w.accent); ellipse(10, -224, 8, 10, w.accent);
+    ctx.restore();
+  }
+  function desert(w, time) {
+    curve('M-1700 110Q-860-218-315 83Q-30 191 386-24Q884-218 1700 98V1300H-1700Z', '#d58f78');
+    curve('M-1700 224Q-749-81-230 157Q80 316 660 84Q960-24 1700 200V1300H-1700Z', '#c7796b');
+    for (let j = 0; j < 16; j++) {
+      ctx.beginPath(); ctx.moveTo(-1200, 196 + j * 29);
+      ctx.bezierCurveTo(-530, 18 + j * 31, 45, 432 + j * 23, 1200, 116 + j * 32);
+      stroke('#f0b58c50', 1.5);
+    }
+    ellipse(-392, 243, 227, 54, '#638d85');
+    ellipse(-394, 237, 200, 39, '#85b4a2');
+    for (let i = 0; i < 9; i++) line([-510 + i * 11, 213 + i * 6, -358 + i * 12, 213 + i * 6], '#c0d4af90', 1);
+    palm(-459, 213, 1.24, w, time); palm(-616, 238, .85, w, time);
+    palm(473, 216, 1.48, w, time);
+    for (let side = -1; side <= 1; side += 2) {
+      ctx.save(); ctx.scale(side, 1);
+      // Low tiled walls with repeating pointed niches.
+      rect(193, 132, 158, 104, w.shade);
+      rect(185, 124, 174, 12, w.stone);
+      for (let j = 0; j < 5; j++) {
+        ctx.save(); ctx.translate(210 + j * 30, 180); ctx.scale(.085, .17);
+        paintPath(doorway, w.ink); ctx.restore();
+      }
+      lantern(203, 73, .72, w, time);
+      ctx.restore();
+    }
+    steps(w);
+    // A sleeping fox on the warm stone.
+    ellipse(217, 260, 27, 13, w.ink);
+    polygon([230, 253, 247, 240, 248, 257, 262, 269, 235, 269], w.ink);
+    curve('M205 252Q161 244 184 271Q200 283 224 272Q186 275 205 252Z', w.light);
+  }
+  function coral(x, y, s, color, time) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    for (let i = 0; i < 5; i++) {
+      const end = (i - 2) * 25, top = -78 - Math.sin(i * 1.5) * 24;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(end, -40, end + Math.sin(time * .6 + i) * 2, top); stroke(color, 6);
+      line([end * .68, top * .63, end - 16, top - 9], color, 4);
+      line([end * .89, top * .8, end + 15, top - 7], color, 3);
+    }
+    ctx.restore();
+  }
+  function sea(w, time) {
+    // Light shafts are anchored to the scene, so reversing zoom is exact.
+    for (let i = 0; i < 5; i++) {
+      polygon([-610 + i * 260, -850, -535 + i * 260, -850, -155 + i * 255, 700, -344 + i * 255, 700], '#b6dfc10a');
+    }
+    hills(w);
+    for (let i = 0; i < 30; i++) {
+      const x = (w.numbers[i * 3] - .5) * 1500, y = -470 + mod(w.numbers[i * 3 + 1] * 1100 - time * (5 + i % 4), 1100);
+      ctx.beginPath(); ctx.arc(x + Math.sin(time * .4 + i) * 9, y, 2 + w.numbers[i * 3 + 2] * 6, 0, TAU); stroke('#b5ded375', 1);
+    }
+    for (let side = -1; side <= 1; side += 2) {
+      ctx.save(); ctx.scale(side, 1);
+      for (let j = 0; j < 5; j++) {
+        const x = 280 + j * 80, y = 282 + j * 14;
+        frond(x, y, .55 + j * .17, -.4, j % 2 ? '#4b9a97' : '#84c2af', time, j);
+        coral(x + 40, y + 22, .5 + w.numbers[j + 20] * .6, j % 2 ? '#d5929e' : '#e9b697', time);
+      }
+      // Jellyfish, including fine trailing tentacles.
+      const jx = 370, jy = -144 + Math.sin(time * .65 + side) * 12;
+      for (let j = 0; j < 7; j++) {
+        ctx.beginPath(); ctx.moveTo(jx - 27 + j * 9, jy + 2);
+        ctx.bezierCurveTo(jx - 45 + j * 10, jy + 55, jx - 10 + j * 9 + Math.sin(time + j) * 13, jy + 72, jx - 33 + j * 10, jy + 112);
+        stroke('#bce2d1a0', 1.3);
+      }
+      ctx.beginPath(); ctx.ellipse(jx, jy, 45, 34, 0, PI, TAU); ctx.quadraticCurveTo(jx, jy + 21, jx - 45, jy); fill('#c3debf9a');
+      ctx.beginPath(); ctx.ellipse(jx, jy, 45, 9, 0, 0, TAU); stroke('#ddedd1', 1.5);
+      for (let j = 0; j < 8; j++) {
+        const x = 220 + j * 48 + Math.sin(time * .25 + j) * 14, y = -15 + Math.sin(j * 3) * 52;
+        ellipse(x, y, 9, 3.5, w.light);
+        polygon([x + 7, y, x + 14, y - 5, x + 14, y + 5], w.light);
+      }
+      ctx.restore();
+    }
+    steps(w);
+    star(-222, 264, 17, w.accent);
+    for (let j = 0; j < 4; j++) ellipse(205 + j * 21, 285 + Math.sin(j) * 8, 15, 7, '#b799a0');
+  }
+  function mushroom(x, y, size, w, time) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(size, size);
+    curve('M-9 0Q-18-46-9-100L8-100Q-1-44 17 0Z', w.stone);
+    curve('M-76-90Q-48-172 3-161Q58-154 83-90Q15-66-76-90Z', w.accent);
+    ellipse(3, -91, 80, 15, w.light);
+    for (let j = 0; j < 13; j++) line([3, -78, -71 + j * 12, -91], w.shade + '90', .9);
+    const dots = [[-38,-118,8],[-15,-143,6],[10,-120,11],[41,-111,6],[32,-137,4],[-59,-101,4]];
+    for (const [dx, dy, r] of dots) ellipse(dx, dy, r, r * .6, w.light);
+    line([-5, -61, -3, -7], w.shade + '80', 2);
+    ctx.restore();
+  }
+  function forest(w, time) {
+    for (let side = -1; side <= 1; side += 2) {
+      ctx.save(); ctx.scale(side, 1);
+      for (let i = 0; i < 5; i++) {
+        const x = 280 + i * 115;
+        curve(`M${x-27} 380Q${x+28} 0 ${x-21}-800H${x+54}Q${x+67}-20 ${x+44} 380Z`, i % 2 ? '#315a4c' : '#3c6855');
+        line([x + 12, 265, x + 17, -320, x - 66, -411], '#83a77b35', 3);
+      }
+      ctx.restore();
+    }
+    hills(w);
+    mushroom(-382, 254, 1.8, w, time);
+    mushroom(446, 288, 2.23, w, time);
+    mushroom(-539, 290, .84, w, time);
+    for (let side = -1; side <= 1; side += 2) {
+      ctx.save(); ctx.scale(side, 1);
+      frond(242, 257, .77, -.6, w.leaf, time, side);
+      frond(551, 451, 1.56, -.4, '#658e68', time, side + 4);
+      for (let i = 0; i < 5; i++) {
+        leaf(475 + i * 43, -440 + i * 19, 262, 89, 2.3 + i * .14, i % 2 ? '#285448' : '#43765a', true);
+      }
+      ctx.restore();
+    }
+    steps(w);
+    mushroom(-204, 282, .4, w, time);
+    mushroom(246, 316, .55, w, time);
+    for (let i = 0; i < 23; i++) {
+      const x = (w.numbers[i * 2] - .5) * 1200 + Math.sin(time * .3 + i) * 15;
+      const y = w.numbers[i * 2 + 1] * 640 - 230 + Math.cos(time * .45 + i) * 9;
+      ellipse(x, y, 7, 7, '#f7df9a0c');
+      ellipse(x, y, 1.5, 1.5, '#f7df9a');
+    }
+  }
+  function books(x, y, n, height, rng, w) {
+    let bx = x;
+    for (let i = 0; i < n; i++) {
+      const bw = 9 + rng() * 15, bh = height * (.62 + rng() * .38);
+      const col = [w.accent, w.leaf, w.stone, '#718b99', '#c99878'][i % 5];
+      rect(bx, y - bh, bw - 2, bh, col);
+      rect(bx + 2, y - bh, 2, bh, '#ffffff13');
+      line([bx + 2, y - bh + 8, bx + bw - 4, y - bh + 8], w.light + '90', 1);
+      line([bx + 2, y - 9, bx + bw - 4, y - 9], w.light + '90', 1);
+      if (i % 3 === 0) ellipse(bx + bw / 2 - 1, y - bh / 2, 2, 4, w.light);
+      bx += bw;
+    }
+  }
+  function library(w, time) {
+    rect(-1800, -900, 3600, 1800, w.sky);
+    for (let j = -8; j <= 8; j++) {
+      ctx.beginPath(); ctx.moveTo(j * 106, -800); ctx.lineTo(j * 106, 224); stroke('#d1a07b0e', 1);
+    }
+    polygon([-1500, 208, 1500, 208, 2000, 1100, -2000, 1100], w.ground);
+    for (let j = -8; j <= 8; j++) line([j * 89, 208, j * 246, 1000], '#d4a17830', 2);
+    for (let j = 0; j < 12; j++) line([-1800, 222 + j * j * 9, 1800, 222 + j * j * 9], '#d4a17825', 1.3);
+    const rng = random(w.seed);
+    for (let side = -1; side <= 1; side += 2) {
+      ctx.save(); ctx.scale(side, 1);
+      for (let bay = 0; bay < 3; bay++) {
+        const x = 214 + bay * 207, top = -378 - bay * 55;
+        rect(x, top, 193, 614, '#272f3d');
+        rect(x - 9, top - 12, 211, 15, w.stone);
+        for (let j = 0; j < 7; j++) {
+          const y = top + 73 + j * 77;
+          books(x + 8, y, 10, 57, rng, w);
+          rect(x, y, 193, 9, w.shade);
+          rect(x, y, 193, 2, w.stone);
+        }
+        rect(x - 9, top, 9, 614, w.shade); rect(x + 193, top, 9, 614, w.shade);
+      }
+      // Sliding ladder, drawn across the shelves.
+      line([505, -183, 420, 314], w.stone, 6);
+      line([552, -183, 467, 314], w.stone, 6);
+      for (let j = 0; j < 12; j++) {
+        const y = -158 + j * 39, x = 501 - j * 6.7;
+        line([x, y, x + 47, y], w.stone, 4);
+      }
+      lantern(175, -75, .8, w, time);
+      ctx.restore();
+    }
+    steps(w);
+    polygon([-175, 316, 175, 316, 270, 760, -270, 760], w.accent);
+    for (let side = -1; side <= 1; side += 2) {
+      ctx.save(); ctx.scale(side, 1);
+      line([154, 326, 246, 750], w.light, 3);
+      for (let j = 0; j < 16; j++) {
+        const x = 140 + j * 4.7, y = 338 + j * 26;
+        polygon([x, y, x + 8, y + 10, x, y + 20, x - 8, y + 10], w.light);
+      }
+      ctx.restore();
+    }
+    // An open book resting on a small table.
+    ellipse(-296, 228, 68, 22, w.stone);
+    line([-337, 231, -349, 318], w.shade, 7); line([-257, 231, -245, 318], w.shade, 7);
+    polygon([-350, 216, -299, 222, -248, 212, -262, 184, -299, 191, -338, 185], w.light);
+    line([-299, 192, -299, 220], w.shade, 1.5);
+    for (let j = 0; j < 4; j++) line([-334, 192 + j * 5, -306, 197 + j * 5], w.shade, 1);
+    cat(306, 276, w.ink, time);
+    // Pendant lamp.
+    line([0, -850, 0, -371], w.stone, 2);
+    polygon([-42, -319, -17, -369, 17, -369, 42, -319], w.light);
+    ellipse(0, -315, 42, 8, w.accent);
+    polygon([-38, -311, 38, -311, 194, 206, -194, 206], '#ffdda20a');
+  }
+  const painters = [garden, observatory, desert, sea, forest, library];
+  function gate(w, time) {
+    ctx.save(); ctx.translate(21, 14);
+    paintPath(arch(326, -264, 192), w.ink + 'a0'); ctx.restore();
+    paintPath(arch(326, -264, 187), w.shade, w.ink, 3);
+    paintPath(arch(310, -254, 179), w.stone, w.light + '80', 2);
+    paintPath(arch(260, -214, 169), w.shade);
+    paintPath(arch(231, -183, 165), w.ink);
+    // Voussoirs follow the arch instead of drawing a square frame over it.
+    for (let j = 0; j <= 12; j++) {
+      const a = PI + j * PI / 12;
+      line([Math.cos(a) * 155, -99 + Math.sin(a) * 155, Math.cos(a) * 132, -84 + Math.sin(a) * 130], w.shade, 1.5);
+    }
+    for (let side = -1; side <= 1; side += 2) {
+      ctx.save(); ctx.scale(side, 1);
+      rect(134, -94, 20, 257, w.stone);
+      line([139, -87, 139, 156], w.light + '70', 2);
+      for (let j = 0; j < 6; j++) line([133, -70 + j * 40, 154, -70 + j * 40], w.shade, 1.5);
+      rect(122, -107, 45, 13, w.shade);
+      rect(122, -109, 45, 4, w.light);
+      rect(122, 144, 46, 18, w.shade);
+      rect(118, 159, 54, 8, w.stone);
+      if (w.type === 2 || w.type === 5) {
+        for (let j = 0; j < 8; j++) {
+          const y = -73 + j * 27;
+          polygon([121, y - 5, 126, y, 121, y + 5, 116, y], w.light);
+        }
+      }
+      ctx.restore();
+    }
+    // A small gilded emblem tells the six doorway families apart.
+    ellipse(0, -233, 14, 14, w.shade);
+    if (w.type === 0) {
+      leaf(-1, -228, 12, 6, -.6, w.light); leaf(1, -228, 12, 6, .6, w.light);
+      for (let side = -1; side <= 1; side += 2) {
+        ctx.save(); ctx.scale(side, 1);
+        for (let j = 0; j < 13; j++) {
+          const a = j * .105, x = 34 + j * 10, y = -261 + j * 5 + j * j * .45;
+          leaf(x, y, 27, 10, .5 + a, j % 2 ? '#83bb99' : '#4f8d73', true);
+          if (j % 3 === 0) ellipse(x + 8, y - 10, 3, 3, w.light);
+        }
+        ctx.restore();
+      }
+    } else if (w.type === 1) {
+      star(0, -233, 10, w.light);
+    } else if (w.type === 2) {
+      ellipse(0, -233, 6, 6, w.light);
+      for (let i = 0; i < 8; i++) {
+        const a = i * TAU / 8;
+        line([Math.cos(a) * 9, -233 + Math.sin(a) * 9, Math.cos(a) * 12, -233 + Math.sin(a) * 12], w.light, 1);
+      }
+    } else if (w.type === 3) {
+      curve('M-10-233Q-5-241 0-233T10-233M-10-228Q-5-236 0-228T10-228', null, w.light, 1.5);
+      coral(-164, 166, .55, w.accent, time);
+      coral(166, 157, .42, w.leaf, time);
+    } else if (w.type === 4) {
+      leaf(0, -225, 19, 9, .4, w.light);
+      mushroom(-152, -95, .37, w, time);
+      mushroom(149, 35, .26, w, time);
+      for (let i = 0; i < 10; i++) {
+        const a = PI + i * PI / 9;
+        leaf(Math.cos(a) * 165, -100 + Math.sin(a) * 165, 39, 13, a + PI / 2, i % 2 ? w.leaf : '#668f6a', true);
+      }
+    } else {
+      line([-8, -227, -8, -237, 0, -235, 8, -237, 8, -227, 0, -225, -8, -227, 0, -225, 0, -235], w.light, 1.2);
+    }
+  }
+  // A seeded paper grain is made once, never downloaded.
+  const grainCanvas = document.createElement('canvas');
+  grainCanvas.width = grainCanvas.height = 128;
+  const gc = grainCanvas.getContext('2d'), image = gc.createImageData(128, 128), grainRng = random(1907);
+  for (let i = 0; i < image.data.length; i += 4) {
+    const v = grainRng() > .5 ? 245 : 20;
+    image.data[i] = image.data[i + 1] = image.data[i + 2] = v; image.data[i + 3] = 12 + grainRng() * 17;
+  }
+  gc.putImageData(image, 0, 0);
+  const grain = ctx.createPattern(grainCanvas, 'repeat');
+  function apertureCovers(scale) {
+    const x = Math.max(cx, width - cx) / scale, top = -cy / scale, bottom = (height - cy) / scale;
+    if (x > 104 || bottom > 159 || top < -159) return false;
+    return top >= -55 || x * x + (top + 55) * (top + 55) < 104 * 104;
+  }
+  function render() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    // At most six nested worlds, with offscreen ancestors culled. Complexity
+    // and memory stay bounded regardless of how far the traveler has gone.
+    let start = -2;
+    while (start < 2 && apertureCovers(base * RATIO ** (position - start))) start++;
+    const draw = offset => {
+      const scale = base * RATIO ** (position - offset);
+      const w = worldAt(address + BigInt(offset));
+      screenScale = scale; detail = scale > .22;
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(scale, scale);
+      sky(w, clock); painters[w.type](w, clock); gate(w, clock);
+      ctx.restore();
+      if (offset < 3 && scale * 208 > 2) {
+        ctx.save(); ctx.translate(cx, cy); ctx.scale(scale, scale); ctx.clip(doorway);
+        // Restore just the transform, not the clip, to draw the child in
+        // screen coordinates without losing any ancestor's aperture.
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        draw(offset + 1);
+        ctx.restore();
+      } else {
+        ctx.save(); ctx.translate(cx, cy); ctx.scale(scale, scale); paintPath(doorway, worlds[(w.type + 1) % 6].sky); ctx.restore();
+      }
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(scale, scale);
+      paintPath(doorway, null, w.light + '95', 1.8);
+      line([-104, 160, 104, 160], w.light, 2);
+      ctx.restore();
+    };
+    draw(start);
+    ctx.fillStyle = grain; ctx.fillRect(0, 0, width, height);
+    const vignette = ctx.createRadialGradient(cx, cy, Math.min(width, height) * .18, cx, cy, Math.max(width, height) * .78);
+    vignette.addColorStop(0, '#10243800'); vignette.addColorStop(1, '#10243842');
+    ctx.fillStyle = vignette; ctx.fillRect(0, 0, width, height);
+  }
+  let noticeTimer;
+  function notice(message) {
+    clearTimeout(noticeTimer);
+    $('notice').textContent = message; $('notice').classList.add('visible');
+    noticeTimer = setTimeout(() => $('notice').classList.remove('visible'), 3200);
+  }
+  function updateLabels() {
+    const n = address + (position > .72 ? 1n : 0n), key = n.toString();
+    if (key !== lastLabel) {
+      const w = worldAt(n);
+      $('layer').textContent = key; $('layer').title = key;
+      $('place-name').textContent = w.name;
+      canvas.setAttribute('aria-label', `${w.name}. Somewhere ${key}. An arched doorway contains ${worldAt(n + 1n).name.toLowerCase()}. Use the zoom controls to travel in either direction.`);
+      lastLabel = key;
+      tune(w.type);
+    }
+    $('needle').style.top = `${(1 - position) * 100}%`;
+  }
+  function wake() {
+    dirty = true;
+    if (!raf && !document.hidden) raf = requestAnimationFrame(frame);
+  }
+  function frame(now) {
+    raf = 0;
+    const dt = last ? Math.min((now - last) / 1000, .05) : 0;
+    last = now;
+    if (drifting) target += dt * Number($('pace').value);
+    const moving = Math.abs(target - position) > .000001;
+    if (moving) {
+      position = reduced ? target : position + (target - position) * (1 - Math.exp(-9 * dt));
+      if (Math.abs(target - position) < .00001) position = target;
+      const shift = Math.floor(position);
+      if (shift) { address += BigInt(shift); position -= shift; target -= shift; }
+      dirty = true;
+    }
+    if (!reduced) clock += dt;
+    if (dirty || !reduced) { render(); updateLabels(); dirty = false; }
+    playAudio(now);
+    if (!document.hidden && (!reduced || moving || drifting || soundOn)) raf = requestAnimationFrame(frame);
+    else last = 0;
+  }
+  function resize() {
+    width = Math.max(1, innerWidth); height = Math.max(1, innerHeight);
+    dpr = Math.min(devicePixelRatio || 1, 2, Math.sqrt(4000000 / (width * height)));
+    canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
+    base = Math.max(width / 1450, height / 1100);
+    cx = width * .5; cy = height * .49;
+    wake();
+  }
+  function setDrifting(on) {
+    drifting = on;
+    $('drift').setAttribute('aria-pressed', String(on));
+    $('drift-label').textContent = on ? 'Pause' : 'Drift';
+    $('drift-icon').innerHTML = on ? '<path d="M8 5v14M16 5v14"/>' : '<path d="m9 5 10 7-10 7z"/>';
+    if (on) $('hint').classList.add('used');
+    wake();
+  }
+  function travel(delta) {
+    if (drifting) setDrifting(false);
+    target = clamp(target + delta, position - 2, position + 2);
+    $('hint').classList.add('used');
+    wake();
+  }
+  function home() {
+    setDrifting(false);
+    address = 0n; target = position = clock = 0; lastLabel = '';
+    notice('Back to the first garden.'); wake();
+  }
+  function quiet() {
+    const hidden = document.body.classList.toggle('quiet');
+    $('quiet').setAttribute('aria-pressed', String(hidden));
+    $('quiet').setAttribute('aria-label', hidden ? 'Show labels' : 'Hide labels');
+    $('quiet').title = hidden ? 'Show labels (H)' : 'Hide labels (H)';
+  }
+  function help() {
+    if ($('about').open) { $('about').close(); return; }
+    setDrifting(false); target = position;
+    $('about').showModal();
+  }
+  $('in').addEventListener('click', () => travel(.5));
+  $('out').addEventListener('click', () => travel(-.5));
+  $('drift').addEventListener('click', () => setDrifting(!drifting));
+  $('home').addEventListener('click', home);
+  $('quiet').addEventListener('click', quiet);
+  $('help').addEventListener('click', help);
+  $('close-help').addEventListener('click', () => $('about').close());
+  $('about').addEventListener('click', e => {
+    if (e.target !== $('about')) return;
+    const r = $('about').getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) $('about').close();
+  });
+  canvas.addEventListener('wheel', e => {
+    if ($('about').open) return;
+    e.preventDefault();
+    const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? height : 1;
+    const delta = clamp(e.deltaY * unit, -300, 300);
+    travel(e.ctrlKey ? -delta * .004 : delta / 1350);
+  }, { passive: false });
+  // Pointer capture keeps a drag alive outside the canvas. Switching between
+  // one and two fingers resets the baseline instead of jumping the camera.
+  const pointers = new Map();
+  let gestureY = 0, gestureDistance = 0;
+  function pointerBaseline() {
+    const ps = [...pointers.values()];
+    gestureY = ps.reduce((sum, p) => sum + p.y, 0) / Math.max(1, ps.length);
+    gestureDistance = ps.length >= 2 ? Math.hypot(ps[0].x - ps[1].x, ps[0].y - ps[1].y) : 0;
+  }
+  canvas.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || $('about').open) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    canvas.setPointerCapture(e.pointerId); canvas.classList.add('dragging');
+    pointerBaseline();
+    if (drifting) setDrifting(false);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!pointers.has(e.pointerId)) return;
+    const oldY = gestureY, oldDistance = gestureDistance;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    pointerBaseline();
+    if (pointers.size >= 2 && oldDistance > 8 && gestureDistance > 8) {
+      travel(Math.log(gestureDistance / oldDistance) / Math.log(RATIO));
+    } else if (pointers.size === 1) travel((oldY - gestureY) / 570);
+  });
+  function releasePointer(e) {
+    pointers.delete(e.pointerId); pointerBaseline();
+    if (!pointers.size) canvas.classList.remove('dragging');
+  }
+  canvas.addEventListener('pointerup', releasePointer);
+  canvas.addEventListener('pointercancel', releasePointer);
+  canvas.addEventListener('lostpointercapture', releasePointer);
+  addEventListener('blur', () => { pointers.clear(); canvas.classList.remove('dragging'); });
+  addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const tag = e.target.tagName;
+    if (tag === 'SELECT' || tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+    if ($('about').open) return;
+    if (e.code === 'Space' && tag === 'BUTTON') return; // Keep native button activation.
+    const key = e.key.toLowerCase();
+    if (['arrowup', 'arrowright', '+', '='].includes(key)) { e.preventDefault(); travel(.085); }
+    else if (['arrowdown', 'arrowleft', '-', '_'].includes(key)) { e.preventDefault(); travel(-.085); }
+    else if (key === 'pagedown') { e.preventDefault(); travel(1); }
+    else if (key === 'pageup') { e.preventDefault(); travel(-1); }
+    else if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) setDrifting(!drifting); }
+    else if (key === 'r' && !e.repeat) home();
+    else if (key === 'h' && !e.repeat) quiet();
+    else if (key === 'm' && !e.repeat) toggleSound();
+    else if (key === '?' && !e.repeat) help();
+  });
+  // Optional sound: a quiet three-voice chord, soft bells and a generated
+  // stereo room impulse. No microphone, network, or prerecorded audio.
+  let audio = null, master = null, wet = null, pads = [];
+  let soundOn = false, audioBusy = false, nextBell = 0, bellNumber = 0;
+  const roots = [174.614, 146.832, 164.814, 130.813, 196, 164.814];
+  function makeAudio() {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (!Audio) throw new Error('Web Audio is unavailable');
+    audio = new Audio();
+    master = audio.createGain(); master.gain.value = 0;
+    const compressor = audio.createDynamicsCompressor();
+    compressor.threshold.value = -18; compressor.ratio.value = 3;
+    master.connect(compressor); compressor.connect(audio.destination);
+    wet = audio.createConvolver();
+    const length = Math.floor(audio.sampleRate * 2.8);
+    const impulse = audio.createBuffer(2, length, audio.sampleRate), rng = random(415);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = impulse.getChannelData(ch);
+      for (let i = 0; i < length; i++) data[i] = (rng() * 2 - 1) * (1 - i / length) ** 3 * .35;
+    }
+    wet.buffer = impulse;
+    const returnGain = audio.createGain(); returnGain.gain.value = .45;
+    wet.connect(returnGain); returnGain.connect(master);
+    for (let i = 0; i < 3; i++) {
+      const oscillator = audio.createOscillator(), gain = audio.createGain();
+      oscillator.type = 'sine'; gain.gain.value = [.095, .045, .025][i];
+      oscillator.connect(gain); gain.connect(master); gain.connect(wet);
+      oscillator.frequency.value = roots[0] * [.5, 1, 1.5][i];
+      oscillator.start(); pads.push(oscillator);
+    }
+  }
+  function tune(type) {
+    if (!audio) return;
+    pads.forEach((pad, i) => pad.frequency.setTargetAtTime(roots[type] * [.5, 1, 1.5][i], audio.currentTime, 1.7));
+  }
+  function soundUI() {
+    $('sound').setAttribute('aria-pressed', String(soundOn));
+    $('sound').setAttribute('aria-label', soundOn ? 'Turn sound off' : 'Turn sound on');
+    $('sound').title = soundOn ? 'Turn sound off (M)' : 'Turn sound on (M)';
+    $('sound-waves').setAttribute('d', soundOn ? 'M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14' : 'm16 9 5 6m0-6-5 6');
+  }
+  async function toggleSound() {
+    if (audioBusy) return;
+    audioBusy = true; $('sound').disabled = true;
+    try {
+      if (!audio) makeAudio();
+      if (soundOn) {
+        soundOn = false;
+        await audio.suspend();
+      } else {
+        await audio.resume();
+        if (audio.state !== 'running') throw new Error('Audio is blocked');
+        soundOn = true; nextBell = 0;
+        master.gain.setTargetAtTime(.65, audio.currentTime, .5);
+        tune(worldAt(address).type);
+      }
+    } catch (error) {
+      soundOn = false;
+      notice('Sound is unavailable. The journey is still open.');
+    } finally {
+      audioBusy = false; $('sound').disabled = false; soundUI(); wake();
+    }
+  }
+  function playAudio(now) {
+    if (!soundOn || !audio || audio.state !== 'running' || now < nextBell) return;
+    nextBell = now + 2800;
+    const type = worldAt(address).type, pentatonic = [1, 1.125, 1.25, 1.5, 1.667, 2];
+    const note = [0, 2, 4, 1, 3, 5, 2, 1][bellNumber++ % 8];
+    const at = audio.currentTime, gain = audio.createGain(), osc = audio.createOscillator();
+    osc.type = 'sine'; osc.frequency.value = roots[type] * pentatonic[note] * 2;
+    gain.gain.setValueAtTime(0, at); gain.gain.linearRampToValueAtTime(.10, at + .012);
+    gain.gain.exponentialRampToValueAtTime(.0001, at + 3.8);
+    osc.connect(gain); gain.connect(master); gain.connect(wet);
+    osc.start(at); osc.stop(at + 4);
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+  }
+  $('sound').addEventListener('click', toggleSound);
+  $('capture').addEventListener('click', () => {
+    const out = document.createElement('canvas');
+    out.width = canvas.width; out.height = canvas.height;
+    const c = out.getContext('2d');
+    c.drawImage(canvas, 0, 0);
+    const unit = Math.min(out.width, out.height) / 800;
+    const n = address + (position > .72 ? 1n : 0n);
+    const wash = c.createLinearGradient(0, out.height - 145 * unit, 0, out.height);
+    wash.addColorStop(0, '#102b3500'); wash.addColorStop(1, '#102b35cc');
+    c.fillStyle = wash; c.fillRect(0, 0, out.width, out.height);
+    c.fillStyle = '#fff1d3'; c.font = `${34 * unit}px Palatino, Georgia, serif`;
+    c.fillText('Elsewhere.', 33 * unit, out.height - 58 * unit);
+    c.font = `${14 * unit}px sans-serif`;
+    c.fillText(`${worldAt(n).name} / Somewhere ${n}`, 35 * unit, out.height - 29 * unit, out.width - 70 * unit);
+    out.toBlob(blob => {
+      if (!blob) { notice('The postcard could not be saved. Try again.'); return; }
+      const url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.download = `elsewhere-${n.toString().slice(0, 60)}.png`; a.href = url;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      notice('A little somewhere to keep.');
+    }, 'image/png');
+  });
+  function readAddress() {
+    const params = new URLSearchParams(location.hash.slice(1));
+    const at = params.get('at'), z = Number(params.get('z') || 0);
+    if (at !== null && /^-?\d{1,256}$/.test(at) && Number.isFinite(z)) {
+      address = BigInt(at); target = position = clamp(z, 0, .999999);
+      clock = 0; lastLabel = ''; setDrifting(false);
+    }
+  }
+  addEventListener('hashchange', readAddress);
+  addEventListener('resize', resize);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      cancelAnimationFrame(raf); raf = 0; last = 0;
+      if (audio) audio.suspend().catch(() => {});
+    } else {
+      nextBell = 0; wake();
+      if (soundOn && audio) audio.resume().catch(() => { soundOn = false; soundUI(); });
+    }
+  });
+  motion.addEventListener('change', e => {
+    reduced = e.matches; clock = 0;
+    $('motion-note').hidden = !reduced;
+    if (reduced) setDrifting(false);
+    wake();
+  });
+  $('motion-note').hidden = !reduced;
+  if (matchMedia('(pointer: coarse)').matches) $('hint').textContent = 'Swipe up to go closer. Down to return.';
+  readAddress(); resize();
+})();
+</script>
+</body>
+</html>
