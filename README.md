@@ -40,6 +40,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Drizzle](https://dyrits.github.io/AI-XPERIENCE/pages/drizzle.html) | Canvas 2D, animated short film | Claude Sonnet 5.5 | 1 | 49 KB |
 | [Elsewhere](https://dyrits.github.io/AI-XPERIENCE/pages/elsewhere.html) | Canvas 2D, recursive zoom worlds (incomplete, untested) | GPT-6 Astra | 1 | 52 KB |
 | [Needle](https://dyrits.github.io/AI-XPERIENCE/pages/needle.html) | DOM + Canvas 2D, regex workbench | Space Bunny | 1 | 73 KB |
+| [Palimpsest](https://dyrits.github.io/AI-XPERIENCE/pages/palimpsest.html) | Canvas 2D, ink recognition + time scrubbing | Space Bunny | 1 | 90 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -86,6 +87,7 @@ Includes optional synthesized sound, pause, timeline scrubbing, keyboard frame s
 
 **Elsewhere.** An endless zoom through ornate doorways into illustrated pocket worlds: terraced gardens, a lunar observatory, a desert oasis, a sea arch, a mushroom forest and a lantern-lit library. Each doorway opens onto the next world, and travel works in either direction with scroll, swipe, pinch or keyboard, or with automatic travel and optional generated audio. This is an incomplete piece: the model ran out of tokens before it could finish, and the page was never tested. It had no chance to iterate, so bugs, visual glitches or missing behaviour are expected and no correction round was possible.
 
+**Palimpsest.** A whiteboard that keeps its own history. Every mark is stored together with the moment it was made, so the strip along the bottom edge is the session itself, drawn as a density plot of everything you have drawn: drag its head back and the board takes itself apart in reverse, far enough to stop halfway through a single stroke and watch the ink being pulled back, then play it forward again. Because every mark has a time, the pen can be loose: on release the board reads what you drew and resolves it — an uneven loop becomes an ellipse, four corners become a rectangle or a diamond, three become a triangle, and a straight flick with a barb on the end becomes an arrow that stays attached to the shapes it touches. If it is not sure, the ink stays ink. Nothing is discarded: the original stroke is kept as a ghost underneath, one button away, which is the first draft. Also here: pen, highlighter, eraser, six shape tools, text and sticky notes, snapping alignment guides, selection with handles, align and distribute, undo and redo, pan and zoom, PNG and JSON export, optional synthesized pen sound, local saves, touch and keyboard input and reduced-motion support.
 **Somewhere, softly.** Five miniature places hang from a wooden mobile: a village, an orchard, a lighthouse, a small sea with a sailboat and a solitary house. Drag to turn the sculpture, select an island to look closer and read its story, send a breeze through the hanging islands, or move the light from morning to night. Includes optional synthesized chimes, PNG postcard export, pause and reset controls, touch and keyboard input, and reduced-motion support. Everything is drawn in the file, with no external assets.
 
 **Paperborough.** A city builder drawn as a folded-paper town, with pencil outlines, lavender roofs, sage trees and a paper river. Lay roads and bridges to connect homes, markets and paper mills to the town hall. Residents arrive as days pass, jobs and gardens affect happiness, and taxes and mills supply paper for construction. Seven buildable pieces, building upgrades and six town goals let the settlement grow at your own pace. Includes local saves, undo, pause and manual day advancement, optional synthesized sound, PNG postcard export, mouse and keyboard controls, touch panning and pinch zoom, and reduced-motion support. All artwork is generated in the file, with no external assets.
@@ -135,6 +137,7 @@ AI-XPERIENCE/
     ├── needle.html
     ├── night-atlas.html
     ├── nodal.html
+    ├── palimpsest.html
     ├── paperborough.html
     ├── percy.html
     ├── replace-you.html

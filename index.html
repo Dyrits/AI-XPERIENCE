@@ -175,6 +175,27 @@
   @keyframes ccrun { 0%, 15% { transform: translate(0, 0); } 50%, 70% { transform: translate(230px, 0); } 100% { transform: translate(0, 0); } }
   .art-elsewhere { background: #142c50; }
   .art-elsewhere svg { width: 100%; height: 100%; }
+  .art-palimpsest { background: #f4f1e9; }
+  .art-palimpsest svg { width: 100%; height: 100%; }
+  .art-palimpsest .pd-clean { stroke-dasharray: 520; animation: pdresolve 5.4s cubic-bezier(.5,0,.2,1) infinite; }
+  @keyframes pdresolve {
+    0% { stroke-dashoffset: 520; opacity: 0; }
+    18% { opacity: 1; }
+    42%, 78% { stroke-dashoffset: 0; opacity: 1; }
+    100% { stroke-dashoffset: 0; opacity: 0; }
+  }
+  .art-palimpsest .pd-ghost { animation: pdfade 5.4s ease infinite; }
+  @keyframes pdfade {
+    0% { opacity: .55; }
+    40%, 78% { opacity: .3; }
+    100% { opacity: .55; }
+  }
+  .art-palimpsest .pd-head { animation: pdplay 5.4s cubic-bezier(.45,0,.25,1) infinite; }
+  @keyframes pdplay {
+    0% { transform: translateX(0); }
+    88% { transform: translateX(300px); }
+    100% { transform: translateX(0); }
+  }
   .art-drizzle { background: #8fc4ee; }
   .art-drizzle svg { width: 100%; height: 100%; }
   .art-drizzle .dz-cloud { animation: dzbob 3s ease-in-out infinite alternate; }  .art-drizzle .dz-drop { animation: dzdrop 1s linear infinite; }
@@ -1613,6 +1634,7 @@
         <a class="open mono" href="pages/elsewhere.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+
     <article class="card" data-src="pages/needle.html" style="--accent: #5fe3b0; animation-delay: 5.1s;">
       <div class="preview">
         <div class="art art-needle" aria-hidden="true">
@@ -1688,6 +1710,76 @@
           <div><dt>Size</dt><dd>73 <small>KB</small></dd></div>
         </dl>
         <a class="open mono" href="pages/needle.html" target="_blank" rel="noopener"><span>Open the tool</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
+
+    <article class="card" data-src="pages/palimpsest.html" style="--accent: #c8402f; animation-delay: 5.25s;">
+      <div class="preview">
+        <div class="art art-palimpsest" aria-hidden="true">
+          <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="pd-grid" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#8a7c62" opacity=".26"/></pattern>
+              <pattern id="pd-hatch" width="7" height="7" patternUnits="userSpaceOnUse"><path d="M0 7L7 0" stroke="#a89574" stroke-opacity=".3"/></pattern>
+            </defs>
+            <rect width="640" height="400" fill="#f4f1e9"/>
+            <rect width="640" height="400" fill="url(#pd-grid)"/>
+
+            <!-- a loop that was drawn badly, and the ellipse it became -->
+            <path class="pd-ghost" d="M186 62c-52 4-84 44-80 86 4 44 44 72 90 70 46-2 84-32 82-78-2-44-42-74-92-78Z"
+                  fill="none" stroke="#b9a684" stroke-width="1.6" stroke-dasharray="5 4"/>
+            <ellipse class="pd-clean" cx="184" cy="140" rx="86" ry="66" fill="none" stroke="#bf3d2a" stroke-width="2.6"/>
+
+            <!-- four corners that became a box, and the arrow between them -->
+            <path class="pd-ghost" d="M404 84l116-6 4 104-114 10Z" fill="none" stroke="#b9a684" stroke-width="1.6" stroke-dasharray="5 4"/>
+            <rect class="pd-clean" x="402" y="88" width="120" height="100" fill="none" stroke="#bf3d2a" stroke-width="2.6"/>
+            <path class="pd-clean" d="M300 132h58" fill="none" stroke="#22201c" stroke-width="2.4"/>
+            <path d="M358 132l-12-7v14Z" fill="#22201c"/>
+
+            <!-- ink left as ink, because the board was not sure -->
+            <path d="M300 250c22-26 34 14 56-10s30 18 52-6 32 10 44-2" fill="none" stroke="#22201c" stroke-width="4.5" stroke-linecap="round"/>
+            <path d="M470 258c14-16 22 10 36-4" fill="none" stroke="#15716b" stroke-width="4.5" stroke-linecap="round"/>
+
+            <!-- a sticky note -->
+            <g><rect x="44" y="238" width="92" height="80" fill="#f6e6a8"/>
+               <rect x="47" y="241" width="86" height="74" fill="url(#pd-hatch)" opacity=".5"/>
+               <path d="M58 268h58M58 284h44" stroke="#5c4a22" stroke-width="3" stroke-linecap="round" opacity=".7"/></g>
+
+            <!-- the reel -->
+            <g>
+              <rect y="344" width="640" height="56" fill="#1a1815"/>
+              <g fill="#f7f4ec" opacity=".2">
+                <rect x="48" y="366" width="4" height="10"/><rect x="58" y="360" width="4" height="22"/>
+                <rect x="68" y="363" width="4" height="16"/><rect x="78" y="356" width="4" height="30"/>
+                <rect x="88" y="362" width="4" height="18"/><rect x="98" y="358" width="4" height="26"/>
+                <rect x="108" y="365" width="4" height="12"/><rect x="118" y="360" width="4" height="22"/>
+                <rect x="128" y="354" width="4" height="34"/><rect x="138" y="363" width="4" height="16"/>
+                <rect x="148" y="361" width="4" height="20"/><rect x="158" y="365" width="4" height="12"/>
+              </g>
+              <g fill="#c8402f">
+                <rect x="48" y="366" width="4" height="10"/><rect x="58" y="360" width="4" height="22"/>
+                <rect x="68" y="363" width="4" height="16"/><rect x="78" y="356" width="4" height="30"/>
+                <rect x="88" y="362" width="4" height="18"/><rect x="98" y="358" width="4" height="26"/>
+                <rect x="108" y="365" width="4" height="12"/>
+              </g>
+              <rect x="30" y="371" width="470" height="1" fill="#f7f4ec" opacity=".14"/>
+              <g class="pd-head"><rect x="116" y="352" width="2" height="40" fill="#c8402f"/><circle cx="117" cy="349" r="4" fill="#c8402f"/></g>
+              <g fill="#f7f4ec" opacity=".3"><circle cx="24" cy="372" r="4"/><path d="M22 372l3-3v6Z" fill="#1a1815"/></g>
+            </g>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · Ink recognition</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Palimpsest</h2><span class="num mono">Nº 29</span></div>
+        <p>A whiteboard that keeps its own history. Every mark is stored with the moment it was made, so the strip along the bottom is the session itself: drag its head back and the board takes itself apart in reverse, down to the middle of a single stroke, then plays forward again. Loose ink is read when you let go — an uneven loop becomes an ellipse, four corners a rectangle, a flick with a barb an arrow — and the original stroke stays underneath as the first draft.</p>
+        <div class="chips mono"><span>Time-scrubbing reel</span><span>Shape recognition</span><span>First-draft ghosts</span><span>Arrow binding</span><span>PNG &amp; JSON</span><span>Touch &amp; keyboard</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Space Bunny</dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>90 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/palimpsest.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
   </section>
