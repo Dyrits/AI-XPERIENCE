@@ -11,31 +11,32 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 ## Pages
 
-| Page | Technique | Model | Tokens (est.) | Prompts | Size |
-|---|---|---|---|---|---|
-| [Abyss](https://dyrits.github.io/AI-XPERIENCE/pages/abyss.html) | Canvas 2D | Claude Opus 5.5 | ~60K | 1 + 1 | 28 KB |
-| [Mercurial](https://dyrits.github.io/AI-XPERIENCE/pages/mercurial.html) | WebGL2 raymarching | Claude Opus 5.5 | ~55K | 1 + 1 | 37 KB |
-| [Night atlas](https://dyrits.github.io/AI-XPERIENCE/pages/night-atlas.html) | Canvas 2D, projected 3D mesh | GPT-6 Atra | ~57K | 1 + 1 | 21 KB |
-| [Foldwake](https://dyrits.github.io/AI-XPERIENCE/pages/foldwake.html) | Canvas 2D, mirror geometry | GPT-6 Atra | ~60K | 1 | 21 KB |
-| [Echoveil](https://dyrits.github.io/AI-XPERIENCE/pages/echoveil.html) | Canvas 2D, sonar reveal | GLM-5.3 | ~58K | 1 | 33 KB |
-| [Umbralux](https://dyrits.github.io/AI-XPERIENCE/pages/umbralux.html) | Canvas 2D, raycast optics | Gemini 3.8 Flash | ~52K | 1 | 46 KB |
-| [Estuary](https://dyrits.github.io/AI-XPERIENCE/pages/estuary.html) | Canvas 2D, curl-noise flow field | DeepSeek V4 Pro | ~55K | 1 | 28 KB |
-| [The last warm window](https://dyrits.github.io/AI-XPERIENCE/pages/the-last-warm-window.html) | Canvas 2D, animated narrative | GPT-6 Astra | ~58K | 1 + 2 | 23 KB |
-| [Lifeline](https://dyrits.github.io/AI-XPERIENCE/pages/lifeline.html) | Canvas 2D, single continuous line | Claude Opus 5.5 | ~150K | 1 | 34 KB |
-| [Starshard](https://dyrits.github.io/AI-XPERIENCE/pages/starshard.html) | Canvas 2D, roguelike shooter | GLM-5.3 | ~70K | 1 + 2 | 80 KB |
-| [Vesper](https://dyrits.github.io/AI-XPERIENCE/pages/vesper.html) | Canvas 2D, idle clicker | Claude Opus 5.5 | ~150K | 1 + 1 | 78 KB |
-| [Echo Ward](https://dyrits.github.io/AI-XPERIENCE/pages/echo-ward.html) | Canvas 2D, tower defense | Claude Opus 5.5 | ~170K | 1 + 1 | 71 KB |
-| [Until the tide](https://dyrits.github.io/AI-XPERIENCE/pages/until-the-tide.html) | Canvas 2D, escape game | GPT-6 | ~70K | 1 | 54 KB |
-| [Longhand](https://dyrits.github.io/AI-XPERIENCE/pages/longhand.html) | Canvas 2D, drawn-line runner | GLM-5.3 | ~65K | 1 + 1 | 34 KB |
-| [Loaded](https://dyrits.github.io/AI-XPERIENCE/pages/loaded.html) | Canvas 2D, dice roguelike | Claude Opus 5.5 | ~200K | 1 + 1 | 96 KB |
-| [Enough](https://dyrits.github.io/AI-XPERIENCE/pages/enough.html) | Canvas 2D, motion graphic | Claude Opus 5.5 | ~100K | 1 | 32 KB |
-| [Replace you](https://dyrits.github.io/AI-XPERIENCE/pages/replace-you.html) | Canvas 2D, motion graphic | GTP-5 Astra | ~51K | 1 | 15 KB |
-| [Tick](https://dyrits.github.io/AI-XPERIENCE/pages/tick.html) | DOM + Canvas 2D, scroll-driven explainer | Claude Opus 5.5 | ~120K | 1 | 60 KB |
-| [Murmur](https://dyrits.github.io/AI-XPERIENCE/pages/murmur.html) | Canvas 2D, 3D flocking | Claude Opus 5.5 | ~90K | 1 | 44 KB |
-| [Somewhere, softly](https://dyrits.github.io/AI-XPERIENCE/pages/somewhere-softly.html) | Canvas 2D, projected 3D mobile | GTP-6 Astra | ~62K | 1 | 33 KB |
-| [Paperborough](https://dyrits.github.io/AI-XPERIENCE/pages/paperborough.html) | Canvas 2D, isometric city builder | GTP-6 Astra | ~83K | 1 | 59 KB |
-| [Nodal](https://dyrits.github.io/AI-XPERIENCE/pages/nodal.html) | Canvas 2D, particle transport + wave simulation | Space Bunny | ~95K | 1 + 1 | 52 KB |
-| [Percy](https://dyrits.github.io/AI-XPERIENCE/pages/percy.html) | DOM + Canvas 2D, fake installer comedy | Claude Sonnet 5.5 | ~75K | 1 | 44 KB |
+| Page | Technique | Model | Prompts | Size |
+|---|---|---|---|---|
+| [Abyss](https://dyrits.github.io/AI-XPERIENCE/pages/abyss.html) | Canvas 2D | Claude Opus 5.5 | 1 + 1 | 28 KB |
+| [Mercurial](https://dyrits.github.io/AI-XPERIENCE/pages/mercurial.html) | WebGL2 raymarching | Claude Opus 5.5 | 1 + 1 | 37 KB |
+| [Night atlas](https://dyrits.github.io/AI-XPERIENCE/pages/night-atlas.html) | Canvas 2D, projected 3D mesh | GPT-6 Atra | 1 + 1 | 21 KB |
+| [Foldwake](https://dyrits.github.io/AI-XPERIENCE/pages/foldwake.html) | Canvas 2D, mirror geometry | GPT-6 Atra | 1 | 21 KB |
+| [Echoveil](https://dyrits.github.io/AI-XPERIENCE/pages/echoveil.html) | Canvas 2D, sonar reveal | GLM-5.3 | 1 | 33 KB |
+| [Umbralux](https://dyrits.github.io/AI-XPERIENCE/pages/umbralux.html) | Canvas 2D, raycast optics | Gemini 3.8 Flash | 1 | 46 KB |
+| [Estuary](https://dyrits.github.io/AI-XPERIENCE/pages/estuary.html) | Canvas 2D, curl-noise flow field | DeepSeek V4 Pro | 1 | 28 KB |
+| [The last warm window](https://dyrits.github.io/AI-XPERIENCE/pages/the-last-warm-window.html) | Canvas 2D, animated narrative | GPT-6 Astra | 1 + 2 | 23 KB |
+| [Lifeline](https://dyrits.github.io/AI-XPERIENCE/pages/lifeline.html) | Canvas 2D, single continuous line | Claude Opus 5.5 | 1 | 34 KB |
+| [Starshard](https://dyrits.github.io/AI-XPERIENCE/pages/starshard.html) | Canvas 2D, roguelike shooter | GLM-5.3 | 1 + 2 | 80 KB |
+| [Vesper](https://dyrits.github.io/AI-XPERIENCE/pages/vesper.html) | Canvas 2D, idle clicker | Claude Opus 5.5 | 1 + 1 | 78 KB |
+| [Echo Ward](https://dyrits.github.io/AI-XPERIENCE/pages/echo-ward.html) | Canvas 2D, tower defense | Claude Opus 5.5 | 1 + 1 | 71 KB |
+| [Until the tide](https://dyrits.github.io/AI-XPERIENCE/pages/until-the-tide.html) | Canvas 2D, escape game | GPT-6 | 1 | 54 KB |
+| [Longhand](https://dyrits.github.io/AI-XPERIENCE/pages/longhand.html) | Canvas 2D, drawn-line runner | GLM-5.3 | 1 + 1 | 34 KB |
+| [Loaded](https://dyrits.github.io/AI-XPERIENCE/pages/loaded.html) | Canvas 2D, dice roguelike | Claude Opus 5.5 | 1 + 1 | 96 KB |
+| [Enough](https://dyrits.github.io/AI-XPERIENCE/pages/enough.html) | Canvas 2D, motion graphic | Claude Opus 5.5 | 1 | 32 KB |
+| [Replace you](https://dyrits.github.io/AI-XPERIENCE/pages/replace-you.html) | Canvas 2D, motion graphic | GTP-5 Astra | 1 | 15 KB |
+| [Tick](https://dyrits.github.io/AI-XPERIENCE/pages/tick.html) | DOM + Canvas 2D, scroll-driven explainer | Claude Opus 5.5 | 1 | 60 KB |
+| [Murmur](https://dyrits.github.io/AI-XPERIENCE/pages/murmur.html) | Canvas 2D, 3D flocking | Claude Opus 5.5 | 1 | 44 KB |
+| [Somewhere, softly](https://dyrits.github.io/AI-XPERIENCE/pages/somewhere-softly.html) | Canvas 2D, projected 3D mobile | GTP-6 Astra | 1 | 33 KB |
+| [Paperborough](https://dyrits.github.io/AI-XPERIENCE/pages/paperborough.html) | Canvas 2D, isometric city builder | GTP-6 Astra | 1 | 59 KB |
+| [Nodal](https://dyrits.github.io/AI-XPERIENCE/pages/nodal.html) | Canvas 2D, particle transport + wave simulation | Space Bunny | 1 + 1 | 52 KB |
+| [Percy](https://dyrits.github.io/AI-XPERIENCE/pages/percy.html) | DOM + Canvas 2D, fake installer comedy | Claude Sonnet 5.5 | 1 | 44 KB |
+| [Drizzle](https://dyrits.github.io/AI-XPERIENCE/pages/drizzle.html) | Canvas 2D, animated short film | Claude Sonnet 5.5 | 1 | 49 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -78,6 +79,8 @@ Includes optional synthesized sound, pause, timeline scrubbing, keyboard frame s
 
 **Murmur.** A poem written by a murmuration of starlings over a lake at dusk. Thousands of birds fly as a 3D flock, each one following its seven nearest neighbours inside a roaming soft envelope that stretches, folds and sometimes splits in two, and every so often the flock streams into a line of the poem, written from left to right, then lets it go. Nine lines play while the sun sets, stars come out and the moon rises; after the last line the flock pours down into the reeds for the night and rises again at dawn to write "your turn". Move to be the wind, move fast to be the hawk and send panic waves through the flock (even through a finished line), hold to gather the birds into a swirling ball, touch the water to make ripples, or type a word and press Enter for the flock to write it. Left alone after the poem, the flock rewrites your earlier words. The sky and flock are mirrored in a rippling lake between swaying reeds, and optional synthesized wind, wing rush, pads and bells follow the flock.
 
+**Drizzle.** A wordless, Pixar-style animated short in seven scenes. A tiny cloud named Drizzle cannot make rain, and trails three huge storm clouds that sail over a dry valley without a drop. Left behind, he tries three times, with strain, a jump and a sad trombone, to water a wilting sunflower, and fails. The first drop only comes as a tear of affection: the sunflower revives, flowers bloom wherever the rain falls, a rainbow rises and the big clouds turn back to watch, until the now much smaller cloud falls asleep on the flower's head at dusk. Every frame is computed from the time alone, so the film can be paused, scrubbed, jumped by scene or opened at a moment with `#t=61`. Squash and stretch, expressive eyes, brows and mouths, camera pushes, colour grading, film grain, optional synthesized score and rain, keyboard shortcuts and reduced-motion support (gentler camera, no flashes).
+
 The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand. Vesper received a correction that set the bell inside a belfry tower instead of in open air. Starshard needed two correction rounds: crash fixes (a palette key mismatch that crashed the game when splitters appeared, and a music-sequencer index bug that crashed the run seconds after launch), and a desktop-only gate that blocks the game on touch devices. Longhand received a correction that breaks stalemates: a runner wedged against a wall for five seconds is thrown back to the left of the screen and loses a heart (with a little ink back), so a stalled run now costs lives instead of freezing; the same round lowered early cliff heights, moved ink milestones closer together and made the warning sign blink over his head. Loaded received a correction so that selling a Joker frees its slot in the shop immediately, and so that Stars apply on purchase instead of taking a consumable slot. Nodal received a correction because the page came up blank: the second mode's m·n steppers had been dropped from the panel while the script still wrote to them, so start-up threw before anything was drawn. The same round restored the steppers, added a difference/sum switch for the second mode, made the control lookup fall back to a harmless stub so a missing element can never blank the page again, and tamed the nodal glow, which had been drawn so wide and bright that it read as neon tubes over the sand instead of a hint of the lines beneath it.
 
 **Somewhere, softly.** Five miniature places hang from a wooden mobile: a village, an orchard, a lighthouse, a small sea with a sailboat and a solitary house. Drag to turn the sculpture, select an island to look closer and read its story, send a breeze through the hanging islands, or move the light from morning to night. Includes optional synthesized chimes, PNG postcard export, pause and reset controls, touch and keyboard input, and reduced-motion support. Everything is drawn in the file, with no external assets.
@@ -102,6 +105,7 @@ AI-XPERIENCE/
 ├── README.md
 └── pages/
     ├── abyss.html
+    ├── drizzle.html
     ├── echo-ward.html
     ├── echoveil.html
     ├── enough.html
@@ -125,7 +129,3 @@ AI-XPERIENCE/
     ├── until-the-tide.html
     └── vesper.html
 ```
-
-## About the token figures
-
-The token counts are rough estimates, not billing data. They include the context sent to the model, the generated code and the correction round.

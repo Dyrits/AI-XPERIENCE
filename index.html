@@ -169,6 +169,12 @@
   @keyframes ndshift { from { transform: translate(0, 0); } to { transform: translate(-2px, 1.5px); } }
   .art-percy { background: #cfc8f6; }
   .art-percy svg { width: 100%; height: 100%; }
+  .art-drizzle { background: #8fc4ee; }
+  .art-drizzle svg { width: 100%; height: 100%; }
+  .art-drizzle .dz-cloud { animation: dzbob 3s ease-in-out infinite alternate; }
+  .art-drizzle .dz-drop { animation: dzdrop 1s linear infinite; }
+  @keyframes dzbob { to { transform: translate(40px, -8px); } }
+  @keyframes dzdrop { 0% { transform: translateY(-10px); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(150px); opacity: 0; } }
   .art-percy .pc-fill, .art-percy .pc-head { animation: pcrun 11s ease-in-out infinite; }
   @keyframes pcrun { 0% { transform: translateX(0); } 18% { transform: translateX(70px); } 24% { transform: translateX(70px); } 42% { transform: translateX(170px); } 47% { transform: translateX(120px); } 66% { transform: translateX(270px); } 74% { transform: translateX(270px); } 90% { transform: translateX(345px); } 100% { transform: translateX(350px); } }
   .art-murmur .mm-flock { animation: mmdrift 7s ease-in-out infinite alternate; transform-origin: 400px 120px; }
@@ -367,7 +373,7 @@
     <div class="meta">
       <span>Claude + Codex + GLM + DeepSeek</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">23 pieces</span>
+      <span class="live">24 pieces</span>
     </div>
   </header>
 
@@ -1468,6 +1474,38 @@
           <div><dt>Size</dt><dd>44 <small>KB</small></dd></div>
         </dl>
         <a class="open mono" href="pages/percy.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
+    <article class="card" data-src="pages/drizzle.html" style="--accent: #8fc4ee; animation-delay: 4.65s;">
+      <div class="preview">
+        <div class="art art-drizzle" aria-hidden="true">
+          <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="dzSky" x2="0" y2="1"><stop stop-color="#62aee8"/><stop offset="1" stop-color="#fff0c8"/></linearGradient></defs>
+            <rect width="640" height="400" fill="url(#dzSky)"/>
+            <circle cx="120" cy="90" r="30" fill="#fff2b8"/>
+            <g fill="none" stroke-width="9" opacity=".6"><path d="M70 330A250 250 0 0 1 570 330" stroke="#ff7a7a"/><path d="M79 330A241 241 0 0 1 561 330" stroke="#ffc44d"/><path d="M88 330A232 232 0 0 1 552 330" stroke="#6fd36c"/><path d="M97 330A223 223 0 0 1 543 330" stroke="#5a8cf0"/></g>
+            <path d="M0 300Q160 250 330 290T640 280V400H0z" fill="#8fc27a"/>
+            <path d="M0 340Q200 305 400 335T640 330V400H0z" fill="#5fa857"/>
+            <path d="M330 400V240" stroke="#3b9a38" stroke-width="9" stroke-linecap="round"/>
+            <path d="M330 320q-44-6-60-34 40 0 60 34zM330 296q44-6 60-34-40 0-60 34z" fill="#4aa842"/>
+            <g transform="translate(330 214)"><g fill="#ffc21a"><ellipse cy="-46" rx="11" ry="26"/><ellipse cy="-46" rx="11" ry="26" transform="rotate(45)"/><ellipse cy="-46" rx="11" ry="26" transform="rotate(90)"/><ellipse cy="-46" rx="11" ry="26" transform="rotate(135)"/><ellipse cy="-46" rx="11" ry="26" transform="rotate(180)"/><ellipse cy="-46" rx="11" ry="26" transform="rotate(225)"/><ellipse cy="-46" rx="11" ry="26" transform="rotate(270)"/><ellipse cy="-46" rx="11" ry="26" transform="rotate(315)"/></g><circle r="34" fill="#7a4a24"/><circle cx="-12" cy="-3" r="8" fill="#fff"/><circle cx="12" cy="-3" r="8" fill="#fff"/><circle cx="-10" cy="-2" r="4" fill="#2a170c"/><circle cx="14" cy="-2" r="4" fill="#2a170c"/><path d="M-12 12q12 12 24 0" fill="none" stroke="#3a1c14" stroke-width="3.5" stroke-linecap="round"/></g>
+            <g class="dz-cloud"><g fill="#f4f8fe"><circle cx="300" cy="86" r="26"/><circle cx="332" cy="74" r="32"/><circle cx="364" cy="88" r="25"/><circle cx="330" cy="98" r="26"/></g><g fill="#fff"><circle cx="320" cy="68" r="13" opacity=".7"/></g><circle cx="318" cy="88" r="7" fill="#fff" stroke="#1d2c66" stroke-width="2"/><circle cx="346" cy="88" r="7" fill="#fff" stroke="#1d2c66" stroke-width="2"/><circle cx="319" cy="89" r="3.6" fill="#1d2c66"/><circle cx="347" cy="89" r="3.6" fill="#1d2c66"/><path d="M324 102q9 8 18 0" fill="none" stroke="#4a2a3e" stroke-width="3" stroke-linecap="round"/></g>
+            <g stroke="#cde8ff" stroke-width="2.5" stroke-linecap="round"><path class="dz-drop" d="M312 126v14"/><path class="dz-drop" d="M332 130v14" style="animation-delay:.35s"/><path class="dz-drop" d="M350 126v14" style="animation-delay:.7s"/></g>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · Animated short</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Drizzle</h2><span class="num mono">Nº 25</span></div>
+        <p>A wordless animated short about a cloud too small to make rain. Three huge storm clouds sail over a dry valley without a drop, and little Drizzle is left behind with a wilting sunflower. He tries, strains, jumps and fails, until the first drop arrives as a tear. Then comes the rain, the flowers, a rainbow and a nap on the sunflower's head. Pause, scrub or jump between the seven scenes.</p>
+        <div class="chips mono"><span>Squash &amp; stretch</span><span>Seven scenes</span><span>Scrub &amp; jump</span><span>Synthesized score</span><span>Web Audio</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Claude Sonnet 5.5</dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>49 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/drizzle.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
   </section>
