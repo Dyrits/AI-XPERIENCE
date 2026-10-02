@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Needle — a workbench for regular expressions</title>
+<meta name="description" content="Write a regular expression and see what it catches, why it catches it, and what it does to the text: live highlighting, capture groups, replacements, a readable breakdown, a backtracking warning and a test suite. Runs entirely in this file.">
+<style>
+:root{
+  --bg:#07080b;--panel:#0d0f16;--sunk:#090a0f;--line:rgba(158,172,210,.14);--line-2:rgba(158,172,210,.26);
+  --ink:#e9ecf6;--mute:#8b93ad;--dim:#565e76;
+  --acc:#5fe3b0;--acc-dim:rgba(95,227,176,.16);
+  --hit:rgba(95,227,176,.20);--hit-line:rgba(95,227,176,.55);
+  --gold:#ffd166;--bad:#ff6b7a;--warn:#ffb347;
+  --g0:#ffd166;--g1:#7dd3fc;--g2:#fda4af;--g3:#c4b5fd;--g4:#bef264;--g5:#5eead4;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
+  --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;scrollbar-width:thin;scrollbar-color:#242a3a transparent}
+body{min-height:100vh;overflow-x:hidden;padding-bottom:4rem}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:
+  radial-gradient(70vw 50vh at 88% -6%,rgba(95,227,176,.09),transparent 68%),
+  radial-gradient(60vw 60vh at -8% 108%,rgba(125,211,252,.07),transparent 70%)}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;background:
+  linear-gradient(rgba(158,172,210,.028) 1px,transparent 1px) 0 0/46px 46px,
+  linear-gradient(90deg,rgba(158,172,210,.028) 1px,transparent 1px) 0 0/46px 46px;
+  -webkit-mask:linear-gradient(#000,transparent 78%);mask:linear-gradient(#000,transparent 78%)}
+.mono{font-family:var(--mono)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+
+/* ── header ─────────────────────────────────────────────────────── */
+.wrap{position:relative;z-index:1;max-width:1420px;margin:0 auto;padding:0 clamp(14px,2.6vw,34px)}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  padding:26px 0 18px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:13px}
+.mark{width:34px;height:34px;color:var(--acc);flex:none}
+.mark .st{opacity:.25;animation:stitch 3.2s ease-in-out infinite}
+.mark .st:nth-of-type(2){animation-delay:.18s}
+.mark .st:nth-of-type(3){animation-delay:.36s}
+.mark .st:nth-of-type(4){animation-delay:.54s}
+@keyframes stitch{0%,72%,100%{opacity:.22}34%{opacity:1}}
+.wordmark{font-size:25px;font-weight:250;letter-spacing:-.02em}
+.wordmark em{font-style:normal;color:transparent;-webkit-text-stroke:1px var(--ink)}
+.brand .sub{font:400 11px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+  padding-bottom:4px;border-left:1px solid var(--line);padding-left:13px}
+.acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{font:500 10.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);
+  border:1px solid var(--line);border-radius:8px;padding:8px 11px;transition:color .18s,border-color .18s,background .18s;white-space:nowrap}
+.btn:hover{color:var(--ink);border-color:var(--line-2);background:rgba(255,255,255,.035)}
+.btn.acc{color:var(--acc);border-color:rgba(95,227,176,.34)}
+.btn.acc:hover{background:rgba(95,227,176,.1);border-color:rgba(95,227,176,.6)}
+
+/* ── panels ─────────────────────────────────────────────────────── */
+.grid{display:grid;grid-template-columns:minmax(0,1.26fr) minmax(0,1fr);gap:16px;align-items:start;padding-top:16px}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.ph{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);
+  font:500 10px/1 var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--mute)}
+.ph .sp{margin-left:auto;display:flex;gap:7px;align-items:center}
+.ph .n{color:var(--dim);letter-spacing:.08em;text-transform:none;font-size:10.5px}
+.pb{padding:13px 14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding-top:16px}
+@media(max-width:1060px){.grid,.row2{grid-template-columns:1fr}}
+
+/* ── pattern editor: textarea over a highlighted mirror ─────────── */
+.ed{position:relative;background:var(--sunk);border-bottom:1px solid var(--line)}
+.ed .mirror,.ed textarea{font:600 16px/1.65 var(--mono);padding:13px 15px;border:0;letter-spacing:0;tab-size:4}
+.ed .mirror{margin:0;color:var(--dim);pointer-events:none;overflow:hidden;white-space:pre;width:max-content;min-width:100%;min-height:50px}
+.ed textarea{position:absolute;inset:0;width:100%;height:100%;background:transparent;color:transparent;caret-color:var(--acc);
+  resize:none;outline:none;overflow:auto;white-space:pre}
+.ed textarea::selection{background:rgba(125,211,252,.3)}
+.ed.err{border-bottom-color:rgba(255,107,122,.5);box-shadow:inset 0 -1px 0 rgba(255,107,122,.5)}
+.mirror .p{display:inline;box-shadow:inset 0 -1px 0 currentColor;border-radius:1px}
+/* token colours: fg class + optional bg class */
+.mirror .lit{color:#b9c1d6}
+.mirror .esc{color:#8ad6a0}
+.mirror .cls{color:var(--gold)}
+.mirror .grp{color:#7dd3fc}
+.mirror .q{color:#ff9ec4}
+.mirror .anc{color:#c4b5fd}
+.mirror .dot{color:#ff9ec4}
+.mirror .ref{color:#fda4af}
+.mirror .bad{color:var(--bad);text-decoration:underline wavy rgba(255,107,122,.7);text-underline-offset:3px}
+.mirror .bg-g{background:rgba(125,211,252,.07)}
+.mirror .hl{background:rgba(95,227,176,.17);box-shadow:inset 0 -1px 0 var(--hit-line);border-radius:2px}
+
+.flags{display:flex;flex-wrap:wrap;gap:6px;padding:11px 14px;border-bottom:1px solid var(--line);align-items:center}
+.flags .lab{font:500 9.5px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-right:3px}
+.flag{width:30px;height:26px;border:1px solid var(--line);border-radius:6px;color:var(--dim);
+  font:600 12px/1 var(--mono);transition:all .16s}
+.flag:hover{color:var(--ink);border-color:var(--line-2)}
+.flag[aria-pressed="true"]{color:#06120d;background:var(--acc);border-color:var(--acc)}
+.flag .k{position:absolute;margin:-20px 0 0 22px;font-size:8px;color:var(--dim);letter-spacing:.06em}
+.flags .note{margin-left:auto;font:400 10px/1.3 var(--mono);color:var(--dim);text-align:right;letter-spacing:.04em}
+/* ── text panel: highlight layer behind a transparent textarea ───── */
+.tw{position:relative;background:var(--sunk);height:clamp(220px,34vh,340px)}
+.tw .hl,.tw textarea{font:400 13.5px/1.7 var(--mono);padding:13px 15px;border:0;box-sizing:border-box;
+  white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;letter-spacing:0}
+.tw .hl{position:absolute;top:0;left:0;overflow:hidden;color:#4d566e;pointer-events:none;scrollbar-width:none}
+.tw .hl::-webkit-scrollbar{display:none}
+.tw textarea{position:absolute;inset:0;width:100%;height:100%;background:transparent;color:#d7dcec;caret-color:var(--acc);
+  resize:none;outline:none;overflow:auto}
+.tw textarea::selection{background:rgba(125,211,252,.28)}
+.hl .mt{background:var(--hit);box-shadow:inset 0 0 0 1px var(--hit-line);border-radius:2px}
+.hl .g{display:inline}
+.hl .g0{background:rgba(255,209,102,.30)}
+.hl .g1{background:rgba(125,211,252,.30)}
+.hl .g2{background:rgba(253,164,175,.30)}
+.hl .g3{background:rgba(196,181,253,.30)}
+.hl .g4{background:rgba(190,228,100,.30)}
+.hl .g5{background:rgba(94,234,212,.30)}
+.hl .ins{color:#06120d;background:var(--acc);border-radius:2px;box-shadow:0 0 14px rgba(95,227,176,.35)}
+
+/* ── match map ──────────────────────────────────────────────────── */
+.mapwrap{position:relative;border-top:1px solid var(--line);background:#070910}
+#map{display:block;width:100%;height:62px}
+.mapwrap .tip{position:absolute;pointer-events:none;z-index:5;transform:translate(-50%,-100%);white-space:nowrap;
+  font:11px/1 var(--mono);padding:5px 8px;border-radius:6px;background:#1b2030;border:1px solid var(--line-2);
+  color:var(--ink);opacity:0;transition:opacity .15s;max-width:280px;overflow:hidden;text-overflow:ellipsis}
+.mapwrap .tip.on{opacity:1}
+.maplab{display:flex;justify-content:space-between;padding:0 14px 8px;font:10px/1 var(--mono);color:var(--dim);letter-spacing:.06em}
+
+/* ── replace ────────────────────────────────────────────────────── */
+input[type=text],select{font:400 13px/1.5 var(--mono);color:var(--ink);background:var(--sunk);border:1px solid var(--line);
+  border-radius:8px;padding:9px 11px;width:100%;outline:none}
+input[type=text]:focus,select:focus{border-color:rgba(95,227,176,.45)}
+input::placeholder{color:var(--dim)}
+.rl{display:flex;gap:10px;align-items:center;padding:12px 14px 0}
+.rl .arrow{color:var(--dim);font:11px var(--mono);letter-spacing:.2em;text-transform:uppercase;flex:none}
+.out{background:var(--sunk);border:1px solid var(--line);border-radius:8px;margin:10px 14px 12px;padding:11px 12px;
+  font:400 13px/1.7 var(--mono);white-space:pre-wrap;overflow-wrap:break-word;overflow:auto;max-height:180px;color:#b7bfd4;min-height:44px}
+.hint{font:11px/1.5 var(--mono);color:var(--warn);padding:0 14px 11px;letter-spacing:.02em}
+.hint.quiet{color:var(--dim)}
+
+/* ── words + breakdown tree ─────────────────────────────────────── */
+.words{padding:13px 14px;font:400 14.5px/1.7 var(--sans);color:#dfe4f2;border-bottom:1px solid var(--line)}
+.words b{font-weight:500;color:var(--acc)}
+.tree{padding:6px 0 10px;max-height:340px;overflow:auto}
+.tr{position:relative;display:flex;gap:9px;align-items:baseline;padding:3px 14px 3px 0;cursor:default}
+.tr:hover{background:rgba(255,255,255,.035)}
+.tr .rail{flex:none;width:var(--d);position:relative}
+.tr .rail::before{content:"";position:absolute;left:calc(var(--d) - 13px);top:-4px;bottom:-4px;width:1px;background:var(--line)}
+.tr:last-child .rail::before{bottom:auto;height:14px}
+.tr .raw{flex:none;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cbd2e6;background:rgba(255,255,255,.05);
+  border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.tr .ds{font:400 11.5px/1.55 var(--mono);color:var(--mute);min-width:0}
+.tr[data-kind=grp] .raw{color:#9fd9ff;border-color:rgba(125,211,252,.28)}
+.tr[data-kind=rep] .raw{color:#ffc0d8;border-color:rgba(255,158,196,.26)}
+.empty{padding:14px;font:400 12px/1.6 var(--mono);color:var(--dim)}
+
+/* ── matches + groups ───────────────────────────────────────────── */
+.mlist{max-height:230px;overflow:auto}
+.mrow{display:flex;gap:10px;align-items:baseline;width:100%;text-align:left;padding:5px 14px;border-left:2px solid transparent}
+.mrow:hover{background:rgba(255,255,255,.04)}
+.mrow[aria-current=true]{background:rgba(95,227,176,.09);border-left-color:var(--acc)}
+.mrow .i{flex:none;font:10px/1.5 var(--mono);color:var(--dim);min-width:26px}
+.mrow .t{flex:1;min-width:0;font:12px/1.5 var(--mono);color:#d3d9ea;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mrow .t .q{color:var(--dim)}
+.mrow .p{flex:none;font:10px/1.5 var(--mono);color:var(--dim)}
+.grow2{display:flex;gap:10px;align-items:center;padding:6px 14px;border-top:1px solid var(--line)}
+.grow2 .sw{flex:none;width:9px;height:9px;border-radius:2px}
+.grow2 .k{flex:none;font:11px var(--mono);color:var(--mute);min-width:34px}
+.grow2 .nm{flex:none;font:10.5px var(--mono);color:var(--dim);min-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grow2 .v{flex:1;min-width:0;font:12px var(--mono);color:#e2e7f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grow2 .v.off{color:var(--dim)}
+
+/* ── messages ───────────────────────────────────────────────────── */
+.msg{padding:9px 14px;font:400 11.5px/1.55 var(--mono);border-top:1px solid var(--line);display:flex;gap:8px;align-items:flex-start}
+.msg.err{color:#ffb3bb;background:rgba(255,107,122,.08);border-top-color:rgba(255,107,122,.3)}
+.msg.warn{color:#ffd8a3;background:rgba(255,179,71,.07);border-top-color:rgba(255,179,71,.26)}
+.msg .ic{flex:none;font-size:11px;line-height:1.55}
+.status{display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:9px 14px;border-top:1px solid var(--line);
+  font:400 11px/1.4 var(--mono);color:var(--dim);letter-spacing:.04em}
+.status b{color:var(--ink);font-weight:500}
+.status .live{color:var(--acc)}
+.status .busy{color:var(--gold)}
+
+/* ── tests + library ────────────────────────────────────────────── */
+.tcase{display:grid;grid-template-columns:14px 1fr 1fr 24px;gap:10px;align-items:start;padding:10px 14px;border-top:1px solid var(--line)}
+.tcase:first-child{border-top:0}
+.tcase .dot{width:9px;height:9px;border-radius:50%;margin-top:5px;background:var(--dim)}
+.tcase.pass .dot{background:var(--acc);box-shadow:0 0 10px var(--acc)}
+.tcase.fail .dot{background:var(--bad);box-shadow:0 0 10px var(--bad)}
+.tcase textarea{width:100%;font:400 12px/1.55 var(--mono);color:#d7dcec;background:var(--sunk);border:1px solid var(--line);
+  border-radius:7px;padding:7px 9px;resize:vertical;outline:none;min-height:34px;overflow:hidden}
+.tcase textarea:focus{border-color:rgba(95,227,176,.45)}
+.tcase .meta{display:flex;gap:8px;align-items:center;font:10px/1 var(--mono);color:var(--dim);margin-bottom:5px;letter-spacing:.08em;text-transform:uppercase}
+.tcase .meta .g{color:var(--bad);text-transform:none;letter-spacing:0}
+.tcase .del{flex:none;width:24px;height:26px;border-radius:6px;color:var(--dim);font:15px/1 var(--mono)}
+.tcase .del:hover{color:var(--bad);background:rgba(255,107,122,.1)}
+.lib{display:flex;flex-wrap:wrap;gap:7px;padding:13px 14px}
+.chip2{font:500 11px/1 var(--mono);letter-spacing:.06em;color:var(--mute);border:1px solid var(--line);border-radius:99px;
+  padding:7px 12px;transition:all .16s}
+.chip2:hover{color:#06120d;background:var(--acc);border-color:var(--acc)}
+
+.foot{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;padding:26px 2px 0;margin-top:22px;
+  border-top:1px solid var(--line);font:10.5px/1.6 var(--mono);color:var(--dim);letter-spacing:.04em}
+.tipbox{position:fixed;left:50%;bottom:22px;transform:translate(-50%,14px);z-index:20;padding:9px 15px;border-radius:99px;
+  background:#161b28;border:1px solid var(--line-2);font:11px/1 var(--mono);color:var(--ink);
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.tipbox.on{opacity:1;transform:translate(-50%,0)}
+@media(max-width:720px){
+  .brand .sub{display:none}
+  .row2{grid-template-columns:1fr}
+  .flags .note{display:none}
+  .tcase{grid-template-columns:14px 1fr 24px}
+  .tcase .want{grid-column:2}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+        <path d="M2 27h30" stroke="currentColor" stroke-opacity=".3" stroke-dasharray="1 4" stroke-linecap="round"/>
+        <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path class="st" d="M8 27v5"/><path class="st" d="M14 27v5"/><path class="st" d="M20 27v5"/><path class="st" d="M26 27v5"/></g>
+        <path d="M5 3.5 29 27" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M6.6 6.2c-3.4 1.1-4.2 4.6-1.6 6.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="wordmark">Need<em>l</em>e</div>
+      </div>
+      <span class="sub">a workbench for regular expressions</span>
+    </div>
+    <div class="acts">
+      <button class="btn" id="btnJs" title="Copy the pattern as a JavaScript RegExp literal">JS</button>
+      <button class="btn" id="btnPy" title="Copy the pattern as a Python raw string">Python</button>
+      <button class="btn" id="btnMd" title="Copy as Markdown inline code">Markdown</button>
+      <button class="btn acc" id="btnShare">Copy share link</button>
+    </div>
+  </header>
+  <main>
+  <div class="grid">
+    <div class="col">
+      <section class="panel">
+        <div class="ph">Pattern<span class="sp"><span class="n mono" id="patLen"></span></span></div>
+        <div class="ed" id="ed">
+          <pre class="mirror" aria-hidden="true"><code id="mirror"></code></pre>
+          <textarea id="pattern" rows="1" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off"
+            autocorrect="off" aria-label="Regular expression pattern"></textarea>
+        </div>
+        <div class="flags" id="flags" role="group" aria-label="Flags">
+          <span class="lab">Flags</span>
+        </div>
+        <div id="msgs" aria-live="polite"></div>
+        <div class="status mono" id="status"></div>
+      </section>
+
+      <section class="panel">
+        <div class="ph">Text<span class="sp"><span class="n mono" id="lenN"></span>
+          <button class="btn" id="btnClearText">Clear</button></span></div>
+        <div class="tw">
+          <div class="hl" id="hl" aria-hidden="true"></div>
+          <textarea id="subject" spellcheck="false" autocomplete="off" aria-label="Text to match against"></textarea>
+        </div>
+        <div class="mapwrap" id="mapwrap">
+          <canvas id="map" aria-label="Map of matches across the text"></canvas>
+          <div class="tip" id="mtip"></div>
+          <div class="maplab mono"><span id="mapL">start</span><span id="mapR">end</span></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="ph">Replace<span class="sp">
+          <button class="btn" id="btnCopyOut">Copy result</button></span></div>
+        <div class="rl"><input type="text" id="replace" spellcheck="false" autocomplete="off"
+          aria-label="Replacement text" placeholder="leave empty to delete every match"></div>
+        <div class="out mono" id="out"></div>
+        <div class="hint" id="replHint"></div>
+      </section>
+    </div>
+    <div class="col">
+      <section class="panel">
+        <div class="ph">In words</div>
+        <p class="words" id="words">Type a pattern and it will describe itself here.</p>
+        <div class="tree" id="tree"></div>
+      </section>
+
+      <section class="panel">
+        <div class="ph">Matches<span class="sp"><span class="n mono" id="selN"></span></span></div>
+        <div class="mlist" id="mlist"></div>
+        <div class="ph" style="border-top:1px solid var(--line)">Capture groups<span class="sp"><span class="n mono" id="grpN"></span></span></div>
+        <div id="glist"></div>
+      </section>
+    </div>
+  </div>
+  <div class="row2">
+    <section class="panel">
+      <div class="ph">Test cases<span class="sp"><span class="n mono" id="caseN"></span>
+        <select id="testMode" style="width:auto;font-size:11px;padding:5px 8px" aria-label="What the test cases compare">
+          <option value="out">compare replaced text</option>
+          <option value="match">compare matched text</option>
+          <option value="count">compare match count</option>
+        </select>
+        <button class="btn" id="btnAddCase">Add current</button>
+      </span></div>
+      <div id="cases"></div>
+    </section>
+
+    <section class="panel">
+      <div class="ph">Library</div>
+      <div class="lib" id="lib"></div>
+    </section>
+  </div>
+  </main>
+  <footer class="foot">
+    <span class="mono">⌘/Ctrl + Enter run · Alt + ↑/↓ step through matches · / focus the pattern</span>
+    <span class="mono">Nothing leaves this file — no network requests, no storage beyond this browser.</span>
+  </footer>
+</div>
+<script>
+/* Needle — a workbench for regular expressions.
+   Everything runs in this file: a pattern parser, a description writer,
+   a match runner that can be abandoned if it backtracks forever. */
+(() => {
+'use strict';
+
+const $ = id => document.getElementById(id);
+const LS = 'needle.v1';
+const FLAGS = 'gimsuy';
+const GAP = 90;           // ms of quiet before a keystroke triggers a run
+const TIMEOUT = 1400;     // ms before a runaway match is abandoned
+const CAP = 20000;        // hard ceiling on matches collected
+const SCAN = 250000;      // characters handed to the matcher
+const DRAW = 4000;        // matches drawn in the highlight layer
+const DRAWTEXT = 20000;   // characters drawn in the highlight layer
+const LISTCAP = 300;
+const GROUPCOLS = ['var(--g0)','var(--g1)','var(--g2)','var(--g3)','var(--g4)','var(--g5)'];
+
+const HAS_D = (() => { try { new RegExp('a', 'd'); return true; } catch (e) { return false; } })();
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const STORE_OK = (() => { try { localStorage.setItem(LS + '.t', '1'); localStorage.removeItem(LS + '.t'); return true; } catch (e) { return false; } })();
+
+const FLAG_INFO = {
+  g: 'global — keep going past the first match',
+  i: 'ignore case — A matches a',
+  m: 'multiline — ^ and $ also match at line breaks',
+  s: 'dot all — . also matches a line break',
+  u: 'unicode — pattern and text are read as code points',
+  y: 'sticky — start at lastIndex instead of scanning forward'
+};
+
+const DEFAULTS = {
+  pattern: '([\\w.+-]+)@([\\w-]+\\.[\\w.-]+)',
+  flags: 'g',
+  replace: '$1 [at] $2',
+  subject: 'Reach ana.lopez@paperborough.example before Friday, or the desk at\n' +
+           'hello@dyrits.github.io answers. Tickets go to support@carbon-copy.example\n' +
+           'and every reply is logged against the ticket.',
+  cases: [{ subject: 'ping ops@foldwake.example now', expect: 'ping ops [at] foldwake.example now' }]
+};
+
+/* Library of patterns worth keeping a copy of.
+   Written as escaped string literals, so "\\\\d" in here is the two characters \d. */
+const LIB = [
+  { n:'Email → masked', p:'([\\w.+-]+)@([\\w-]+\\.[\\w.-]+)', f:'g', r:'$1 [at] $2',
+    s:'Reach ana.lopez@paperborough.example, or hello@dyrits.github.io for the deck.' },
+  { n:'ISO date', p:'(\\d{4})-(\\d{2})-(\\d{2})', f:'g', r:'$3/$2/$1',
+    s:'Ships 2026-03-14, arrives 2026-03-19. The 2025-12-01 batch was late.' },
+  { n:'URL', p:'https?:\\/\\/[^\\s"<>()\\]]+', f:'g', r:'',
+    s:'See https://dyrits.github.io/AI-XPERIENCE/ and http://example.com/a?b=1&c=2.' },
+  { n:'Time (24h)', p:'\\b([01]?\\d|2[0-3]):([0-5]\\d)\\b', f:'g', r:'', s:'Doors 09:30, show 20:00, last entry 23:45 sharp.' },
+  { n:'IPv4', p:'\\b(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\b', f:'g', r:'', s:'Bind 127.0.0.1 and 192.168.1.10; never 999.1.1.1.' },
+  { n:'Hex colour', p:'#((?:[0-9a-f]{6}|[0-9a-f]{3}))\\b', f:'gi', r:'', s:'accent #7ff6ff, ink #07070a, hairline #eef0f4.' },
+  { n:'UUID', p:'\\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\b', f:'gi', r:'', s:'Session 3f7b1c2a-9d4e-4a11-b6f0-1e2d3c4b5a69 revoked.' },
+  { n:'Semver', p:'\\b\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?\\b', f:'g', r:'', s:'Bumped to 2.4.1, then 2.4.1-rc.3, never 2.4.' },
+  { n:'HTML tag', p:'<\\/?([a-z][a-z0-9]*)\\b[^>]*>', f:'gi', r:'', s:'Swap <b class="x">bold</b> for <strong>strong</strong>.' },
+  { n:'Quoted string', p:'"([^"\\\\]|\\\\.)*"', f:'g', r:'$1', s:'header = "content-type"; note = "he said \\"hi\\"";' },
+  { n:'Duplicate word', p:'\\b(\\w+)\\s+\\1\\b', f:'gi', r:'$1', s:'the the quick brown fox jumps over over the lazy dog dog.' },
+  { n:'Markdown link', p:'\\[([^\\]]+)\\]\\(([^)]+)\\)', f:'g', r:'$1 — $2', s:'Read [the README](README.md) and [the notes](notes/plan.md) first.' },
+  { n:'Number', p:'-?\\b\\d+(?:\\.\\d+)?\\b', f:'g', r:'', s:'-12, 3.14, 1024 and 0.0001 plus 7.' },
+  { n:'Trailing space', p:'[ \\t]+$', f:'gm', r:'', s:'indented line   \nanother\t\nclean line\n' },
+  { n:'TODO', p:'(TODO|FIXME|NOTE)\\b:?\\s*(.*)$', f:'gm', r:'', s:'// TODO: fix the parser\nconst x = 1; // FIXME later\n' },
+  { n:'Log level', p:'(\\b(?:DEBUG|INFO|WARN|ERROR)\\b)', f:'g', r:'[$1]', s:'INFO boot ok / DEBUG cache warm / WARN slow query / ERROR timeout' },
+  { n:'Word boundary', p:'\\bcat\\b', f:'gi', r:'dog', s:'cat concatenate cat CAT scatter cat.' }
+];
+
+const S = {
+  pattern: DEFAULTS.pattern,
+  flags: DEFAULTS.flags,
+  subject: DEFAULTS.subject,
+  replace: DEFAULTS.replace,
+  cases: DEFAULTS.cases.map(c => Object.assign({}, c)),
+  mode: 'out',
+  sel: 0
+};
+
+/* Live results, filled in by run(). */
+/* Results of the last run, read by the paint functions. */
+const R = {
+  matches: [], truncated: false, timeout: false, error: null, ms: 0,
+  words: '', risks: [], groups: [], engine: null, expander: null, gapped: false
+};
+let ast = { root: null, error: null, groups: [] };
+let notes = [];
+
+/* ── small helpers ─────────────────────────────────────────────── */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const clip = (s, n) => s.length > n ? s.slice(0, n) + '…' : s;
+
+function debounce(fn, ms){
+  let t = 0;
+  return function(){ clearTimeout(t); const a = arguments; t = setTimeout(() => fn.apply(null, a), ms); };
+}
+
+let toastTimer = 0;
+function toast(msg){
+  let el = $('toast');
+  if (!el){ el = document.createElement('div'); el.id = 'toast'; el.className = 'tipbox'; document.body.appendChild(el); }
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('on'), 1700);
+}
+
+function copy(text, label){
+  const done = () => toast((label || 'Copied') + ' · ' + clip(String(text), 46));
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done, () => fallback());
+  } else fallback();
+  function fallback(){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { toast('Could not reach the clipboard'); }
+    ta.remove();
+  }
+}
+
+function save(){
+  if (!STORE_OK) return;
+  try {
+    localStorage.setItem(LS, JSON.stringify({
+      pattern: S.pattern, flags: S.flags, subject: S.subject,
+      replace: S.replace, cases: S.cases, mode: S.mode
+    }));
+  } catch (e) { /* full or disabled: the tool still works, it just forgets. */ }
+}
+
+function restore(){
+  if (!STORE_OK) return false;
+  try {
+    const raw = localStorage.getItem(LS);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (typeof d.pattern === 'string') S.pattern = d.pattern;
+    if (typeof d.flags === 'string') S.flags = d.flags;
+    if (typeof d.subject === 'string') S.subject = d.subject;
+    if (typeof d.replace === 'string') S.replace = d.replace;
+    if (Array.isArray(d.cases)) S.cases = d.cases.filter(c => c && typeof c.subject === 'string');
+    if (d.mode === 'out' || d.mode === 'match' || d.mode === 'count') S.mode = d.mode;
+    return true;
+  } catch (e) { return false; }
+}
+
+function share(){
+  const payload = { p: S.pattern, f: S.flags, r: S.replace, s: clip(S.subject, 4000), t: S.cases.map(c => [c.subject, c.expect]), m: S.mode };
+  return location.href.split('#')[0] + '#' + encodeURIComponent(JSON.stringify(payload));
+}
+
+function unshare(){
+  const raw = location.hash.slice(1);
+  if (!raw) return false;
+  try {
+    const d = JSON.parse(decodeURIComponent(raw));
+    if (typeof d.p === 'string') S.pattern = d.p;
+    if (typeof d.f === 'string') S.flags = d.f;
+    if (typeof d.r === 'string') S.replace = d.r;
+    if (typeof d.s === 'string') S.subject = d.s;
+    if (Array.isArray(d.t)) S.cases = d.t.filter(x => Array.isArray(x)).map(x => ({ subject: String(x[0]), expect: String(x[1] == null ? '' : x[1]) }));
+    if (d.m === 'out' || d.m === 'match' || d.m === 'count') S.mode = d.m;
+    return true;
+  } catch (e) { return false; }
+}
+
+/* ── parser ────────────────────────────────────────────────────────
+   A small recursive-descent parser for JS regex sources. It knows where
+   every construct starts and ends, which is what lets the mirror colour
+   tokens, the tree point back at the source, and errors name a column. */
+const CLASS_ESC = new Set(['d', 'D', 'w', 'W', 's', 'S']);
+const CLS_NAME = {
+  d: 'a digit', D: 'anything but a digit',
+  w: 'a word character', W: 'anything but a word character',
+  s: 'whitespace', S: 'anything but whitespace'
+};
+const CTRL_NAME = { '\n': 'a newline', '\t': 'a tab', '\r': 'a carriage return', '\f': 'a form feed', '\v': 'a vertical tab', '\0': 'a null' };
+
+function parse(src){
+  let i = 0, gi = 0, error = null;
+  const groups = [];
+  const fail = (at, msg) => { if (!error) error = { at, msg }; };
+
+  function alt(){
+    const branches = [ seq() ];
+    while (src[i] === '|'){ i++; branches.push(seq()); }
+    if (branches.length === 1) return branches[0];
+    return { k:'alt', branches, start: branches[0].start, end: i };
+  }
+
+  function seq(){
+    const start = i, kids = [];
+    while (i < src.length && src[i] !== '|' && src[i] !== ')'){
+      const before = i;
+      const t = term();
+      if (t) kids.push(t);
+      if (i === before) i++;            /* never stall on a bad byte */
+    }
+    if (kids.length === 1) return kids[0];
+    return { k:'seq', kids, start, end: i, empty: !kids.length };
+  }
+
+  function term(){
+    const a = atom();
+    return a ? quant(a) : null;
+  }
+
+  function atom(){
+    const start = i, c = src[i];
+    if (c === undefined) return null;
+    if (c === '^' || c === '$'){ i++; return { k:'anc', kind:c, start, end:i }; }
+    if (c === '.'){ i++; return { k:'dot', start, end:i }; }
+    if (c === '\\') return escape();
+    if (c === '[') return klass();
+    if (c === '(') return group();
+    if (c === '*' || c === '+' || c === '?'){
+      fail(i, 'Nothing to repeat — "' + c + '" has nothing in front of it.');
+      i++; return null;
+    }
+    i++;
+    return { k:'lit', ch:c, start, end:i };
+  }
+
+  function escape(){
+    const start = i; i++;
+    if (i >= src.length){ fail(start, 'The pattern ends with a backslash.'); return null; }
+    const c = src[i];
+    if (c === 'b' || c === 'B'){ i++; return { k:'anc', kind:c, start, end:i }; }
+    if (CLASS_ESC.has(c)){ i++; return { k:'esc', kind:'class', ch:c, start, end:i }; }
+    if (c === 'p' || c === 'P'){
+      const m = /^[pP]\{([^}]*)\}/.exec(src.slice(i));
+      if (!m){ fail(i, 'A property escape needs a name in braces, like \\p{L}.'); i++; return { k:'esc', kind:'prop', start, end:i }; }
+      i += m[0].length;
+      return { k:'esc', kind:'prop', neg:c === 'P', name:m[1], start, end:i };
+    }
+    if (c === 'k'){
+      const m = /^k<([^>]*)>/.exec(src.slice(i));
+      if (!m){ fail(i, 'A named backreference looks like \\k<name>.'); i++; return { k:'esc', kind:'ref', start, end:i }; }
+      i += m[0].length;
+      return { k:'esc', kind:'ref', name:m[1], start, end:i };
+    }
+    if (c === 'x' || c === 'u'){
+      const m = c === 'x' ? /^x([0-9a-fA-F]{2})/.exec(src.slice(i))
+                          : /^u(?:\{([0-9a-fA-F]+)\}|([0-9a-fA-F]{4}))/.exec(src.slice(i));
+      if (!m){ fail(i, c === 'x' ? 'A hex escape needs two digits, like \\x41.' : 'A unicode escape needs four digits, like \\u0041.'); i++; return { k:'esc', kind:'hex', start, end:i }; }
+      i += m[0].length;
+      const ch = c === 'x' ? String.fromCharCode(parseInt(m[1], 16)) : String.fromCodePoint(parseInt(m[1] || m[2], 16));
+      return { k:'lit', ch, raw:m[0], start, end:i };
+    }
+    if (c === 'c'){
+      const m = /^c([a-zA-Z])/.exec(src.slice(i));
+      if (!m){ i++; return { k:'esc', kind:'ctrl', start, end:i }; }
+      i += m[0].length;
+      return { k:'esc', kind:'ctrl', ch:m[1], start, end:i };
+    }
+    if (/[1-9]/.test(c)){
+      const m = /^\d+/.exec(src.slice(i));
+      i += m[0].length;
+      return { k:'esc', kind:'ref', num:+m[0], start, end:i };
+    }
+    i++;
+    return { k:'lit', ch:c, raw:'\\' + c, start, end:i, esc:true };
+  }
+
+  function klass(){
+    const start = i; i++;
+    let negate = false;
+    if (src[i] === '^'){ negate = true; i++; }
+    const items = [];
+    let first = true;
+    while (i < src.length){
+      if (src[i] === ']' && !first){ i++; return { k:'cls', negate, items, start, end:i }; }
+      first = false;
+      const from = catom();
+      if (src[i] === '-' && src[i+1] !== undefined && src[i+1] !== ']'){
+        i++;
+        const to = catom();
+        if (from.code === null || to.code === null) fail(i, 'A range needs a single character on each side of the "-".');
+        else items.push({ raw: from.raw + '-' + to.raw, desc: rangeDesc(from, to), at: from.at });
+        continue;
+      }
+      items.push(from);
+    }
+    fail(start, 'Unclosed character class — add a "]".');
+    return { k:'cls', negate, items, start, end:i, open:true };
+  }
+
+  function catom(){
+    const start = i, c = src[i];
+    if (c !== '\\'){ i++; return { raw:c, desc:chPhrase(c), code:c.charCodeAt(0), at:start }; }
+    i++;
+    const e = src[i];
+    if (CLASS_ESC.has(e)){ i++; return { raw:'\\' + e, desc: CLS_NAME[e], code:null, at:start }; }
+    if (e === undefined){ fail(start, 'The character class ends with a backslash.'); return { raw:'\\', desc:'a backslash', code:null, at:start }; }
+    if (Object.prototype.hasOwnProperty.call(CTRL_NAME, e)){
+      i++;
+      return { raw:'\\' + e, desc: CTRL_NAME[e], code: e === 't' ? 9 : e === 'n' ? 10 : e === 'r' ? 13 : e.charCodeAt(0), at:start };
+    }
+    if (e === 'x'){
+      const m = /^x([0-9a-fA-F]{2})/.exec(src.slice(i));
+      if (m){ i += m[0].length; const ch = String.fromCharCode(parseInt(m[1], 16)); return { raw:'\\' + m[0], desc:chPhrase(ch), code:ch.charCodeAt(0), at:start }; }
+    }
+    if (e === 'u'){
+      const m = /^u(?:\{([0-9a-fA-F]+)\}|([0-9a-fA-F]{4}))/.exec(src.slice(i));
+      if (m){ i += m[0].length; const ch = String.fromCodePoint(parseInt(m[1] || m[2], 16)); return { raw:'\\' + m[0], desc:chPhrase(ch), code:ch.codePointAt(0), at:start }; }
+    }
+    i++;
+    return { raw:'\\' + e, desc:chPhrase(e), code:e.charCodeAt(0), at:start };
+  }
+
+  function group(){
+    const start = i; i++;
+    let kind = 'capture', name = null;
+    if (src[i] === '?'){
+      const n = src[i + 1];
+      if (n === ':'){ kind = 'plain'; i += 2; }
+      else if (n === '='){ kind = 'ahead'; i += 2; }
+      else if (n === '!'){ kind = 'nAhead'; i += 2; }
+      else if (n === '<' && src[i + 2] === '='){ kind = 'behind'; i += 3; }
+      else if (n === '<' && src[i + 2] === '!'){ kind = 'nBehind'; i += 3; }
+      else if (n === '<'){
+        kind = 'capture'; i += 2;
+        const m = /^[^>]*/.exec(src.slice(i));
+        name = m[0]; i += m[0].length;
+        if (src[i] === '>') i++; else fail(i, 'A named group needs a ">" after the name.');
+      }
+      else if (/[a-z]/.test(n || '')){
+        kind = 'mods'; i += /^\?(?:[a-z]*)(?:-[a-z]+:)?/.exec(src.slice(i))[0].length;
+      }
+      else { fail(i, 'Unrecognised group type "(?' + (n || '') + '".'); i += 2; kind = 'plain'; }
+    }
+    const index = kind === 'capture' ? ++gi : 0;
+    const node = { k:'grp', kind, name, index, kids:[], start, end:i };
+    const entry = index ? { index, name, start, end:i } : null;
+    if (entry){
+      if (name && groups.some(g => g.name === name)) fail(start, 'Two groups are both named "' + name + '".');
+      groups.push(entry);
+    }
+    node.kids = [ alt() ];
+    if (src[i] === ')') i++; else fail(start, 'Unclosed group — add a ")".');
+    node.end = i;
+    if (entry) entry.end = i;
+    return node;
+  }
+
+  function quant(a){
+    const c = src[i];
+    let min, max;
+    if (c === '*'){ min = 0; max = Infinity; i++; }
+    else if (c === '+'){ min = 1; max = Infinity; i++; }
+    else if (c === '?'){ min = 0; max = 1; i++; }
+    else if (c === '{'){
+      const m = /^\{(\d+)(,(\d*))?\}/.exec(src.slice(i));
+      if (!m) return a;                                  /* a bare "{" is a literal */
+      min = +m[1];
+      max = m[2] === undefined ? min : (m[3] === '' ? Infinity : +m[3]);
+      if (max < min){ fail(i, 'The range {' + min + ',' + max + '} counts backwards.'); max = min; }
+      i += m[0].length;
+    } else return a;
+    const start = a.start;
+    const greedy = src[i] === '?' ? (i++, false) : true;
+    if (a.k === 'anc') fail(start, 'An anchor matches nothing, so repeating it does nothing.');
+    if (a.k === 'rep') fail(start, 'A repetition stacked straight on another one is always a mistake.');
+    return { k:'rep', min, max, greedy, a, start, end:i, qStart:a.end };
+  }
+
+  const root = alt();
+  if (i < src.length) fail(i, src[i] === ')' ? 'Unmatched ")".' : 'Unexpected "' + src[i] + '".');
+  return { root, error, groups };
+}
+
+function walk(n, fn){
+  if (!n) return;
+  fn(n);
+  if (n.k === 'seq') n.kids.forEach(k => walk(k, fn));
+  else if (n.k === 'alt') n.branches.forEach(b => walk(b, fn));
+  else if (n.k === 'grp') n.kids.forEach(k => walk(k, fn));
+  else if (n.k === 'rep') walk(n.a, fn);
+}
+
+/* ── saying it in English ──────────────────────────────────────── */
+function chPhrase(ch){
+  if (ch === ' ') return 'a space';
+  if (ch === '\n') return 'a newline';
+  if (ch === '\t') return 'a tab';
+  if (ch === '\r') return 'a carriage return';
+  return 'the character "' + ch + '"';
+}
+
+function rangeDesc(a, b){
+  const lo = a.raw, hi = b.raw;
+  if (lo === 'a' && hi === 'z') return 'a lowercase letter';
+  if (lo === 'A' && hi === 'Z') return 'an uppercase letter';
+  if (lo === '0' && hi === '9') return 'a digit';
+  if (lo === '0' && (hi === 'f' || hi === 'F')) return 'a hex digit';
+  if (a.desc.startsWith('the character "') && b.desc.startsWith('the character "')){
+    return '"' + lo + '" to "' + hi + '"';
+  }
+  return a.desc + ' to ' + b.desc;
+}
+
+function clsPhrase(n){
+  if (!n.items.length) return n.negate ? 'any character' : 'nothing at all';
+  if (n.items.length === 1) return n.items[0].desc;
+  return (n.negate ? 'any character except ' : 'a character from ') + n.items.map(it => it.desc).join(', ');
+}
+
+function grpPhrase(n, ml){
+  const inner = phrase(n.kids[0], ml);
+  if (n.kind === 'ahead') return 'followed by ' + inner;
+  if (n.kind === 'nAhead') return 'not followed by ' + inner;
+  if (n.kind === 'behind') return 'preceded by ' + inner;
+  if (n.kind === 'nBehind') return 'not preceded by ' + inner;
+  return inner;
+}
+
+/* In the sentence, a capturing group reads as what it matches — the
+   numbering belongs in the list at the end and on the tree row. */
+function groupName(n){
+  return n.name ? '"' + n.name + '" (group ' + n.index + ')' : 'group ' + n.index;
+}
+
+function rowLabel(n, ml){
+  if (n.k !== 'grp') return phrase(n, ml);
+  if (n.kind === 'capture') return 'captures as ' + groupName(n) + ' — ' + clip(phrase(n.kids[0], ml), 64);
+  if (n.kind === 'plain') return 'plain group, captures nothing — ' + clip(phrase(n.kids[0], ml), 64);
+  if (n.kind === 'mods') return 'flags switched on just for this group';
+  return phrase(n, ml);
+}
+
+const NOUN = {
+  'a digit': 'digits',
+  'a lowercase letter': 'letters',
+  'an uppercase letter': 'letters',
+  'a word character': 'word characters',
+  'whitespace': 'spaces',
+  'a hex digit': 'hex digits'
+};
+const singular = s => s.replace(/s$/, '');
+
+function noun(n){
+  if (n.k === 'cls'){ const p = clsPhrase(n); return NOUN[p] || (/^a character from/.test(p) ? 'characters' : null); }
+  if (n.k === 'esc' && n.kind === 'class') return NOUN[CLS_NAME[n.ch]] || null;
+  if (n.k === 'dot') return 'characters';
+  return null;
+}
+
+function repPhrase(n, ml){
+  const p = phrase(n.a, ml), nn = noun(n.a);
+  const tail = n.greedy ? '' : ', as few as possible';
+  if (n.min === 0 && n.max === Infinity) return (nn ? 'zero or more ' + nn : 'zero or more times ' + p) + tail;
+  if (n.min === 1 && n.max === Infinity) return (nn ? 'one or more ' + nn : 'one or more times ' + p) + tail;
+  if (n.min === 0 && n.max === 1) return (nn ? 'an optional ' + singular(nn) : 'optionally ' + p) + tail;
+  if (n.max === Infinity) return n.min + ' or more ' + (nn || p) + tail;
+  if (n.min === n.max) return n.min + ' ' + (nn || p + 's') + tail;
+  return 'between ' + n.min + ' and ' + n.max + ' ' + (nn || p) + tail;
+}
+
+function phrase(n, ml){
+  switch (n.k){
+    case 'lit': return chPhrase(n.ch);
+    case 'dot': return ml.has('s') ? 'any character' : 'any character except a line break';
+    case 'esc':
+      if (n.kind === 'class') return CLS_NAME[n.ch];
+      if (n.kind === 'prop') return 'a character whose Unicode property is ' + (n.neg ? 'not ' : '') + n.name;
+      if (n.kind === 'ref') return 'the same text as ' + (n.name ? 'the group "' + n.name + '"' : 'group ' + n.num);
+      if (n.kind === 'ctrl') return 'the control character Ctrl-' + String(n.ch || '?').toUpperCase();
+      return 'an escape';
+    case 'cls': return clsPhrase(n);
+    case 'anc':
+      if (n.kind === '^') return ml.has('m') ? 'the start of a line' : 'the start of the text';
+      if (n.kind === '$') return ml.has('m') ? 'the end of a line' : 'the end of the text';
+      return n.kind === 'b' ? 'a word boundary' : 'a place that is not a word boundary';
+    case 'grp': return grpPhrase(n, ml);
+    case 'alt': return 'either ' + n.branches.map(b => phrase(b, ml)).join(' or ');
+    case 'seq': return n.kids.length ? n.kids.map(k => phrase(k, ml)).join(' then ') : 'nothing';
+    case 'rep': return repPhrase(n, ml);
+    default: return '…';
+  }
+}
+
+function sentence(root, ml, groups){
+  if (!S.pattern) return 'Type a pattern and it will describe itself here.';
+  if (!root) return 'Fix the pattern and this will describe it.';
+  let s = phrase(root, ml);
+  s = s.charAt(0).toUpperCase() + s.slice(1);
+  if (groups.length) s += '. Captures ' + groups.map(g => g.name ? '"' + g.name + '" as group ' + g.index : 'group ' + g.index).join(', ');
+  return clip(s + '.', 320);
+}
+
+/* ── the one shape worth warning about ─────────────────────────────
+   An unbounded repetition containing another unbounded repetition is
+   where the engine has to try every way of splitting the text before it
+   can fail. Bounded forms — "(?:\\.\\d+)?" or "(?:...)"{3} — are linear
+   and are left alone, because a warning that cries wolf teaches people
+   to ignore it. Anything slower than this is caught by the timeout. */
+function openInside(n){
+  if (n.k === 'rep') return n.max === Infinity;
+  if (n.k === 'grp' || n.k === 'seq') return n.kids.some(openInside);
+  if (n.k === 'alt') return n.branches.some(openInside);
+  return false;
+}
+
+function findRisks(root, src){
+  const out = [];
+  if (!root) return out;
+  walk(root, n => {
+    if (n.k === 'rep' && n.max === Infinity && openInside(n.a)){
+      out.push({
+        at:n.start,
+        msg:'Repetition inside repetition at column ' + (n.start + 1) + ' (' + clip(src.slice(n.start, n.end), 24) +
+          '): the engine has to try every way of splitting the text before it can fail, which grows fast on a long input.'
+      });
+    }
+  });
+  return out.slice(0, 2);
+}
+
+/* ── colouring the pattern source ──────────────────────────────── */
+function tokenize(src, root){
+  const n = src.length;
+  const bg = new Array(n).fill(''), fg = new Array(n).fill('lit');
+  const mark = (a, b, c) => { for (let k = a; k < b && k < n; k++) if (!bg[k]) bg[k] = c; };
+  const paint = (a, b, c) => { for (let k = a; k < b && k < n; k++) fg[k] = c; };
+  walk(root, x => { if (x.k === 'grp') mark(x.start, x.end, 'bg-g'); });
+  walk(root, x => {
+    if (x.k === 'grp'){
+      let open = 1;
+      if (src[x.start + 1] === '?'){
+        open = src[x.start + 3] === '>' ? src.indexOf('>', x.start) - x.start + 1 : 3;
+      }
+      paint(x.start, x.start + open, 'grp');
+      paint(x.end - 1, x.end, 'grp');
+    }
+    else if (x.k === 'rep') paint(x.qStart, x.end, 'q');
+    else if (x.k === 'cls'){
+      paint(x.start, x.end, 'cls');
+      x.items.forEach(it => { if (it.raw && it.raw.charAt(0) === '\\') paint(it.at, it.at + it.raw.length, 'esc'); });
+    }
+    else if (x.k === 'anc') paint(x.start, x.end, 'anc');
+    else if (x.k === 'dot') paint(x.start, x.end, 'dot');
+    else if (x.k === 'esc') paint(x.start, x.end, x.kind === 'ref' ? 'ref' : 'esc');
+  });
+  return { bg, fg };
+}
+
+/* ── matching ──────────────────────────────────────────────────────
+   The scan runs in a worker where the browser allows one, so a pattern
+   that backtracks forever costs a timeout instead of a frozen tab. */
+const SCAN_SRC = [
+  'self.onmessage = function (e) {',
+  '  var d = e.data, out = [], truncated = false, m, guard = 0;',
+  '  try {',
+  '    var re = new RegExp(d.pattern, d.flags);',
+  '    while ((m = re.exec(d.subject))) {',
+  '      out.push([m.index, m.index + m[0].length, m[0], Array.prototype.slice.call(m, 1),',
+  '        m.indices ? Array.prototype.slice.call(m.indices, 1) : null,',
+  '        m.groups ? Object.keys(m.groups).map(function (k) { return [k, m.groups[k]]; }) : null]);',
+  '      if (++guard >= d.cap) { truncated = true; break; }',
+  '    }',
+  '  } catch (err) { self.postMessage({ id:d.id, ok:false, error:String(err && err.message || err) }); return; }',
+  '  self.postMessage({ id:d.id, ok:true, matches:out, truncated:truncated });',
+  '};'
+].join('\n');
+
+let worker = null, workerOK = true, seq = 0;
+const waiting = new Map();
+
+function killWorker(){
+  if (worker){ try { worker.terminate(); } catch (e) {} worker = null; }
+}
+
+function getWorker(){
+  if (worker || !workerOK) return worker;
+  try {
+    const url = URL.createObjectURL(new Blob([SCAN_SRC], { type:'text/javascript' }));
+    worker = new Worker(url);
+    URL.revokeObjectURL(url);
+    worker.onmessage = e => {
+      const p = waiting.get(e.data.id);
+      if (!p) return;
+      waiting.delete(e.data.id);
+      clearTimeout(p.timer);
+      p.resolve(unpack(e.data, p.t0));
+    };
+    worker.onerror = () => {
+      workerOK = false;
+      killWorker();
+      waiting.forEach(p => { clearTimeout(p.timer); p.resolve(scanSync(p.job)); });
+      waiting.clear();
+    };
+  } catch (e) {
+    workerOK = false;
+    worker = null;
+  }
+  return worker;
+}
+
+function namedOf(list){
+  const o = {};
+  if (list) for (let k = 0; k < list.length; k++) o[list[k][0]] = list[k][1];
+  return o;
+}
+
+function unpack(msg, t0){
+  const ms = performance.now() - t0;
+  if (!msg.ok) return { matches:[], truncated:false, timeout:false, error:msg.error, ms };
+  return {
+    matches: msg.matches.map(a => ({ index:a[0], end:a[1], text:a[2], groups:a[3], indices:a[4], named:namedOf(a[5]) })),
+    truncated: !!msg.truncated, timeout:false, error:null, ms
+  };
+}
+
+/* Same scan on this thread, for browsers that refuse blob workers. */
+function scanSync(job){
+  const t0 = performance.now();
+  const out = [];
+  try {
+    const re = new RegExp(job.pattern, job.flags);
+    let m, guard = 0;
+    while ((m = re.exec(job.subject))){
+      out.push({
+        index:m.index, end:m.index + m[0].length, text:m[0],
+        groups:Array.prototype.slice.call(m, 1),
+        indices:m.indices ? Array.prototype.slice.call(m.indices, 1) : null,
+        named:namedOf(m.groups ? Object.keys(m.groups).map(k => [k, m.groups[k]]) : null)
+      });
+      if (++guard >= job.cap) return { matches:out, truncated:true, timeout:false, error:null, ms:performance.now() - t0 };
+    }
+  } catch (e) {
+    return { matches:[], truncated:false, timeout:false, error:String(e && e.message || e), ms:performance.now() - t0 };
+  }
+  return { matches:out, truncated:false, timeout:false, error:null, ms:performance.now() - t0 };
+}
+
+function runScan(pattern, flags, subject){
+  const job = { pattern, flags, subject };
+  const w = getWorker();
+  if (!w) return Promise.resolve(scanSync(job));
+  const id = ++seq;
+  const t0 = performance.now();
+  return new Promise(resolve => {
+    const timer = setTimeout(() => {
+      waiting.delete(id);
+      killWorker();
+      resolve({ matches:[], truncated:false, timeout:true, error:null, ms:TIMEOUT });
+    }, TIMEOUT);
+    waiting.set(id, { timer, resolve, job, t0 });
+    try { w.postMessage({ id, pattern, flags, subject, cap:CAP }); }
+    catch (e) { waiting.delete(id); clearTimeout(timer); killWorker(); resolve(scanSync(job)); }
+  });
+}
+
+/* Flags for the scan: always global so every match can be listed, plus
+   indices when the engine has them, so capture groups can be coloured. */
+function scanFlags(f){
+  let set = f.replace(/[^gimsuy]/g, '');
+  if (set.indexOf('g') < 0) set += 'g';
+  if (HAS_D) set += 'd';
+  return set;
+}
+function realFlags(f){ return f.replace(/[^gimsuy]/g, ''); }
+
+/* What one match turns into, with JavaScript doing the $1 / $& / $<name>
+   work: a sticky copy of the same pattern can only match at that index. */
+function makeExpander(source, flags){
+  let sticky = null;
+  try { sticky = new RegExp(source, flags.replace(/[gy]/g, '') + 'y'); } catch (e) { sticky = null; }
+  if (!sticky) return () => '';
+  return (subject, m) => {
+    try {
+      sticky.lastIndex = m.index;
+      const out = subject.replace(sticky, S.replace);
+      const len = out.length - subject.length + (m.end - m.index);
+      return out.slice(m.index, m.index + Math.max(0, len));
+    } catch (e) { return ''; }
+  };
+}
+
+/* ── one run, one paint ────────────────────────────────────────── */
+let running = 0;
+async function run(){
+  ast = parse(S.pattern);
+  const ml = new Set(realFlags(S.flags));
+  const text = S.subject.length > SCAN ? S.subject.slice(0, SCAN) : S.subject;
+  const t0 = performance.now();
+  const mine = ++running;
+  status('matching…', 'busy');
+  const res = await runScan(S.pattern, scanFlags(S.flags), text);
+  if (mine !== running) return;                          /* a newer run won */
+  R.ms = performance.now() - t0;
+  R.matches = res.matches;
+  R.truncated = res.truncated;
+  R.timeout = res.timeout;
+  R.error = res.error;
+  R.words = sentence(ast.root, ml, ast.groups);
+  R.groups = ast.groups;
+  R.risks = ast.error ? [] : findRisks(ast.root, S.pattern);
+  R.engine = null;
+  if (!res.error && !res.timeout){
+    try { R.engine = new RegExp(S.pattern, scanFlags(S.flags)); } catch (e) { R.engine = null; }
+  }
+  R.expander = R.engine ? makeExpander(S.pattern, scanFlags(S.flags)) : null;
+  R.gapped = S.subject.length > SCAN;
+  if (S.sel >= R.matches.length) S.sel = Math.max(0, R.matches.length - 1);
+  paint();
+}
+
+/* ── painting ───────────────────────────────────────────────────── */
+let ML = new Set();
+let hlFrom = -1, hlTo = -1;
+let replErr = '';
+
+function status(msg, cls){
+  $('status').innerHTML = '<span class="' + (cls || '') + '">' + esc(msg) + '</span>';
+}
+
+function paintFlags(){
+  FLAGS.split('').forEach(f => {
+    const b = $('f' + f);
+    b.setAttribute('aria-pressed', S.flags.indexOf(f) >= 0 ? 'true' : 'false');
+  });
+  $('flagNote').textContent = S.flags ? '/' + S.flags : 'no flags';
+}
+
+function paintPattern(){
+  const src = S.pattern, ta = $('pattern');
+  if (ta.value !== src) ta.value = src;
+  const { bg, fg } = tokenize(src, ast.root);
+  const badAt = ast.error ? ast.error.at : -1;
+  let html = '', run = '', key = null;
+  for (let k = 0; k < src.length; k++){
+    const parts = [];
+    if (bg[k]) parts.push(bg[k]);
+    parts.push(fg[k]);
+    if (k === badAt) parts.push('bad');
+    if (k >= hlFrom && k < hlTo) parts.push('hl');
+    const kk = parts.join(' ');
+    if (kk !== key){
+      if (run !== '') html += '<span class="' + key + '">' + esc(run) + '</span>';
+      run = '';
+      key = kk;
+    }
+    run += src[k];
+  }
+  if (run !== '') html += '<span class="' + key + '">' + esc(run) + '</span>';
+  $('mirror').innerHTML = html + '<span class="lit p">/' + esc(S.flags) + '</span>';
+  $('ed').classList.toggle('err', !!ast.error);
+  $('patLen').textContent = src.length + (src.length === 1 ? ' character' : ' characters');
+  syncMirrorScroll();
+}
+
+function paintMessages(){
+  let html = '';
+  if (ast.error){
+    html += '<div class="msg err"><span class="ic">✕</span><span>Column ' + (ast.error.at + 1) + ' — ' + esc(ast.error.msg) + '</span></div>';
+  } else if (R.error){
+    html += '<div class="msg err"><span class="ic">✕</span><span>The engine refused it: ' + esc(R.error) + '</span></div>';
+  }
+  if (replErr) html += '<div class="msg err"><span class="ic">✕</span><span>That replacement will not compile: ' + esc(replErr) + '</span></div>';
+  if (R.timeout){
+    html += '<div class="msg err"><span class="ic">⏱</span><span>Abandoned after ' + (TIMEOUT / 1000).toFixed(1) +
+      ' s. Something in this pattern backtracks on this text; repetition inside repetition is nearly always why.</span></div>';
+  }
+  (R.risks || []).forEach(r => {
+    html += '<div class="msg warn"><span class="ic">!</span><span>' + esc(r.msg) + '</span></div>';
+  });
+  $('msgs').innerHTML = html;
+}
+
+function paintWords(){ $('words').textContent = R.words || ''; }
+
+function paintTree(){
+  const box = $('tree'), src = S.pattern;
+  if (!ast.root){
+    box.innerHTML = '<div class="empty">' + (S.pattern ? 'Nothing to break down yet.' : 'An empty pattern matches the empty string at every position.') + '</div>';
+    return;
+  }
+  let html = '';
+  const row = (n, depth, kind) => {
+    html += '<div class="tr" data-kind="' + kind + '" data-s="' + n.start + '" data-e="' + n.end +
+      '" style="--d:' + (12 + depth * 16) + 'px"><span class="rail"></span>' +
+      '<span class="raw">' + esc(clip(src.slice(n.start, n.end), 48)) + '</span>' +
+      '<span class="ds">' + esc(clip(rowLabel(n, ML), 130)) + '</span></div>';
+  };
+  const emit = (n, depth) => {
+    if (n.k === 'seq'){ n.kids.forEach(k => emit(k, depth)); return; }
+    if (n.k === 'alt'){ row(n, depth, 'alt'); n.branches.forEach(b => emit(b, depth + 1)); return; }
+    if (n.k === 'grp'){ row(n, depth, 'grp'); n.kids.forEach(k => emit(k, depth + 1)); return; }
+    if (n.k === 'rep'){ row(n, depth, 'rep'); emit(n.a, depth + 1); return; }
+    row(n, depth, 'atom');
+  };
+  emit(ast.root, 0);
+  box.innerHTML = html;
+  box.querySelectorAll('.tr').forEach(el => {
+    const on = () => { hlFrom = +el.dataset.s; hlTo = +el.dataset.e; paintPattern(); };
+    const off = () => { hlFrom = hlTo = -1; paintPattern(); };
+    el.addEventListener('mouseenter', on);
+    el.addEventListener('mouseleave', off);
+  });
+}
+
+function paintStatus(){
+  const bits = [];
+  if (R.timeout) bits.push('<span class="bad">abandoned</span>');
+  else if (ast.error || R.error) bits.push('<span class="bad">not run</span>');
+  else bits.push('<b>' + R.matches.length.toLocaleString() + '</b> match' + (R.matches.length === 1 ? '' : 'es'));
+  bits.push(R.ms.toFixed(1) + ' ms');
+  bits.push(S.subject.length.toLocaleString() + ' characters');
+  if (R.truncated) bits.push('stopped at ' + CAP.toLocaleString());
+  $('status').innerHTML = bits.map(b => '<span>' + b + '</span>').join('');
+}
+
+function paint(){
+  ML = new Set(realFlags(S.flags));
+  replErr = '';
+  if (!R.timeout && !R.error && !ast.error && S.replace){
+    try { ''.replace(new RegExp(S.pattern, realFlags(S.flags)), S.replace); }
+    catch (e) { replErr = String(e && e.message || e); }
+  }
+  paintFlags();
+  paintPattern();
+  paintMessages();
+  paintWords();
+  paintTree();
+  paintText();
+  paintList();
+  paintGroups();
+  paintReplace();
+  paintMap();
+  paintCases();
+  paintStatus();
+}
+
+/* ── text, matches, groups ─────────────────────────────────────── */
+function nest(text, m){
+  const gs = [];
+  m.indices.forEach((idx, i) => { if (idx && idx[1] > idx[0]) gs.push({ i, s:idx[0], e:idx[1] }); });
+  if (!gs.length) return esc(m.text);
+  gs.sort((a, b) => a.s - b.s || b.e - a.e);
+  let out = '', pos = m.index;
+  for (const g of gs){
+    if (g.s < pos || g.e > m.end) continue;
+    out += esc(text.slice(pos, g.s));
+    out += '<span class="g g' + (g.i % 6) + '">' + esc(text.slice(g.s, g.e)) + '</span>';
+    pos = g.e;
+  }
+  return out + esc(text.slice(pos, m.end));
+}
+
+function paintText(){
+  const ta = $('subject'), hl = $('hl');
+  if (ta.value !== S.subject) ta.value = S.subject;
+  const text = S.subject.slice(0, DRAWTEXT);
+  let html = '', pos = 0, drawn = 0;
+  for (const m of R.matches){
+    if (m.index >= text.length) break;
+    if (m.index < pos) continue;
+    if (drawn++ >= DRAW) break;
+    html += esc(text.slice(pos, m.index));
+    html += '<span class="mt">' + (m.indices ? nest(text, m) : esc(m.text)) + '</span>';
+    pos = m.end;
+  }
+  html += esc(text.slice(pos));
+  if (text.length < S.subject.length){
+    html += '\n<span class="q">… highlighting stops at ' + DRAWTEXT.toLocaleString() +
+      ' characters; the count above covers the whole text.</span>';
+  }
+  hl.innerHTML = html;
+  sizeHL();
+  syncScroll();
+  $('lenN').textContent = S.subject.length.toLocaleString() + ' chars';
+  $('mapL').textContent = S.subject.length ? '0' : '';
+  $('mapR').textContent = S.subject.length ? String(S.subject.length) : '';
+}
+
+function sizeHL(){
+  const ta = $('subject'), hl = $('hl');
+  hl.style.width = ta.clientWidth + 'px';
+  hl.style.height = ta.clientHeight + 'px';
+}
+
+function syncScroll(){
+  const ta = $('subject'), hl = $('hl');
+  if (hl.scrollTop !== ta.scrollTop) hl.scrollTop = ta.scrollTop;
+  if (hl.scrollLeft !== ta.scrollLeft) hl.scrollLeft = ta.scrollLeft;
+}
+
+function syncMirrorScroll(){
+  const ta = $('pattern');
+  $('mirror').style.transform = 'translateX(' + (-ta.scrollLeft) + 'px)';
+}
+
+function paintList(){
+  const box = $('mlist');
+  if (!R.matches.length){
+    box.innerHTML = '<div class="empty">' + (S.pattern ? 'Nothing matches this text.' : 'Write a pattern to find something.') + '</div>';
+    $('selN').textContent = '';
+    return;
+  }
+  const n = Math.min(R.matches.length, LISTCAP);
+  let html = '';
+  for (let i = 0; i < n; i++){
+    const m = R.matches[i];
+    const t = m.text === '' ? '(empty match)' : clip(m.text.replace(/\n/g, '⏎'), 64);
+    html += '<button class="mrow" type="button" data-i="' + i + '" aria-current="' + (i === S.sel) +
+      '"><span class="i">' + (i + 1) + '</span><span class="t">' + esc(t) + '</span><span class="p">@' + m.index + '</span></button>';
+  }
+  if (R.matches.length > n) html += '<div class="empty">… and ' + (R.matches.length - n).toLocaleString() + ' more</div>';
+  box.innerHTML = html;
+  box.querySelectorAll('.mrow').forEach(el => el.addEventListener('click', () => select(+el.dataset.i, true)));
+  $('selN').textContent = R.matches.length.toLocaleString() + ' total';
+}
+
+function paintGroups(){
+  const box = $('glist');
+  if (!ast.groups.length){
+    box.innerHTML = '<div class="empty">Wrap part of the pattern in ( ) and it will be captured here.</div>';
+    $('grpN').textContent = '';
+    return;
+  }
+  const m = R.matches[S.sel];
+  let html = '';
+  ast.groups.forEach(g => {
+    const gi = g.index;
+    const named = m && m.named && m.named[g.name] !== undefined ? m.named[g.name] : undefined;
+    const plain = m && m.groups ? m.groups[gi - 1] : undefined;
+    const shown = named !== undefined ? named : plain;
+    html += '<div class="grow2"><span class="sw" style="background:' + GROUPCOLS[(gi - 1) % 6] + '"></span>' +
+      '<span class="k">$' + gi + '</span><span class="nm">' + esc(g.name || ' ') + '</span>' +
+      '<span class="v' + (shown === undefined ? ' off' : '') + '">' +
+      (shown === undefined ? 'not part of this match' : esc(shown === '' ? '(empty)' : clip(shown.replace(/\n/g, '⏎'), 56))) +
+      '</span></div>';
+  });
+  box.innerHTML = html;
+  $('grpN').textContent = R.matches.length ? 'in match ' + (S.sel + 1) : '';
+}
+
+/* ── replacement ───────────────────────────────────────────────── */
+function paintReplace(){
+  const out = $('out'), hint = $('replHint');
+  const flags = realFlags(S.flags);
+  if (replErr || R.timeout || ast.error || R.error){
+    out.innerHTML = '<span style="color:var(--dim)">—</span>';
+    hint.textContent = '';
+    hint.className = 'hint';
+    return;
+  }
+  const text = S.subject.slice(0, DRAWTEXT);
+  const global = flags.indexOf('g') >= 0;
+  const list = global ? R.matches : R.matches.slice(0, 1);
+  let html = '', pos = 0;
+  if (R.expander){
+    for (const m of list){
+      if (m.index >= text.length) break;
+      if (m.index < pos) continue;
+      html += esc(text.slice(pos, m.index));
+      html += '<span class="ins">' + esc(R.expander(S.subject, m)) + '</span>';
+      pos = m.end;
+    }
+    html += esc(text.slice(pos));
+  } else {
+    html = esc(S.subject.replace(new RegExp(S.pattern, flags), S.replace));
+  }
+  if (html === '') html = '<span style="color:var(--dim)">everything was replaced away</span>';
+  out.innerHTML = html;
+  if (!global) hint.textContent = 'No g flag, so only the first match is replaced. Add g to change all of them.';
+  else if (S.replace === '') hint.textContent = 'An empty replacement deletes each match and leaves a hole where it was.';
+  else hint.textContent = 'In the replacement: $1…$9, $&, $`, $\' and $<name>. Leave it empty to delete.';
+  hint.className = 'hint' + (global ? ' quiet' : '');
+}
+
+/* ── the map ───────────────────────────────────────────────────── */
+function rrect(g, x, y, w, h, r){
+  if (w <= 0 || h <= 0) return;
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
+  g.beginPath();
+  g.moveTo(x + r, y);
+  g.arcTo(x + w, y, x + w, y + h, r);
+  g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r);
+  g.arcTo(x, y, x + w, y, r);
+  g.closePath();
+}
+
+let mapSig = '', mapT0 = 0;
+function paintMap(){
+  const cv = $('map'), w = $('mapwrap').clientWidth, h = 62;
+  if (!w) return;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = Math.round(w * dpr);
+  cv.height = Math.round(h * dpr);
+  cv.style.height = h + 'px';
+  const sig = S.pattern + '|' + S.flags + '|' + R.matches.length + '|' + S.subject.length;
+  if (sig === mapSig) return;
+  mapSig = sig;
+  if (REDUCED){ drawMap(1); return; }
+  mapT0 = performance.now();
+  requestAnimationFrame(function step(now){
+    const t = Math.min(1, (now - mapT0) / 420);
+    drawMap(1 - Math.pow(1 - t, 3));
+    if (t < 1) requestAnimationFrame(step);
+  });
+}
+
+function drawMap(p){
+  const cv = $('map'), w = $('mapwrap').clientWidth, h = 62;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  const g = cv.getContext('2d');
+  const x0 = 14, span = w - 28;
+  if (span <= 0) return;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  const total = Math.max(1, S.subject.length);
+  const barY = 24, barH = 13;
+  g.fillStyle = 'rgba(158,172,210,.10)';
+  rrect(g, x0, barY, span, barH, 6);
+  g.fill();
+  g.fillStyle = 'rgba(158,172,210,.18)';
+  g.fillRect(x0, barY + barH / 2 - .5, span, 1);
+  for (let i = 0; i < R.matches.length; i++){
+    const m = R.matches[i];
+    if (m.index >= total) break;
+    const x = x0 + (m.index / total) * span;
+    const bw = Math.max(1.5, (Math.min(m.end, total) - m.index) / total * span) * p;
+    const sel = i === S.sel;
+    g.fillStyle = sel ? '#5fe3b0' : 'rgba(95,227,176,.42)';
+    rrect(g, x, barY - (sel ? 2 : 0), bw, barH + (sel ? 4 : 0), 3);
+    g.fill();
+  }
+  const m = R.matches[S.sel];
+  if (m && m.indices){
+    m.indices.forEach((idx, gi) => {
+      if (!idx || idx[1] <= idx[0]) return;
+      const x = x0 + (idx[0] / total) * span;
+      const bw = Math.max(1.5, (Math.min(idx[1], total) - idx[0]) / total * span) * p;
+      g.fillStyle = GROUPCOLS[gi % 6];
+      rrect(g, x, barY + barH + 5, bw, 5, 2);
+      g.fill();
+    });
+  }
+  if (!R.matches.length && S.pattern){
+    g.fillStyle = 'rgba(158,172,210,.4)';
+    g.font = '10px ui-monospace, Menlo, monospace';
+    g.fillText('nothing matches here', x0 + 2, 17);
+  }
+}
+
+function matchAt(x){
+  const w = $('mapwrap').clientWidth;
+  const total = Math.max(1, S.subject.length);
+  const x0 = 14, span = w - 28;
+  let best = -1, bestD = 8;
+  for (let i = 0; i < R.matches.length; i++){
+    const m = R.matches[i];
+    const a = x0 + (m.index / total) * span;
+    const b = x0 + (Math.max(m.end, m.index + 1) / total) * span;
+    if (x >= a - 4 && x <= b + 4) return i;
+    const d = x < a ? a - x : x - b;
+    if (d < bestD){ bestD = d; best = i; }
+  }
+  return bestD <= 8 ? best : -1;
+}
+
+/* ── test cases ────────────────────────────────────────────────── */
+function evalCase(c){
+  if (ast.error || R.error || R.timeout) return { state:'fail', got:'⟨pattern error⟩' };
+  let got;
+  try {
+    if (S.mode === 'count'){
+      got = String(scanSync({ pattern:S.pattern, flags:scanFlags(S.flags), subject:c.subject, cap:CAP }).matches.length);
+    } else if (S.mode === 'match'){
+      const r = scanSync({ pattern:S.pattern, flags:scanFlags(S.flags), subject:c.subject, cap:CAP });
+      got = r.matches.map(m => m.text).join('\n');
+    } else {
+      got = c.subject.replace(new RegExp(S.pattern, realFlags(S.flags)), S.replace);
+    }
+  } catch (e) { got = '⟨error⟩'; }
+  return { state: got === c.expect ? 'pass' : 'fail', got };
+}
+
+function autogrow(ta){ ta.style.height = 'auto'; ta.style.height = Math.min(110, ta.scrollHeight + 2) + 'px'; }
+
+function caseLabel(){
+  return S.mode === 'count' ? 'expected count' : S.mode === 'match' ? 'expected matches' : 'expected result';
+}
+
+function countCases(){
+  const results = S.cases.map(evalCase);
+  const passed = results.filter(r => r.state === 'pass').length;
+  $('caseN').textContent = S.cases.length ? passed + ' of ' + S.cases.length + ' passing' : '';
+}
+
+/* Re-judge one row in place. Rebuilding the whole list while someone is
+   typing in it would move the caret out from under them. */
+function syncCaseRow(i){
+  const row = $('cases').children[i];
+  const c = S.cases[i];
+  if (!row || !c){ paintCases(); return; }
+  const res = evalCase(c);
+  row.className = 'tcase ' + res.state;
+  row.querySelector('.want .meta').innerHTML = caseLabel() +
+    (res.state === 'fail' ? ' · <span class="g">got ' + esc(clip(res.got, 60)) + '</span>' : '');
+  countCases();
+}
+
+function paintCases(){
+  const box = $('cases');
+  const results = S.cases.map(evalCase);
+  const passed = results.filter(r => r.state === 'pass').length;
+  $('caseN').textContent = S.cases.length ? passed + ' of ' + S.cases.length + ' passing' : '';
+  if (!S.cases.length){
+    box.innerHTML = '<div class="empty">Set up a piece of text and a result you want, then press “Add current”.</div>';
+    return;
+  }
+  let html = '';
+  S.cases.forEach((c, i) => {
+    const res = results[i];
+    html += '<div class="tcase ' + res.state + '" data-i="' + i + '"><span class="dot"></span>' +
+      '<div><div class="meta">text</div><textarea rows="1" data-f="subject" data-i="' + i + '">' + esc(c.subject) + '</textarea></div>' +
+      '<div class="want"><div class="meta">' + caseLabel() +
+      (res.state === 'fail' ? ' · <span class="g">got ' + esc(clip(res.got, 60)) + '</span>' : '') +
+      '</div><textarea rows="1" data-f="expect" data-i="' + i + '">' + esc(c.expect) + '</textarea></div>' +
+      '<button class="del" type="button" data-i="' + i + '" title="Remove this case">×</button></div>';
+  });
+  box.innerHTML = html;
+  box.querySelectorAll('textarea').forEach(ta => {
+    autogrow(ta);
+    ta.addEventListener('input', () => { autogrow(ta); });
+  });
+  box.querySelectorAll('.del').forEach(b => b.addEventListener('click', () => {
+    S.cases.splice(+b.dataset.i, 1);
+    save();
+    paintCases();
+  }));
+  box.querySelectorAll('textarea[data-f]').forEach(ta => ta.addEventListener('input', debounce(() => {
+    const c = S.cases[+ta.dataset.i];
+    if (!c) return;
+    c[ta.dataset.f] = ta.value;
+    save();
+    syncCaseRow(+ta.dataset.i);
+  }, 320)));
+}
+
+/* ── selection, events, start-up ────────────────────────────────── */
+function select(i, scroll){
+  S.sel = Math.max(0, Math.min(i, R.matches.length - 1));
+  paintList();
+  paintGroups();
+  drawMap(1);
+  if (scroll){
+    const m = R.matches[S.sel];
+    if (m){
+      const ta = $('subject');
+      const before = S.subject.slice(0, m.index);
+      const line = before.split('\n').length - 1;
+      const lh = parseFloat(getComputedStyle(ta).lineHeight) || 22;
+      const target = line * lh - ta.clientHeight / 2 + lh;
+      ta.scrollTop = Math.max(0, target);
+      syncScroll();
+    }
+  }
+}
+
+function step(delta){
+  if (!R.matches.length) return;
+  select((S.sel + delta + R.matches.length) % R.matches.length, true);
+}
+
+const queueRun = debounce(() => { run(); save(); }, GAP);
+
+function buildFlags(){
+  FLAGS.split('').forEach(f => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'flag';
+    b.id = 'f' + f;
+    b.textContent = f;
+    b.title = FLAG_INFO[f];
+    b.setAttribute('aria-label', 'Flag ' + f + ': ' + FLAG_INFO[f]);
+    b.addEventListener('click', () => {
+      const at = S.flags.indexOf(f);
+      S.flags = at >= 0 ? S.flags.slice(0, at) + S.flags.slice(at + 1) : S.flags + f;
+      queueRun();
+    });
+    $('flags').appendChild(b);
+  });
+  const note = document.createElement('span');
+  note.className = 'note';
+  note.id = 'flagNote';
+  $('flags').appendChild(note);
+}
+
+function bind(){
+  const ta = $('pattern'), sub = $('subject'), rep = $('replace');
+
+  ta.addEventListener('input', () => { S.pattern = ta.value; queueRun(); });
+  ta.addEventListener('scroll', syncMirrorScroll);
+  sub.addEventListener('input', () => { S.subject = sub.value; queueRun(); });
+  sub.addEventListener('scroll', syncScroll);
+  rep.addEventListener('input', () => { S.replace = rep.value; paintReplace(); save(); });
+
+  $('btnClearText').addEventListener('click', () => { S.subject = ''; queueRun(); });
+  $('btnCopyOut').addEventListener('click', () => {
+    try { copy($('out').textContent, 'Result copied'); }
+    catch (e) { toast('Nothing to copy yet'); }
+  });
+
+  const cv = $('map'), tip = $('mtip');
+  cv.addEventListener('pointermove', e => {
+    const r = cv.getBoundingClientRect();
+    const i = matchAt(e.clientX - r.left);
+    if (i < 0){ tip.classList.remove('on'); return; }
+    const m = R.matches[i];
+    tip.textContent = '#' + (i + 1) + '  @' + m.index + '  ' + clip(m.text.replace(/\n/g, '⏎'), 40);
+    tip.style.left = Math.max(60, Math.min(r.width - 60, e.clientX - r.left)) + 'px';
+    tip.style.top = '46px';
+    tip.classList.add('on');
+  });
+  cv.addEventListener('pointerleave', () => tip.classList.remove('on'));
+  cv.addEventListener('click', e => {
+    const r = cv.getBoundingClientRect();
+    const i = matchAt(e.clientX - r.left);
+    if (i >= 0) select(i, true);
+  });
+
+  $('testMode').addEventListener('change', e => { S.mode = e.target.value; save(); paintCases(); });
+  $('btnAddCase').addEventListener('click', () => {
+    if (!S.subject){ toast('Put some text in first'); return; }
+    let expect;
+    try { expect = S.subject.replace(new RegExp(S.pattern, realFlags(S.flags)), S.replace); }
+    catch (e) { expect = ''; }
+    S.cases.push({ subject:S.subject, expect });
+    save();
+    paintCases();
+    toast('Case added — edit the expectation');
+  });
+
+  $('lib').innerHTML = LIB.map((e, i) => '<button class="chip2" type="button" data-i="' + i + '" title="' + esc(e.p) + '">' + esc(e.n) + '</button>').join('');
+  $('lib').querySelectorAll('.chip2').forEach(b => b.addEventListener('click', () => {
+    const e = LIB[+b.dataset.i];
+    S.pattern = e.p;
+    S.flags = e.f;
+    S.replace = e.r;
+    S.subject = e.s;
+    $('replace').value = e.r;
+    run();
+    save();
+    toast(e.n + ' loaded');
+  }));
+
+  $('btnShare').addEventListener('click', () => copy(share(), 'Link copied'));
+  $('btnJs').addEventListener('click', () => copy('new RegExp(' + JSON.stringify(S.pattern) + ', ' + JSON.stringify(realFlags(S.flags)) + ')', 'JavaScript copied'));
+  $('btnPy').addEventListener('click', () => copy('re.compile(r' + JSON.stringify(S.pattern).replace(/^"|"$/g, "'") + ', ' + (realFlags(S.flags).indexOf('i') >= 0 ? 're.I' : '0') + ')', 'Python copied'));
+  $('btnMd').addEventListener('click', () => copy('`' + S.pattern + '/' + realFlags(S.flags) + '`', 'Markdown copied'));
+
+  addEventListener('resize', debounce(() => { sizeHL(); syncMirrorScroll(); drawMap(1); }, 120));
+
+  /* A share link pasted into a tab that is already open changes nothing
+     unless the page listens for it. */
+  addEventListener('hashchange', () => {
+    if (!unshare()) return;
+    loadIntoForm();
+    run();
+    toast('Loaded from the link');
+  });
+
+  addEventListener('keydown', e => {
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName);
+    if (e.key === '/' && !typing){ e.preventDefault(); $('pattern').focus(); $('pattern').select(); return; }
+    if (e.key === 'Escape' && typing){ document.activeElement.blur(); return; }
+    if (e.altKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp')){ e.preventDefault(); step(e.key === 'ArrowDown' ? 1 : -1); return; }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); run(); save(); }
+  });
+}
+
+/* A flag this tool does not offer, pasted in from a link or saved by an
+   older version, is dropped rather than silently disagreeing with the
+   buttons. Applied on every way into the tool, not just at start-up. */
+function loadIntoForm(){
+  S.flags = realFlags(S.flags);
+  $('pattern').value = S.pattern;
+  $('subject').value = S.subject;
+  $('replace').value = S.replace;
+  $('testMode').value = S.mode;
+}
+
+function boot(){
+  const fromLink = unshare();
+  if (!fromLink) restore();
+  loadIntoForm();
+  buildFlags();
+  bind();
+  sizeHL();
+  run();
+  if (fromLink) toast('Loaded from the link');
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+})();
+</script>
+</body>
+</html>

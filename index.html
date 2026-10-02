@@ -177,8 +177,18 @@
   .art-elsewhere svg { width: 100%; height: 100%; }
   .art-drizzle { background: #8fc4ee; }
   .art-drizzle svg { width: 100%; height: 100%; }
-  .art-drizzle .dz-cloud { animation: dzbob 3s ease-in-out infinite alternate; }
-  .art-drizzle .dz-drop { animation: dzdrop 1s linear infinite; }
+  .art-drizzle .dz-cloud { animation: dzbob 3s ease-in-out infinite alternate; }  .art-drizzle .dz-drop { animation: dzdrop 1s linear infinite; }
+  .art-needle { background: #080a0f; }
+  .art-needle svg { width: 100%; height: 100%; }
+  .art-needle .nd-hit { animation: ndpulse2 3.4s ease-in-out infinite; }
+  .art-needle .nd-st { animation: ndsew 3.2s ease-in-out infinite; }
+  .art-needle .nd-st.s2 { animation-delay: .2s; }
+  .art-needle .nd-st.s3 { animation-delay: .4s; }
+  .art-needle .nd-st.s4 { animation-delay: .6s; }
+  .art-needle .nd-eye { animation: ndeye 4s ease-in-out infinite; }
+  @keyframes ndpulse2 { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+  @keyframes ndsew { 0%, 68%, 100% { opacity: .2; } 32% { opacity: 1; } }
+  @keyframes ndeye { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-13px, 7px); } }
   @keyframes dzbob { to { transform: translate(40px, -8px); } }
   @keyframes dzdrop { 0% { transform: translateY(-10px); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(150px); opacity: 0; } }
   .art-percy .pc-fill, .art-percy .pc-head { animation: pcrun 11s ease-in-out infinite; }
@@ -1601,6 +1611,83 @@
           <div><dt>Size</dt><dd>52 <small>KB</small></dd></div>
         </dl>
         <a class="open mono" href="pages/elsewhere.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
+    <article class="card" data-src="pages/needle.html" style="--accent: #5fe3b0; animation-delay: 5.1s;">
+      <div class="preview">
+        <div class="art art-needle" aria-hidden="true">
+          <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="nd-grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#8ea0c8" stroke-opacity=".07"/></pattern>
+              <pattern id="nd-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V7" stroke="#5fe3b0" stroke-opacity=".2" stroke-width="1.4"/></pattern>
+              <linearGradient id="nd-glow" x2="0" y2="1"><stop stop-color="#5fe3b0" stop-opacity=".26"/><stop offset="1" stop-color="#5fe3b0" stop-opacity="0"/></linearGradient>
+            </defs>
+            <rect width="640" height="400" fill="#080a0f"/>
+            <rect width="640" height="400" fill="url(#nd-grid)"/>
+            <rect x="28" y="26" width="584" height="240" rx="12" fill="#0c0f16" stroke="#8ea0c8" stroke-opacity=".16"/>
+            <g fill="#39415c">
+              <rect x="52" y="92" width="120" height="12" rx="4"/>
+              <rect x="180" y="92" width="72" height="12" rx="4"/>
+              <rect x="260" y="92" width="150" height="12" rx="4"/>
+              <rect x="52" y="128" width="66" height="12" rx="4"/>
+              <rect x="126" y="128" width="180" height="12" rx="4"/>
+              <rect x="314" y="128" width="90" height="12" rx="4"/>
+              <rect x="52" y="188" width="96" height="12" rx="4"/>
+              <rect x="156" y="188" width="130" height="12" rx="4"/>
+              <rect x="52" y="224" width="210" height="12" rx="4"/>
+            </g>
+            <g class="nd-hit">
+              <rect x="52" y="84" width="124" height="28" rx="5" fill="url(#nd-glow)"/>
+              <rect x="52" y="84" width="124" height="28" rx="5" fill="url(#nd-hatch)"/>
+              <rect x="52" y="84" width="124" height="28" rx="5" fill="none" stroke="#5fe3b0" stroke-opacity=".8"/>
+              <rect x="52" y="120" width="186" height="28" rx="5" fill="url(#nd-glow)"/>
+              <rect x="52" y="120" width="186" height="28" rx="5" fill="url(#nd-hatch)"/>
+              <rect x="52" y="120" width="186" height="28" rx="5" fill="none" stroke="#5fe3b0" stroke-opacity=".8"/>
+              <rect x="52" y="180" width="100" height="28" rx="5" fill="url(#nd-glow)"/>
+              <rect x="52" y="180" width="100" height="28" rx="5" fill="url(#nd-hatch)"/>
+              <rect x="52" y="180" width="100" height="28" rx="5" fill="none" stroke="#5fe3b0" stroke-opacity=".8"/>
+            </g>
+            <g fill="#5fe3b0">
+              <rect x="52" y="116" width="60" height="4" rx="2"/><rect x="52" y="122" width="34" height="4" rx="2"/>
+              <rect x="58" y="176" width="52" height="4" rx="2"/><rect x="64" y="182" width="28" height="4" rx="2"/>
+            </g>
+            <g transform="translate(470 236)">
+              <g class="nd-eye">
+                <path d="M2 2 62 66" stroke="#5fe3b0" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+                <path d="M2 2c-7 1-8.5 9-2 12" stroke="#5fe3b0" stroke-width="2" stroke-linecap="round" fill="none"/>
+                <path d="M60 64l6 3-4 6" stroke="#5fe3b0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </g>
+            </g>
+            <path d="M28 288h584" stroke="#8ea0c8" stroke-opacity=".16"/>
+            <g fill="#5fe3b0">
+              <path class="nd-st" d="M56 288v13" stroke="#5fe3b0" stroke-width="2.4" stroke-linecap="round"/>
+              <path class="nd-st s2" d="M104 288v13" stroke="#5fe3b0" stroke-width="2.4" stroke-linecap="round"/>
+              <path class="nd-st s3" d="M152 288v13" stroke="#5fe3b0" stroke-width="2.4" stroke-linecap="round"/>
+              <path class="nd-st s4" d="M200 288v13" stroke="#5fe3b0" stroke-width="2.4" stroke-linecap="round"/>
+            </g>
+            <g font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#5fe3b0" opacity=".85">
+              <text x="28" y="330">([\w.+-]+)@([\w-]+\.[\w.-]+)</text>
+            </g>
+
+            <g font-family="ui-monospace, Menlo, monospace" font-size="10">
+              <text x="28" y="352" fill="#8ea0c8" fill-opacity=".65">3 matches · 0.4 ms · captures 1 and 2</text>
+              <text x="612" y="352" text-anchor="end" fill="#5fe3b0" fill-opacity=".8">NEEDLE</text>
+            </g>
+          </svg>
+        </div>
+        <span class="tag mono">DOM + Canvas 2D · Regex workbench</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Needle</h2><span class="num mono">Nº 28</span></div>
+        <p>A workbench for regular expressions, and the one tool in this collection you would actually open on purpose. Write a pattern and see what it catches in the text, why it catches it, and what it does when you replace it. The pattern is parsed, not just compiled: every token is coloured, the breakdown names each construct in plain English, and a mistake reports the column it sits in. Capture groups are coloured where they land, the map shows where the matches fall across the text, and a suite of test cases tells you at a glance whether a change broke anything. Runaway patterns are abandoned instead of freezing the tab.</p>
+        <div class="chips mono"><span>Live highlighting</span><span>Plain-English breakdown</span><span>Group inspector</span><span>Replacements</span><span>Test suite</span><span>Backtracking guard</span><span>Share links</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Space Bunny</dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>73 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/needle.html" target="_blank" rel="noopener"><span>Open the tool</span><span class="arrow">↗</span></a>
       </div>
     </article>
   </section>

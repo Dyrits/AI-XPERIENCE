@@ -18,11 +18,11 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Night atlas](https://dyrits.github.io/AI-XPERIENCE/pages/night-atlas.html) | Canvas 2D, projected 3D mesh | GPT-6 Atra | 1 + 1 | 21 KB |
 | [Foldwake](https://dyrits.github.io/AI-XPERIENCE/pages/foldwake.html) | Canvas 2D, mirror geometry | GPT-6 Atra | 1 | 21 KB |
 | [Echoveil](https://dyrits.github.io/AI-XPERIENCE/pages/echoveil.html) | Canvas 2D, sonar reveal | GLM-5.3 | 1 | 33 KB |
-| [Umbralux](https://dyrits.github.io/AI-XPERIENCE/pages/umbralux.html) | Canvas 2D, raycast optics | Gemini 3.8 Flash | 1 | 46 KB |
 | [Estuary](https://dyrits.github.io/AI-XPERIENCE/pages/estuary.html) | Canvas 2D, curl-noise flow field | DeepSeek V4 Pro | 1 | 28 KB |
 | [The last warm window](https://dyrits.github.io/AI-XPERIENCE/pages/the-last-warm-window.html) | Canvas 2D, animated narrative | GPT-6 Astra | 1 + 2 | 23 KB |
 | [Lifeline](https://dyrits.github.io/AI-XPERIENCE/pages/lifeline.html) | Canvas 2D, single continuous line | Claude Opus 5.5 | 1 | 34 KB |
 | [Starshard](https://dyrits.github.io/AI-XPERIENCE/pages/starshard.html) | Canvas 2D, roguelike shooter | GLM-5.3 | 1 + 2 | 80 KB |
+| [Last Orders](https://dyrits.github.io/AI-XPERIENCE/pages/last-orders.html) | Canvas 2D, botanical railshooter | GPT-6 Astra | 1 + 2 | 65 KB |
 | [Vesper](https://dyrits.github.io/AI-XPERIENCE/pages/vesper.html) | Canvas 2D, idle clicker | Claude Opus 5.5 | 1 + 1 | 78 KB |
 | [Echo Ward](https://dyrits.github.io/AI-XPERIENCE/pages/echo-ward.html) | Canvas 2D, tower defense | Claude Opus 5.5 | 1 + 1 | 71 KB |
 | [Until the tide](https://dyrits.github.io/AI-XPERIENCE/pages/until-the-tide.html) | Canvas 2D, escape game | GPT-6 | 1 | 54 KB |
@@ -39,6 +39,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Carbon copy](https://dyrits.github.io/AI-XPERIENCE/pages/carbon-copy.html) | Canvas 2D, recorded-ghost puzzle | GPT-6 | 1 | 35 KB |
 | [Drizzle](https://dyrits.github.io/AI-XPERIENCE/pages/drizzle.html) | Canvas 2D, animated short film | Claude Sonnet 5.5 | 1 | 49 KB |
 | [Elsewhere](https://dyrits.github.io/AI-XPERIENCE/pages/elsewhere.html) | Canvas 2D, recursive zoom worlds (incomplete, untested) | GPT-6 Astra | 1 | 52 KB |
+| [Needle](https://dyrits.github.io/AI-XPERIENCE/pages/needle.html) | DOM + Canvas 2D, regex workbench | Space Bunny | 1 | 73 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -50,8 +51,6 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 
 **Echoveil.** A sonar-stealth game in a cave that only exists where sound has touched it. The world is pitch black: releasing a ping paints expanding rings of light over the walls for a few seconds, and a held charge sends a louder, wider burst. Quiet taps are safe, but bursts — and the pearls, and your own fading halo — draw the attention of lurkers that hunt the source of every echo. Gather seven pearls to open the gate, follow its slow pulses to the far side of the cave, and get out before your light gutters out.
 
-**Umbralux.** A spatial game of living light and sheltering shade. You are a wandering spark of sunlight in an ancient sundial sanctum. Moving your radiant core casts real-time geometric shadows from monolithic stone pillars. Bathe ancestral Sunstones in direct light to ignite them, but use the pillars' shadows to shelter delicate Umbral Orchids—your direct rays scorch them! Focus your beam to banish predatory Gloom Stalkers prowling in the dark, and discharge Eclipse Novas to survive across three escalating ritual chambers.
-
 **Estuary.** A tool for sculpting invisible currents and harvesting them as art. A divergence-free curl-noise flow carries thousands of glowing particles, and you reshape the current by dropping sources, sinks, vortices and repellers — all mapped onto a torus so the field tiles perfectly by construction. Palettes, flow strength and trail persistence are tunable, and a single button exports a seamless generative texture (up to 4096 px) for wallpapers and backgrounds.
 
 **The last warm window.** A two-minute story about a mother who brings two cups of tea to an abandoned station. Passing trains carry memories of her daughter while rain turns to snow and the years pass. Holding a memory reveals her daughter beside the bench and slows the story. Includes six selectable chapters, optional synthesized music, pause and replay controls, and reduced-motion playback.
@@ -59,6 +58,8 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 **Lifeline.** A life told as a single ink line drawn on paper. The line gets a heartbeat, loops like a child at play, climbs mountains, then meets a red thread: they dance, draw a heart and build a house, and a small gold line appears between them and flies off as a kite. When the red thread comes to rest, the ink line circles it once and carries on with a thin red strand wound around it. At the end the camera steps back and the whole life appears as one drawing. Watercolour washes bloom behind each chapter, and optional synthesized music and heartbeats follow the pen. Hold the mouse or Space to hurry time.
 
 **Starshard.** A neon space-shooter roguelike. Fly against escalating waves of six enemy types — chasers, darts, gunners, splitters, orbiters and tanks — and bring down the multi-phase Dreadnought every fifth wave. Kills drop energy shards that charge an Overdrive meter for slow-motion overclocked fire, and clearing a wave lets you draft one of three upgrade modules: spread, pierce, ricochet, crits, homing missiles, a siege laser, orbiting drones, shields and more, stacking into a different build every run. Combos multiply score, dashes grant brief invulnerability, best runs persist locally, and sound and music are synthesized in the browser. The game needs a keyboard and mouse, and refuses to start on touch devices.
+
+**Last Orders.** A runaway tea trolley has to cross an overgrown conservatory before the last orders go out. Pick your blend first — Assam runs rapid and balanced, Oolong scatters wide, Mint fires narrow and piercing — then ride the rails through the palm house, the orchid engine and the sky pavilion. A kettle cannon tracks the cursor, the pests answer with seed volleys, and every kill winds a pressure gauge that SPACE dumps across the screen as a steam blast; let it fill and the blast hits six harder. Between runs you draft from three fittings and stack them into a different trolley every time: double steeps, rose strainers, bone china, velvet brakes, second whistles. Three mechanical gardeners stand in the way, and the shift only ends well if the porcelain reaches the pavilion in one piece. It wants a keyboard and a mouse, and tells you so before it starts.
 
 **Vesper.** An idle clicker set on the last day before a Hush from beyond the sky swallows sound, then light. Strike a belfry bell as its halo closes for true strikes that build harmony and fill a city-wide Peal, raise nine kinds of chimes that ring on their own, catch drifting moth-lanterns for bursts and stolen minutes, and cast a Great Bell in five stages before dusk. Five chapters each force a choice with a visible effect and a hidden echo, and the choices change the ending. Each run ends when the Hush arrives and carries echoes back into permanent recollections, so every morning reaches further. A tower clock counts toward midnight, the synthesized bell dulls as the dark approaches, and progress saves locally.
 
@@ -84,6 +85,8 @@ Includes optional synthesized sound, pause, timeline scrubbing, keyboard frame s
 **Drizzle.** A wordless, Pixar-style animated short in seven scenes. A tiny cloud named Drizzle cannot make rain, and trails three huge storm clouds that sail over a dry valley without a drop. Left behind, he tries three times, with strain, a jump and a sad trombone, to water a wilting sunflower, and fails. The first drop only comes as a tear of affection: the sunflower revives, flowers bloom wherever the rain falls, a rainbow rises and the big clouds turn back to watch, until the now much smaller cloud falls asleep on the flower's head at dusk. Every frame is computed from the time alone, so the film can be paused, scrubbed, jumped by scene or opened at a moment with `#t=61`. Squash and stretch, expressive eyes, brows and mouths, camera pushes, colour grading, film grain, optional synthesized score and rain, keyboard shortcuts and reduced-motion support (gentler camera, no flashes).
 
 **Elsewhere.** An endless zoom through ornate doorways into illustrated pocket worlds: terraced gardens, a lunar observatory, a desert oasis, a sea arch, a mushroom forest and a lantern-lit library. Each doorway opens onto the next world, and travel works in either direction with scroll, swipe, pinch or keyboard, or with automatic travel and optional generated audio. This is an incomplete piece: the model ran out of tokens before it could finish, and the page was never tested. It had no chance to iterate, so bugs, visual glitches or missing behaviour are expected and no correction round was possible.
+
+**Needle.** A workbench for regular expressions, and the one page here you would open on purpose. Write a pattern and see what it catches in the text, why it catches it, and what it does when you replace it. The pattern is parsed rather than only compiled: every token is coloured where it sits, the breakdown names each construct in plain English, and a mistake reports the column it is in. Matches light up in the text with their capture groups tinted inside, a map shows where the matches fall across the passage, and a suite of test cases says at a glance whether a change broke anything. A pattern that backtracks forever is abandoned after a second and a half instead of freezing the tab. Seventeen ready-made patterns, shareable links, local saves, keyboard stepping and reduced-motion support.
 
 The Abyss and Mercurial correction rounds fixed small issues: tentacles glitching during fast scrolling on Abyss, and the material name being cut off on Mercurial. Night atlas received a correction to vary the generated wanderer shapes. The last warm window received a correction to ground the figures and train and align the distant city with the hillside. A second correction removed an extra line extending from the daughter's hand. Vesper received a correction that set the bell inside a belfry tower instead of in open air. Starshard needed two correction rounds: crash fixes (a palette key mismatch that crashed the game when splitters appeared, and a music-sequencer index bug that crashed the run seconds after launch), and a desktop-only gate that blocks the game on touch devices. Longhand received a correction that breaks stalemates: a runner wedged against a wall for five seconds is thrown back to the left of the screen and loses a heart (with a little ink back), so a stalled run now costs lives instead of freezing; the same round lowered early cliff heights, moved ink milestones closer together and made the warning sign blink over his head. Loaded received a correction so that selling a Joker frees its slot in the shop immediately, and so that Stars apply on purchase instead of taking a consumable slot. Nodal received a correction because the page came up blank: the second mode's m·n steppers had been dropped from the panel while the script still wrote to them, so start-up threw before anything was drawn. The same round restored the steppers, added a difference/sum switch for the second mode, made the control lookup fall back to a harmless stub so a missing element can never blank the page again, and tamed the nodal glow, which had been drawn so wide and bright that it read as neon tubes over the sand instead of a hint of the lines beneath it.
 
@@ -119,11 +122,13 @@ AI-XPERIENCE/
     ├── enough.html
     ├── estuary.html
     ├── foldwake.html
+    ├── last-orders.html
     ├── lifeline.html
     ├── loaded.html
     ├── longhand.html
     ├── mercurial.html
     ├── murmur.html
+    ├── needle.html
     ├── night-atlas.html
     ├── nodal.html
     ├── paperborough.html
@@ -133,7 +138,6 @@ AI-XPERIENCE/
     ├── starshard.html
     ├── the-last-warm-window.html
     ├── tick.html
-    ├── umbralux.html
     ├── until-the-tide.html
     └── vesper.html
 ```
