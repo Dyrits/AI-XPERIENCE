@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Percy Setup</title>
+<style>
+  :root { --ink: #15121f; --paper: #fffdf6; --yellow: #ffd23f; --coral: #ff6b57; --mint: #7ee0b5; --desk: #cfc8f6; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    background-color: var(--desk); background-image: radial-gradient(rgba(21,18,31,.17) 1.2px, transparent 1.5px); background-size: 22px 22px;
+    font-family: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink);
+    display: grid; place-items: center; overflow: hidden; -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none;
+  }
+  button { font: inherit; color: inherit; }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  #win {
+    position: relative; width: min(860px, 94vw); background: var(--paper); border: 3px solid var(--ink); border-radius: 14px;
+    box-shadow: 8px 8px 0 var(--ink); transition: transform .9s cubic-bezier(.6,-0.2,.3,1.2), opacity .5s, width .35s;
+  }
+  #win.max { width: 98vw; }
+  #win.mini { transform: translateY(80vh) scale(.08); opacity: 0; }
+  #win.shake { animation: shake .45s; }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-9px) rotate(-.4deg); } 40% { transform: translateX(8px) rotate(.4deg); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+
+  #bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 16px; background: var(--yellow); border-bottom: 3px solid var(--ink); border-radius: 11px 11px 0 0; font-weight: 800; font-size: 14px; }
+  #bar .t { flex: 1; }
+  #bar .v { font-size: 11px; opacity: .6; margin-right: 6px; }
+  .wb { width: 27px; height: 27px; border: 2.5px solid var(--ink); border-radius: 7px; background: var(--paper); font-weight: 800; font-size: 14px; line-height: 1; cursor: pointer; }
+  .wb:hover { background: var(--coral); }
+
+  canvas { display: block; width: 100%; height: 300px; touch-action: manipulation; }
+  #info { display: grid; grid-template-columns: 1fr auto; column-gap: 16px; padding: 0 22px 4px; align-items: end; }
+  #task { font-weight: 800; font-size: 15px; grid-column: 1; }
+  #eta { font-size: 13px; opacity: .65; grid-column: 1; min-height: 1.3em; }
+  #pct { grid-column: 2; grid-row: 1 / span 2; font-weight: 800; font-size: clamp(32px, 7vw, 58px); line-height: 1; text-align: right; font-variant-numeric: tabular-nums; }
+
+  #ask { display: flex; gap: 10px; padding: 8px 22px 0; }
+  #cwrap { display: flex; align-items: center; gap: 12px; padding: 10px 22px 0; font-size: 12px; font-weight: 700; }
+  #cwrap .tr { flex: 1; height: 12px; border: 2.5px solid var(--ink); border-radius: 8px; background: #fff; overflow: hidden; }
+  #cwrap i { display: block; height: 100%; width: 0; background: var(--coral); }
+  #cpct { min-width: 4ch; text-align: right; }
+
+  #foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 14px; padding: 14px 22px 18px; border-top: 3px dashed rgba(21,18,31,.25); }
+  #foot .sp { flex: 1; }
+  #foot label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  #foot input { width: 17px; height: 17px; accent-color: var(--ink); }
+  .btn {
+    font-weight: 800; font-size: 14px; padding: 9px 16px; border: 3px solid var(--ink); border-radius: 10px; background: var(--paper);
+    cursor: pointer; box-shadow: 3px 3px 0 var(--ink); transition: transform .08s, box-shadow .08s, background .15s;
+  }
+  .btn:hover { background: var(--mint); }
+  .btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
+  .btn.pri { background: var(--yellow); }
+  .btn.pri:hover { background: var(--mint); }
+  .btn.sm { font-size: 12px; padding: 6px 11px; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; background: var(--paper); }
+  .btn:focus-visible, .wb:focus-visible, .ico:focus-visible { outline: 3px solid #3a6bff; outline-offset: 2px; }
+
+  #done { position: absolute; left: 0; right: 0; top: 47px; bottom: 0; background: var(--paper); border-radius: 0 0 11px 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 18px 22px; text-align: center; animation: pop .5s cubic-bezier(.3,1.5,.5,1); overflow: auto; }
+  @keyframes pop { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  #done h2 { font-size: clamp(24px, 5vw, 38px); font-weight: 900; letter-spacing: -.01em; }
+  #done .sub { font-size: 15px; font-weight: 700; opacity: .75; max-width: 46ch; }
+  #done dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(560px, 100%); }
+  #done dl div { border: 3px solid var(--ink); border-radius: 10px; padding: 8px 6px; background: #fff; box-shadow: 3px 3px 0 var(--ink); }
+  #done dt { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; opacity: .6; }
+  #done dd { font-size: 24px; font-weight: 900; }
+  #verdict { font-weight: 800; font-size: 15px; background: var(--yellow); border: 3px solid var(--ink); border-radius: 10px; padding: 8px 14px; transform: rotate(-1.2deg); }
+  #done .row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+  #icons { position: fixed; left: 26px; top: 26px; display: flex; flex-direction: column; gap: 22px; }
+  .ico { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 7px; width: 96px; font-weight: 700; font-size: 12px; line-height: 1.15; cursor: pointer; text-align: center; }
+  .ico i { display: block; position: relative; width: 44px; height: 52px; border: 3px solid var(--ink); border-radius: 6px; background: #fff; box-shadow: 3px 3px 0 var(--ink); }
+  .ico i::after { content: ""; position: absolute; left: 7px; right: 7px; top: 11px; height: 22px; background: repeating-linear-gradient(var(--ink) 0 2.5px, transparent 2.5px 7px); }
+  .ico.f i { height: 38px; margin-top: 7px; background: var(--yellow); border-radius: 4px 10px 6px 6px; }
+  .ico.f i::before { content: ""; position: absolute; left: -3px; top: -11px; width: 20px; height: 9px; border: 3px solid var(--ink); border-bottom: 0; border-radius: 5px 5px 0 0; background: var(--yellow); }
+  .ico.f i::after { display: none; }
+  .ico.x i { background: var(--coral); }
+  .ico span { padding: 2px 5px; border-radius: 4px; }
+  .ico:hover span { background: var(--ink); color: #fff; }
+  @media (max-width: 1180px) { #icons { display: none; } }
+  @media (max-width: 520px) {
+    canvas { height: 280px; }
+    #foot { padding: 12px 14px 16px; }
+    #done dd { font-size: 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #win, #win.mini { transition: opacity .3s; }
+    #win.shake, #done { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="icons">
+  <button class="ico" id="icDoc"><i></i><span>Important_FINAL_v2 (1).docx</span></button>
+  <button class="ico f" id="icFol"><i></i><span>New folder (47)</span></button>
+  <button class="ico x" id="icNo"><i></i><span>DO NOT OPEN</span></button>
+</div>
+
+<main id="win">
+  <div id="bar">
+    <span class="t">Percy Setup</span>
+    <span class="v mono">v0.99</span>
+    <button class="wb" id="wMin" aria-label="Minimise">&ndash;</button>
+    <button class="wb" id="wMax" aria-label="Maximise">+</button>
+    <button class="wb" id="wX" aria-label="Close">&times;</button>
+  </div>
+  <canvas id="cv" aria-label="Percy, a progress bar with a face"></canvas>
+  <div id="info">
+    <div id="task"></div>
+    <div id="pct" class="mono">0%</div>
+    <div id="eta"></div>
+  </div>
+  <div id="ask" hidden>
+    <button class="btn sm" id="aYes">Yes</button>
+    <button class="btn sm" id="aNo">No</button>
+  </div>
+  <div id="cwrap" hidden>
+    <span id="clabel">Cancelling&hellip;</span>
+    <div class="tr"><i id="cfill"></i></div>
+    <span id="cpct" class="mono">0%</span>
+  </div>
+  <div id="foot">
+    <button class="btn sm" id="bSnd" aria-pressed="false">Sound: off</button>
+    <label><input type="checkbox" id="chk"> Don't show this again</label>
+    <span class="sp"></span>
+    <button class="btn pri" id="bHurry">Hurry up</button>
+    <button class="btn" id="bCancel">Cancel</button>
+  </div>
+  <section id="done" hidden>
+    <h2>Loaded successfully.</h2>
+    <p class="sub">Items loaded: 0. There was never anything to load. Percy just wanted someone to watch.</p>
+    <dl>
+      <div><dt>Waited</dt><dd id="rWait">0:00</dd></div>
+      <div><dt>Wiggles</dt><dd id="rWig">0</dd></div>
+      <div><dt>Hurry ups</dt><dd id="rHur">0</dd></div>
+      <div><dt>Cancels</dt><dd id="rCan">0</dd></div>
+      <div><dt>Pokes</dt><dd id="rPok">0</dd></div>
+      <div><dt>Times you left</dt><dd id="rAway">0</dd></div>
+    </dl>
+    <p id="verdict"></p>
+    <div class="row">
+      <button class="btn pri" id="bAgain">Load again</button>
+      <button class="btn" id="bBye">Close</button>
+    </div>
+  </section>
+</main>
+<div id="live" class="sr" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d'), win = $('win');
+const INK = '#15121f', TAU = Math.PI * 2;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const clock = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+let dt = 0, W = 0, H = 0, DPR = 1;
+
+/* Moods: each is a set of face parameters that the live face eases toward. */
+const BASE = { curve: .15, open: 0, brow: 0, lift: 0, lid: 0, eye: 1, skew: 0, mw: 1, blush: 0, dz: 0 };
+const MOOD = {};
+const defMood = (name, tint, o) => { const [r, g, b] = hex(tint); MOOD[name] = Object.assign({}, BASE, o, { r, g, b }); };
+defMood('neutral', '#ffd23f', {});
+defMood('happy', '#ffd23f', { curve: 1, open: .8, lift: .15, mw: 1.1 });
+defMood('worried', '#ffe27a', { curve: -.5, brow: -1, lift: .2, eye: 1.12 });
+defMood('sad', '#9cc2ff', { curve: -1, open: .1, brow: -1, lift: .1, lid: .12, eye: 1.05 });
+defMood('angry', '#ff6b57', { curve: -.55, open: .3, brow: 1, lid: .18, eye: .95 });
+defMood('smug', '#ffd23f', { curve: .7, brow: .35, lid: .5, skew: 1 });
+defMood('shocked', '#fff0a8', { curve: 0, open: 1.2, brow: -.3, lift: .45, eye: 1.3, mw: .45 });
+defMood('dizzy', '#b6e36b', { curve: -.2, open: .3, dz: 1 });
+defMood('shy', '#ffb3a7', { curve: .35, brow: -.5, lift: .1, lid: 1, blush: 1 });
+defMood('bored', '#ffd23f', { curve: -.05, lid: .55, lift: -.05 });
+const cur = Object.assign({}, MOOD.neutral);
+let tgt = MOOD.neutral;
+
+/* Pointer state outlives restarts. */
+const P = { x: null, y: null, lx: .7, ly: .25, over: false };
+
+/* Sound: tiny synth, off until the user turns it on. */
+let ac = null, soundOn = false;
+function tone(f, d = .08, type = 'square', v = .045, slide = 0, delay = 0) {
+  if (!soundOn || !ac) return;
+  const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f * slide), t + d);
+  g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d + .03);
+}
+const BLIP = { neutral: 420, happy: 560, worried: 380, sad: 280, angry: 190, smug: 340, shocked: 700, dizzy: 300, shy: 520, bored: 240 };
+const fanfare = () => [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, .18, 'square', .05, 0, i * .11));
+const sadSlide = () => tone(420, .6, 'sawtooth', .04, .4);
+
+/* Game state. */
+function freshState() {
+  return {
+    p: 0, digits: 0, vel: 0, frozen: 0, stutter: 0, time: 0, waited: 0, idle: 0, sinceReact: 99,
+    reacting: false, resume: null, storyMood: 'neutral', lastStory: null, finished: false,
+    task: '', eta: '', taskOverride: '', hurryRun: 0, cancelP: -1, answer: null,
+    sq: 0, sqv: 0, rot: 0, spin: 0, blinkT: 2, blinkV: 0, stripe: 0, emT: 1, moveAcc: 0, wiggleCd: 0,
+    mood: 'neutral', pokeT: 0, G: null,
+    stats: { wiggle: 0, hurry: 0, cancel: 0, poke: 0, away: 0, closeX: 0 }
+  };
+}
+let S = freshState();
+let gen = null, parts = [];
+const bub = { full: '', shown: 0, holdT: 0, done: true, vis: false, linger: 0, alpha: 0, pop: 0, pinned: false, lines: null, wrapW: 0 };
+let runs = 0;
+try { runs = +localStorage.getItem('percy-runs') || 0; } catch (e) {}
+
+function setMood(m) {
+  S.mood = m; tgt = MOOD[m] || MOOD.neutral;
+  if (m === 'shocked') emit('text', S.G ? S.G.hx : 0, S.G ? S.G.hy - 50 : 0, '!');
+}
+
+/* Speech bubble. */
+function say(text, o = {}) {
+  bub.full = text; bub.shown = 0; bub.holdT = o.hold ?? 1.1; bub.pinned = bub.holdT > 50;
+  bub.done = false; bub.vis = true; bub.pop = 1; bub.lines = null; bub.linger = 1.6;
+  if (o.mood) setMood(o.mood);
+  $('live').textContent = text;
+}
+function* speak(text, mood, hold) {
+  const o = { mood, hold: hold ?? Math.min(2.4, .9 + text.length * .012) };
+  S.lastStory = { text, o }; if (mood) S.storyMood = mood;
+  say(text, o);
+  while (!bub.done) yield;
+}
+
+/* Reactions interrupt the story: the bar stops while Percy deals with you. */
+function react(text, mood, o = {}) {
+  if (!o.force && (S.sinceReact < (o.gap ?? 2.5) || S.reacting)) return false;
+  S.sinceReact = 0;
+  if (!S.reacting) S.resume = ((!bub.done || bub.pinned) && S.lastStory && !S.finished) ? S.lastStory : null;
+  S.reacting = true;
+  say(text, { mood, hold: o.hold ?? Math.min(2.4, .9 + text.length * .012) });
+  return true;
+}
+
+/* Story helpers. */
+function* wait(s) { let t = 0; while (t < s) { t += dt; yield; } }
+const speedMod = () => .55 + .9 * (.5 + .5 * Math.sin(S.time * 2.3 + Math.sin(S.time * .9) * 3));
+function* moveTo(t, dur, o = {}) {
+  const rate = Math.abs(t - S.p) / dur, dir = Math.sign(t - S.p) || 1;
+  while ((t - S.p) * dir > .0005) {
+    if (!o.fast && (S.frozen > 0 || S.stutter > 0)) { S.vel = 0; yield; continue; }
+    const step = rate * dt * (o.fast ? 1 : speedMod());
+    S.p += dir * Math.min(step, Math.abs(t - S.p)); S.vel = dir * step / Math.max(dt, .001);
+    yield;
+  }
+  S.p = t; S.vel = 0;
+}
+const slide = (t, d) => moveTo(t, d, { fast: true });
+function* ask(q, opts, timeout) {
+  S.lastStory = { text: q, o: { hold: 99 } };
+  say(q, { hold: 99 });
+  S.answer = null;
+  const box = $('ask'); $('aYes').textContent = opts[0]; $('aNo').textContent = opts[1]; box.hidden = false;
+  let t = 0;
+  while (S.answer === null && t < timeout) { t += dt; yield; }
+  box.hidden = true; bub.pinned = false; bub.holdT = 0;
+  return S.answer === null ? -1 : S.answer;
+}
+const setTask = t => { S.task = t; };
+const setEta = t => { S.eta = t; };
+
+/* Optional peek-a-boo beat: Percy loads fast only while the mouse is off the window. */
+function* shyBeat() {
+  setTask('Sulking in private');
+  yield* speak('Could you look away? Move the mouse off this window. I get stage fright.', 'shy', 2.4);
+  let t = 0, last = null, gaveUp = false;
+  while (S.p < 63) {
+    t += dt;
+    const watched = P.over && t < 14;
+    if (t >= 14 && !gaveUp) { gaveUp = true; say('Fine. I will load anyway. Rude.', { mood: 'angry', hold: 1 }); }
+    if (!gaveUp && watched !== last) {
+      if (last !== null) say(watched ? 'I can feel you looking.' : 'Thank you. Loading. Do not peek.', { mood: 'shy', hold: 1 });
+      last = watched;
+    }
+    if (S.frozen <= 0) { const r = gaveUp ? 2.6 : (watched ? .15 : 3.6); S.p = Math.min(63, S.p + r * dt); S.vel = r; }
+    yield;
+  }
+  S.vel = 0;
+}
+
+function* story() {
+  const d = new Date(), h = d.getHours();
+  setTask('Initialising initialisation'); setEta('Time remaining: calculating...');
+  if (runs > 0) yield* speak(`Oh. Back again. Run number ${runs + 1}. Same bar, same Percy, same you.`, 'smug');
+  else yield* speak("Hi. I'm Percy. I'll be loading things today.", 'happy');
+  if (h < 5) yield* speak(`It's ${clock()}. Nobody sensible is awake. Welcome, you and me.`, 'smug');
+  else if (d.getDay() === 1) yield* speak("It's Monday. I'm not looking forward to it either.", 'bored');
+  else yield* speak("You don't have to watch. But you will. Everyone does.", 'smug');
+
+  yield* moveTo(7, 2.6);
+  setTask('Warming up the pixels'); setEta('Time remaining: about 40 seconds');
+  yield* speak('Seven percent. Personal best, if we ignore the other times.', 'happy');
+  yield* moveTo(15, 3.5);
+  setTask('Asking the server nicely');
+  yield* speak("The server said 'maybe'. In server, that's a yes.", 'neutral');
+  yield* moveTo(24, 3.5);
+  setTask('Reticulating splines');
+  yield* speak('Reticulating splines. I have never seen a spline. I assume they are fine.', 'neutral');
+  yield* moveTo(33, 3);
+  setTask('Loading the thing that loads the thing'); setEta('Time remaining: 3 minutes (give or take a Tuesday)');
+  yield* speak('Hm. This file needs a file that needs this file.', 'worried');
+  yield* speak("That's a loop. I like loops. I do not like this loop.", 'worried', 1.2);
+  sadSlide(); yield* slide(21, 1.3);
+  yield* speak('Net progress: minus twelve. Technically a loss. Spiritually a stretch.', 'sad');
+  setEta('Time remaining: -2 minutes (somehow ahead of schedule)');
+  yield* moveTo(40, 4.5);
+  yield* speak("Back on track. I didn't say which track.", 'smug');
+  setTask('Compressing air');
+  yield* moveTo(50, 4);
+  setEta('Time remaining: yes');
+  yield* speak('Halfway. Statistically the hard part is behind us. Statistically.', 'happy');
+  yield* shyBeat();
+  yield* speak('Thank you. I feel so much better. Watch this.', 'happy', .8);
+
+  setTask('Dramatic foreshadowing');
+  yield* slide(97, 1.3);
+  yield* speak("WAIT. Is that. WE'RE ALMOST--", 'shocked', .6);
+  yield* wait(.5);
+  sadSlide(); yield* slide(58, .9);
+  yield* speak('That was a rumour. Please disregard.', 'worried');
+
+  setTask('Verifying your patience'); setEta('Time remaining: 12 seconds per percent');
+  yield* moveTo(72, 5);
+  const a = yield* ask('Quick question. Are you still watching?', ['Yes', 'No'], 8);
+  if (a === 0) yield* speak('Wonderful. No pressure. Some pressure.', 'happy');
+  else if (a === 1) yield* speak("Then who am I talking to? Never mind. Don't answer.", 'worried');
+  else yield* speak('Silence. Cool. Cool cool cool.', 'sad');
+  setTask('Hiding the spinners');
+  yield* moveTo(81, 4);
+  yield* speak('Eighty-one. I can see the end. It looks like a door.', 'happy');
+  yield* moveTo(90, 4);
+  setTask('Almost'); setEta('Time remaining: almost');
+  yield* speak('Ninety. This is the part where it goes quickly.', 'smug');
+  yield* moveTo(99, 3);
+
+  setTask('Finalising the finalisation'); setEta(`Time remaining: 1 second (since ${clock()})`);
+  yield* speak('Ninety-nine percent.', 'neutral', .5);
+  yield* speak("The last one percent is also called 'the rest of the project'.", 'smug');
+  const Z = [
+    [99.9, 'Ninety-nine point nine. I can smell the hundred.', 'happy'],
+    [99.99, 'Zeno would be proud. Zeno also never finished anything.', 'worried'],
+    [99.999, 'Each nine is a promise. I keep none of them.', 'sad'],
+    [99.9999, "Okay. Okay okay okay. Deep breath. I don't breathe.", 'shocked']
+  ];
+  for (let i = 0; i < Z.length; i++) {
+    S.digits = i + 1;
+    yield* moveTo(Z[i][0], 2);
+    yield* speak(Z[i][1], Z[i][2], 1.5);
+    yield* wait(1);
+  }
+  yield* moveTo(100, 1.6);
+  S.digits = 0; S.p = 100;
+  setTask('Done'); setEta('Time remaining: none. Look at that.');
+  fanfare(); confetti();
+  yield* speak('One hundred percent!', 'happy', 1);
+  yield* speak('Loaded! Loaded what? ...Good question.', 'neutral', 1.4);
+  for (let i = 0; i < 5; i++) emit('tear', S.G.hx + (i % 2 ? 1 : -1) * S.G.R * .38, S.G.hy);
+  yield* speak('Nothing. There was never anything to load. I just wanted someone to watch.', 'happy', 2.6);
+  yield* wait(.3);
+  finish();
+}
+
+/* Finish, results and restart. */
+function finish() {
+  S.finished = true; runs++;
+  try { localStorage.setItem('percy-runs', runs); } catch (e) {}
+  const st = S.stats, w = Math.round(S.waited);
+  $('rWait').textContent = Math.floor(w / 60) + ':' + String(w % 60).padStart(2, '0');
+  $('rWig').textContent = st.wiggle; $('rHur').textContent = st.hurry; $('rCan').textContent = st.cancel;
+  $('rPok').textContent = st.poke; $('rAway').textContent = st.away;
+  let v;
+  if (st.hurry >= 8) v = 'Verdict: impatient. Percy forgives you. Mostly.';
+  else if (st.cancel >= 3) v = 'Verdict: commitment issues. Percy is not judging. Percy is judging.';
+  else if (st.poke >= 8) v = 'Verdict: handsy. Percy has filed a report.';
+  else if (st.away > 0) v = 'Verdict: left mid-load. Percy noticed. Percy always notices.';
+  else if (!st.hurry && !st.cancel && !st.poke && !st.wiggle) v = 'Verdict: unreasonably calm. Percy finds this suspicious.';
+  else v = 'Verdict: perfectly average. Percy has seen worse. Percy has seen much worse.';
+  $('verdict').textContent = v;
+  $('done').hidden = false; $('cwrap').hidden = true;
+  $('bHurry').textContent = 'Load again'; $('bHurry').disabled = false;
+  $('bCancel').disabled = true;
+}
+function restart() {
+  S = freshState(); parts.length = 0; gen = story();
+  bub.vis = false; bub.done = true; bub.alpha = 0; setMood('neutral'); Object.assign(cur, MOOD.neutral);
+  $('done').hidden = true; $('cwrap').hidden = true; $('ask').hidden = true; $('chk').checked = false;
+  $('bHurry').textContent = 'Hurry up'; $('bHurry').disabled = false; $('bCancel').disabled = false;
+}
+
+/* Particles. */
+const CONF = ['#ff6b57', '#ffd23f', '#7ee0b5', '#8ab6ff', '#ffffff', '#15121f'];
+function emit(kind, x, y, ch) {
+  if (parts.length > 420) return;
+  const p = { kind, x, y, vx: 0, vy: 0, life: 0, max: 1, ch, s: 1, rot: 0, vr: 0, c: '#fff' };
+  if (kind === 'drop') { p.vx = rnd(10, 30); p.vy = rnd(-40, -10); p.max = 1.1; p.c = '#7fb6ff'; }
+  else if (kind === 'tear') { p.vx = rnd(-8, 8); p.vy = rnd(20, 60); p.max = 1; p.c = '#7fb6ff'; }
+  else if (kind === 'puff') { p.vx = rnd(-14, 14); p.vy = rnd(-70, -40); p.max = .8; p.s = rnd(5, 9); }
+  else if (kind === 'text') { p.vx = rnd(10, 25); p.vy = -30; p.max = 1.6; }
+  else { const a = rnd(-Math.PI, 0), sp = rnd(250, 640); p.vx = Math.cos(a) * sp; p.vy = Math.sin(a) * sp; p.max = rnd(1.6, 2.8); p.c = pick(CONF); p.rot = rnd(0, TAU); p.vr = rnd(-12, 12); p.s = rnd(5, 10); }
+  parts.push(p);
+}
+function confetti() {
+  const n = reduce ? 24 : 130, G = S.G;
+  for (let i = 0; i < n; i++) emit('conf', G.hx, G.hy - G.R * .5);
+  for (let i = 0; i < n / 3; i++) { emit('conf', 20, H - 40); emit('conf', W - 20, H - 40); }
+}
+
+/* Reactions to the visitor. */
+const HURRY = [
+  ['Hurrying. Can you feel it? That is what hurrying feels like.', 'neutral', 0],
+  ["I am going exactly as fast as I'm going.", 'neutral', 0],
+  ['Each press adds a little wait. Not a threat. Physics.', 'worried', 1.5],
+  ['...I felt that one.', 'sad', 2],
+  ["That's the Hurry tax. Four seconds, payable now.", 'angry', 4],
+  ["Escalated to my manager. He's also a progress bar. He's at 12%.", 'smug', 2],
+  ['Pressing harder does not press faster. I checked.', 'angry', 3],
+  ['Fine. You asked for it. Watch this.', 'shocked', 0]
+];
+const HURRY_FILL = ['Still hurrying.', 'Noted. Ignored. Noted.', 'You are why progress bars have percentages.', 'No.', 'Bold. Wrong, but bold.'];
+const HURRY_ZENO = ["Hurry up? At 99.9 percent? Yes. I've heard that one.", "You think I'm not trying? Look at me. I'm trying.", 'The last bit is the longest bit. It is in the manual.'];
+function onHurry() {
+  tone(660, .05);
+  if (S.finished) { restart(); return; }
+  S.stats.hurry++; S.hurryRun++;
+  if (S.p >= 99) { react(pick(HURRY_ZENO), 'worried', { force: true }); S.frozen = Math.min(S.frozen + 1.5, 8); return; }
+  const n = S.hurryRun;
+  if (n >= 12) {
+    const b = $('bHurry'); b.disabled = true; b.textContent = 'Hurry up (suspended)';
+    react('Your hurry privileges are suspended. Think about what you have done.', 'angry', { force: true });
+    setTimeout(() => { if (!S.finished) { b.disabled = false; b.textContent = 'Hurry up'; } S.hurryRun = 4; }, 14000);
+    return;
+  }
+  if (n > HURRY.length) { react(pick(HURRY_FILL), 'smug', { force: true }); S.frozen = Math.min(S.frozen + 1, 8); return; }
+  const [t, m, f] = HURRY[n - 1];
+  react(t, m, { force: true });
+  if (f) { S.frozen = Math.min(S.frozen + f, 8); S.taskOverride = 'Applying the Hurry tax...'; }
+  if (n === 8) {
+    S.p = Math.min(S.p + 5, 97);
+    for (let i = 0; i < 6; i++) emit('puff', S.G.hx - S.G.R, S.G.hy);
+    setTimeout(() => {
+      if (S.finished) return;
+      S.p = Math.max(0, S.p - 6); S.frozen = 5; S.spin = 1; S.taskOverride = 'Sitting down...';
+      react('Whoa. Too fast. I need to sit down.', 'dizzy', { force: true });
+    }, 1800);
+  }
+}
+function onCancel() {
+  tone(300, .06);
+  if (S.finished) return;
+  const n = ++S.stats.cancel;
+  if (n === 1) { S.p = Math.max(0, S.p - 5); react('Cancel? Now? After everything we have been through?', 'sad', { force: true }); }
+  else if (n === 2) {
+    if (S.cancelP < 0) { S.cancelP = 0; $('cwrap').hidden = false; }
+    react("Cancelling takes about 14 minutes. I'll do both. I'm great at multitasking.", 'worried', { force: true });
+  } else if (n === 3) react("You can't cancel a cancel. I checked. There's a form.", 'smug', { force: true });
+  else if (n === 4) react(`Cancel is at ${Math.floor(Math.max(S.cancelP, 0))}%. Loading is at ${Math.floor(S.p)}%. We are both so busy.`, 'worried', { force: true });
+  else react(pick(['Cancelling harder.', 'Still cancelling. Still loading. Still here.', 'Have you tried not cancelling?']), 'neutral', { force: true });
+}
+function shake() { if (reduce) return; win.classList.remove('shake'); void win.offsetWidth; win.classList.add('shake'); }
+const POKE = ['Hey!', "That's my face.", 'Ow. Consent is a feature.', 'Tickling slows the load. Just so you know.', 'Five pokes. I am counting.', "I'm going to start charging.", 'Why is this the most interesting thing on your screen?'];
+const POKE_DONE = ["I'm done, and you're still poking. Respect.", 'Finished people can be poked. Noted.', 'Please. I just completed something.'];
+function poke() {
+  S.stats.poke++; const n = S.stats.poke;
+  S.sqv = -7; tone(260, .2, 'sine', .08, 2.2);
+  if (n === 10) { S.spin = 1; S.frozen = Math.max(S.frozen, 3); react('Whee-no. No. Stop. I am dizzy.', 'dizzy', { force: true }); return; }
+  if (n === 15) { react("You know I can't leave, right? Please.", 'sad', { force: true }); return; }
+  react(S.finished ? pick(POKE_DONE) : (n <= POKE.length ? POKE[n - 1] : pick(POKE)), S.finished ? 'happy' : (n % 3 ? 'shocked' : 'angry'), { gap: 1.3 });
+}
+function wiggled() {
+  S.stats.wiggle++; S.wiggleCd = 25;
+  react("You're wiggling the mouse. It doesn't make me faster. I am software.", 'smug', { force: true });
+}
+const IDLE = ['Are you reading a book? Good for you.', 'I can hear you not moving.', 'Take your time. I will. Obviously.'];
+
+/* Layout and drawing. */
+function layout() {
+  const R = clamp(W * .055, 26, 40), barH = R * .95, pad = 22 + R, L = pad, Rr = W - pad, y = H - R - 38;
+  return { R, barH, L, Rr, y, hx: L + (Rr - L) * clamp(S.p / 100, 0, 1), hy: y };
+}
+function wrapText(text, maxW) {
+  const words = text.split(' '), lines = []; let c = '';
+  for (const w of words) {
+    const t = c ? c + ' ' + w : w;
+    if (ctx.measureText(t).width > maxW && c) { lines.push(c); c = w; } else c = t;
+  }
+  if (c) lines.push(c);
+  return lines;
+}
+const rgb = c => `rgb(${c.r | 0},${c.g | 0},${c.b | 0})`;
+const pctText = () => {
+  if (S.finished) return '100%';
+  if (S.p >= 99 && S.digits) { const k = 10 ** S.digits; return (Math.floor(S.p * k) / k).toFixed(S.digits) + '%'; }
+  return Math.floor(S.p) + '%';
+};
+
+function drawBubble(G) {
+  if (bub.alpha < .02) return;
+  const BF = '700 18px ui-rounded, "SF Pro Rounded", system-ui, sans-serif';
+  ctx.font = BF;
+  const maxW = Math.min(W - 36, 440);
+  if (!bub.lines || bub.wrapW !== maxW) { bub.lines = wrapText(bub.full, maxW - 34); bub.wrapW = maxW; }
+  const lines = bub.lines;
+  let tw = 0; for (const l of lines) tw = Math.max(tw, ctx.measureText(l).width);
+  const bw = tw + 34, bh = lines.length * 24 + 22;
+  const bx = clamp(G.hx - bw / 2, 14, W - bw - 14), bottom = G.hy - G.R - 22, by = bottom - bh;
+  const sc = 1 - bub.pop * .12, ang = S.mood === 'angry' && !reduce ? Math.sin(S.time * 60) * 1.2 : 0;
+  ctx.save();
+  ctx.globalAlpha = clamp(bub.alpha, 0, 1);
+  ctx.translate(bx + bw / 2 + ang, bottom); ctx.scale(sc, sc); ctx.translate(-bw / 2, -bh);
+  const tx = clamp(G.hx - bx, 24, bw - 24);
+  ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = INK;
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.roundRect(4, 4, bw, bh, 14); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(0, 0, bw, bh, 14); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx - 10, bh - 1); ctx.lineTo(tx, bh + 15); ctx.lineTo(tx + 10, bh - 1); ctx.closePath(); ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.fillRect(tx - 8, bh - 4, 16, 5);
+  ctx.fillStyle = INK; ctx.textBaseline = 'middle';
+  let n = Math.floor(bub.shown);
+  for (let i = 0; i < lines.length; i++) {
+    const s = lines[i].slice(0, clamp(n, 0, lines[i].length));
+    ctx.fillText(s, 17, 11 + 12 + i * 24);
+    n -= lines[i].length + 1;
+  }
+  ctx.restore();
+}
+
+function drawFace(R) {
+  const c = cur, ey = -R * .14, ex = R * .37, er = R * .27 * c.eye;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (c.blush > .02) {
+    ctx.fillStyle = `rgba(255,107,87,${.5 * c.blush})`;
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(s * R * .62, R * .22, R * .16, R * .09, 0, 0, TAU); ctx.fill(); }
+  }
+  const lid = Math.max(c.lid, S.blinkV * .92);
+  for (const s of [-1, 1]) {
+    const cx = s * ex;
+    ctx.strokeStyle = INK; ctx.lineWidth = R * .07;
+    if (c.dz > .5) {
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, ey, er, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.lineWidth = R * .045; ctx.beginPath();
+      for (let a = 0; a < 12; a += .3) {
+        const r = er * .9 * (a / 12), x = cx + Math.cos(a + S.time * 6 * s) * r, y = ey + Math.sin(a + S.time * 6 * s) * r;
+        a ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    } else if (c.lid > .95) {
+      ctx.lineWidth = R * .085; ctx.beginPath(); ctx.arc(cx, ey + er * .4, er * .85, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+    } else {
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, ey, er, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(cx + P.lx * er * .5, ey + P.ly * er * .5, er * .46, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx + P.lx * er * .5 + er * .16, ey + P.ly * er * .5 - er * .16, er * .14, 0, TAU); ctx.fill();
+      if (lid > .02) {
+        ctx.save(); ctx.beginPath(); ctx.arc(cx, ey, er, 0, TAU); ctx.clip();
+        ctx.fillStyle = rgb(c); ctx.fillRect(cx - er - 2, ey - er - 2, er * 2 + 4, er * 2 * lid + 2); ctx.restore();
+        ctx.lineWidth = R * .07; ctx.beginPath(); ctx.moveTo(cx - er, ey - er + er * 2 * lid); ctx.lineTo(cx + er, ey - er + er * 2 * lid); ctx.stroke();
+      }
+    }
+    const by = ey - er - R * .13 - c.lift * R * .35, bl = er * 1.05;
+    ctx.lineWidth = R * .08; ctx.strokeStyle = INK; ctx.beginPath();
+    ctx.moveTo(cx - s * bl, by + c.brow * R * .16); ctx.lineTo(cx + s * bl, by - c.brow * R * .16); ctx.stroke();
+  }
+  const mw = R * .34 * c.mw, my = R * .44, cl = c.curve * R * .5, op = c.open * R * .42;
+  const l = my + c.skew * R * .1, r = my - c.skew * R * .12;
+  ctx.lineWidth = R * .07; ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(-mw, l); ctx.quadraticCurveTo(0, my + cl, mw, r);
+  if (op > R * .2) { ctx.quadraticCurveTo(0, my + cl + op * 2, -mw, l); ctx.closePath(); ctx.fillStyle = '#3a0f1c'; ctx.fill(); }
+  ctx.stroke();
+}
+
+function draw() {
+  const G = S.G;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+  const tx = G.L - G.barH / 2, tw = G.Rr - G.L + G.barH, y = G.y, bh = G.barH;
+  ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.lineJoin = 'round';
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.roundRect(tx + 4, y - bh / 2 + 4, tw, bh, bh / 2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(tx, y - bh / 2, tw, bh, bh / 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(21,18,31,.4)'; ctx.lineWidth = 2; ctx.fillStyle = 'rgba(21,18,31,.55)'; ctx.font = '700 10px "SF Mono", ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (const t of [25, 50, 75]) { const x = G.L + (G.Rr - G.L) * t / 100; ctx.beginPath(); ctx.moveTo(x, y + bh / 2 + 9); ctx.lineTo(x, y + bh / 2 + 15); ctx.stroke(); ctx.fillText(t, x, y + bh / 2 + 17); }
+  ctx.textAlign = 'left';
+
+  const jit = (S.frozen > 0 || S.stutter > 0) && !reduce ? rnd(-1.4, 1.4) : 0;
+  const fw = Math.max(G.hx - tx, bh);
+  ctx.save(); ctx.translate(jit, 0);
+  ctx.beginPath(); ctx.roundRect(tx, y - bh / 2, fw, bh, bh / 2); ctx.save(); ctx.clip();
+  ctx.fillStyle = rgb(cur); ctx.fillRect(tx, y - bh / 2, fw, bh);
+  ctx.fillStyle = 'rgba(21,18,31,.14)';
+  const sw = 22;
+  for (let x = tx - sw * 2 + (S.stripe % (sw * 2)); x < tx + fw + sw; x += sw * 2) {
+    ctx.beginPath(); ctx.moveTo(x, y + bh / 2); ctx.lineTo(x + sw, y + bh / 2); ctx.lineTo(x + sw + bh, y - bh / 2); ctx.lineTo(x + bh, y - bh / 2); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+  ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.beginPath(); ctx.roundRect(tx, y - bh / 2, fw, bh, bh / 2); ctx.stroke();
+  ctx.restore();
+
+  const bob = reduce ? 0 : Math.sin(S.time * 2.2) * 2;
+  ctx.save(); ctx.translate(G.hx + jit, G.hy + bob); ctx.rotate(S.rot); ctx.scale(1 - S.sq * .6, 1 + S.sq);
+  ctx.fillStyle = rgb(cur); ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, G.R, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = G.R * .07; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(0, 0, G.R * .82, Math.PI * 1.12, Math.PI * 1.38); ctx.stroke();
+  drawFace(G.R);
+  ctx.restore();
+
+  for (const p of parts) {
+    const a = clamp(1 - p.life / p.max, 0, 1);
+    ctx.globalAlpha = p.kind === 'conf' ? clamp(a * 2, 0, 1) : a;
+    if (p.kind === 'drop' || p.kind === 'tear') {
+      ctx.fillStyle = p.c; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, TAU); ctx.moveTo(p.x - 3.6, p.y - 1.5); ctx.lineTo(p.x, p.y - 9); ctx.lineTo(p.x + 3.6, p.y - 1.5); ctx.fill();
+    } else if (p.kind === 'puff') {
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, p.s * (1 + p.life), 0, TAU); ctx.fill(); ctx.stroke();
+    } else if (p.kind === 'text') {
+      ctx.fillStyle = INK; ctx.font = '900 22px ui-rounded, system-ui, sans-serif'; ctx.textBaseline = 'middle'; ctx.fillText(p.ch, p.x, p.y);
+    } else {
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore();
+    }
+  }
+  ctx.globalAlpha = 1;
+  drawBubble(G);
+}
+
+/* Update. */
+function update() {
+  S.time += dt; S.sinceReact += dt; S.idle += dt;
+  if (!S.finished && !document.hidden) S.waited += dt;
+  S.frozen = Math.max(0, S.frozen - dt); S.stutter -= dt; S.wiggleCd = Math.max(0, S.wiggleCd - dt);
+  if (S.frozen <= 0 && S.taskOverride) S.taskOverride = '';
+  S.G = layout();
+  const G = S.G;
+
+  if (!S.finished && !S.reacting && S.stutter <= 0 && S.p > 2 && S.p < 95 && S.digits === 0 && !S.frozen && Math.random() < dt * .18) S.stutter = rnd(.3, 1);
+
+  if (S.reacting) {
+    if (bub.done) {
+      S.reacting = false; setMood(S.storyMood);
+      if (S.resume) { say(S.resume.text, S.resume.o); S.resume = null; }
+    }
+  } else if (!S.finished && gen) gen.next();
+
+  S.stripe += Math.abs(S.vel) > .01 ? 46 * dt : 0;
+
+  /* Idle remarks. */
+  if (!S.finished && !S.reacting && S.idle > 22) { S.idle = 0; react(pick(IDLE), 'bored', { gap: 0 }); }
+
+  /* Mouse wiggle detection. */
+  S.moveAcc *= Math.exp(-dt * 2.5);
+  if (S.moveAcc > 900 && !S.wiggleCd && !S.finished) { S.moveAcc = 0; wiggled(); }
+
+  /* Speech typing. */
+  if (!bub.done) {
+    const before = Math.floor(bub.shown);
+    bub.shown += dt * ({ angry: 54, sad: 26, shy: 30 }[S.mood] || 38);
+    if (bub.shown >= bub.full.length) {
+      bub.shown = bub.full.length; bub.holdT -= dt;
+      if (bub.holdT <= 0 && !bub.pinned) { bub.done = true; bub.linger = 1.6; }
+    } else if (Math.floor(bub.shown) !== before && Math.floor(bub.shown) % 2 === 0) tone((BLIP[S.mood] || 400) + rnd(-40, 60), .04, S.mood === 'angry' ? 'sawtooth' : 'square', .022);
+  } else if (bub.vis) { bub.linger -= dt; if (bub.linger <= 0) bub.vis = false; }
+  bub.alpha += ((bub.vis ? 1 : 0) - bub.alpha) * (1 - Math.exp(-dt * 12));
+  bub.pop = Math.max(0, bub.pop - dt * 7);
+
+  /* Face easing, blinking, squash and spin. */
+  const k = 1 - Math.exp(-dt * 9);
+  for (const key in tgt) cur[key] += (tgt[key] - cur[key]) * k;
+  S.blinkT -= dt;
+  if (S.blinkT <= 0) { S.blinkV = 1; S.blinkT = rnd(2.2, 5); }
+  S.blinkV = Math.max(0, S.blinkV - dt * 7);
+  S.sqv += (-S.sq * 220 - S.sqv * 9) * dt; S.sq += S.sqv * dt;
+  if (S.spin > 0 && !reduce) { S.rot += dt * 14; S.spin -= dt * .9; if (S.spin <= 0) { S.rot = 0; S.spin = 0; } }
+  else if (S.spin > 0) S.spin = 0;
+
+  /* Eyes follow the pointer. */
+  if (P.x !== null) {
+    const r = cv.getBoundingClientRect(), dx = P.x - r.left - G.hx, dy = P.y - r.top - G.hy, d = Math.hypot(dx, dy) || 1, f = Math.min(1, d / 110);
+    P.tx = dx / d * f; P.ty = dy / d * f;
+  } else { P.tx = .7; P.ty = .25; }
+  P.lx += (P.tx - P.lx) * (1 - Math.exp(-dt * 14)); P.ly += (P.ty - P.ly) * (1 - Math.exp(-dt * 14));
+
+  /* Ambient particles by mood. */
+  S.emT -= dt;
+  if (S.emT <= 0 && !reduce) {
+    const m = S.mood;
+    if (m === 'worried' || S.frozen > 0 && m !== 'angry') { emit('drop', G.hx + G.R * .7, G.hy - G.R * .5); S.emT = rnd(.5, 1); }
+    else if (m === 'sad') { emit('tear', G.hx - G.R * .38, G.hy + G.R * .05); emit('tear', G.hx + G.R * .38, G.hy + G.R * .05); S.emT = rnd(.35, .7); }
+    else if (m === 'angry') { emit('puff', G.hx + rnd(-1, 1) * G.R * .5, G.hy - G.R); S.emT = rnd(.15, .3); }
+    else if (m === 'bored') { emit('text', G.hx + G.R * .8, G.hy - G.R * .7, 'z'); S.emT = 1.2; }
+    else if (m === 'dizzy') { emit('text', G.hx + rnd(-1, 1) * G.R, G.hy - G.R * 1.1, pick(['*', '?'])); S.emT = .3; }
+    else S.emT = .4;
+  }
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i]; p.life += dt;
+    if (p.life > p.max) { parts.splice(i, 1); continue; }
+    p.vy += ({ drop: 380, tear: 300, conf: 700 }[p.kind] || 0) * dt;
+    if (p.kind === 'conf') { p.vx *= Math.exp(-dt * 1.2); p.vy *= Math.exp(-dt * .4); }
+    p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+  }
+
+  /* Cancel bar creeps towards 99 and then stops responding. */
+  if (S.cancelP >= 0 && !S.finished) {
+    S.cancelP = Math.min(99, S.cancelP + dt * rnd(.1, .7));
+    $('cfill').style.width = S.cancelP + '%'; $('cpct').textContent = Math.floor(S.cancelP) + '%';
+    $('clabel').textContent = S.cancelP >= 99 ? 'Cancel is not responding' : 'Cancelling...';
+  }
+
+  /* DOM text. */
+  const pt = pctText();
+  if ($('pct').textContent !== pt) $('pct').textContent = pt;
+  const task = S.taskOverride || S.task;
+  if ($('task').textContent !== task) $('task').textContent = task;
+  if ($('eta').textContent !== S.eta) $('eta').textContent = S.eta;
+  S.tt = (S.tt || 0) - dt;
+  if (S.tt <= 0 && !document.hidden) { S.tt = .3; document.title = (S.finished ? 'Done' : 'Loading... ' + pt) + ' | Percy Setup'; }
+}
+
+/* Input. */
+function sizeCanvas() {
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  W = cv.clientWidth; H = cv.clientHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  bub.lines = null;
+}
+new ResizeObserver(sizeCanvas).observe(cv);
+
+addEventListener('pointermove', e => {
+  if (P.x !== null) S.moveAcc += Math.hypot(e.clientX - P.x, e.clientY - P.y);
+  P.x = e.clientX; P.y = e.clientY; S.idle = 0;
+  P.over = e.pointerType === 'touch' ? false : !!(e.target.closest && e.target.closest('#win'));
+});
+addEventListener('pointerdown', () => { S.idle = 0; });
+addEventListener('pointerup', e => { if (e.pointerType === 'touch') P.over = false; });
+document.documentElement.addEventListener('mouseleave', () => { P.over = false; });
+addEventListener('blur', () => { P.over = false; });
+addEventListener('keydown', e => {
+  S.idle = 0;
+  if (e.key === 'Escape') react("Escape isn't a cancel either. Nothing here is a cancel.", 'smug', { gap: 3 });
+});
+
+cv.addEventListener('pointermove', e => {
+  const r = cv.getBoundingClientRect(), G = S.G; if (!G) return;
+  cv.style.cursor = Math.hypot(e.clientX - r.left - G.hx, e.clientY - r.top - G.hy) < G.R * 1.05 ? 'pointer' : 'default';
+});
+cv.addEventListener('pointerdown', e => {
+  const r = cv.getBoundingClientRect(), G = S.G, x = e.clientX - r.left, y = e.clientY - r.top;
+  if (Math.hypot(x - G.hx, y - G.hy) < G.R * 1.05) poke();
+  else if (Math.abs(y - G.y) < G.barH / 2 + 4 && x > G.L - G.barH / 2 && x < G.Rr + G.barH / 2) {
+    S.sqv = -3; react("That's my body. Please be normal about it.", 'shy', { gap: 3 });
+  }
+});
+
+$('bHurry').addEventListener('click', onHurry);
+$('bCancel').addEventListener('click', onCancel);
+$('aYes').addEventListener('click', () => { S.answer = 0; tone(700, .05); });
+$('aNo').addEventListener('click', () => { S.answer = 1; tone(400, .05); });
+$('bAgain').addEventListener('click', restart);
+$('bBye').addEventListener('click', () => {
+  $('done').hidden = true;
+  say("Bye. You'll be back. They always are.", { mood: 'smug', hold: 3 });
+});
+$('bSnd').addEventListener('click', e => {
+  soundOn = !soundOn;
+  if (soundOn && !ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+  if (ac && ac.state === 'suspended') ac.resume();
+  e.currentTarget.textContent = 'Sound: ' + (soundOn ? 'on' : 'off'); e.currentTarget.setAttribute('aria-pressed', soundOn);
+  tone(880, .08);
+});
+$('chk').addEventListener('change', e => {
+  if (!e.target.checked) return;
+  react("I unchecked that for you. You're welcome.", 'smug', { force: true });
+  setTimeout(() => { $('chk').checked = false; }, 700);
+});
+$('wX').addEventListener('click', () => {
+  S.stats.closeX++; shake(); tone(200, .12, 'sawtooth');
+  react("That's the X. The X is a decoration. It is there for morale.", 'smug', { force: true });
+});
+$('wMax').addEventListener('click', () => {
+  win.classList.toggle('max'); tone(500, .06);
+  react("I'm not any bigger. I just feel taller.", 'happy', { gap: 1 });
+});
+$('wMin').addEventListener('click', () => {
+  win.classList.add('mini'); tone(500, .3, 'sine', .05, .4);
+  setTimeout(() => {
+    win.classList.remove('mini');
+    react('Back. That was the longest second of my life.', 'worried', { force: true });
+  }, reduce ? 500 : 1500);
+});
+$('icDoc').addEventListener('click', () => react("Not now. I'm in the middle of something. So are you, apparently.", 'smug', { gap: 1 }));
+$('icFol').addEventListener('click', () => react("It's empty. They are all empty. Forty-seven empty folders.", 'sad', { gap: 1 }));
+$('icNo').addEventListener('click', () => { shake(); react('I said DO NOT. It was in capital letters.', 'angry', { force: true }); });
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { S.leftAt = performance.now(); document.title = 'Percy: hello?'; return; }
+  const away = (performance.now() - (S.leftAt || performance.now())) / 1000;
+  if (away > 2 && !S.finished) {
+    S.stats.away++;
+    if (away > 30) react(`You were gone ${Math.round(away)} seconds. I counted. I had nothing else to do.`, 'angry', { force: true });
+    else react("Oh. You're back. I wasn't crying. That's loading fluid.", 'sad', { force: true });
+  }
+});
+
+/* Go. */
+sizeCanvas();
+S.G = layout();
+gen = story();
+let last = performance.now();
+function frame(now) {
+  requestAnimationFrame(frame);
+  dt = Math.min(.05, (now - last) / 1000); last = now;
+  update(); draw();
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

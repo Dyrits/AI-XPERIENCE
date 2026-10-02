@@ -35,6 +35,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Somewhere, softly](https://dyrits.github.io/AI-XPERIENCE/pages/somewhere-softly.html) | Canvas 2D, projected 3D mobile | GTP-6 Astra | ~62K | 1 | 33 KB |
 | [Paperborough](https://dyrits.github.io/AI-XPERIENCE/pages/paperborough.html) | Canvas 2D, isometric city builder | GTP-6 Astra | ~83K | 1 | 59 KB |
 | [Nodal](https://dyrits.github.io/AI-XPERIENCE/pages/nodal.html) | Canvas 2D, particle transport + wave simulation | Space Bunny | ~95K | 1 + 1 | 52 KB |
+| [Percy](https://dyrits.github.io/AI-XPERIENCE/pages/percy.html) | DOM + Canvas 2D, fake installer comedy | Claude Sonnet 5.5 | ~75K | 1 | 44 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -85,6 +86,8 @@ The Abyss and Mercurial correction rounds fixed small issues: tentacles glitchin
 
 **Nodal.** Chladni's 1787 experiment, rebuilt: sand on a vibrating plate, finding the lines where the metal does not move. The plate is a square held at its rim, and its mode shapes are the classical sums and differences of cosines, so the boundary is nodal too and sand gathers along the edge as well as across the figure. Nothing is painted — several thousand grains are pushed every frame down the gradient of the squared displacement, so they crawl into the nodal lines and pile up there on their own, over a damped wave equation that carries genuine ripples from every strike. Twelve preset modes, m·n steppers and difference/sum switches give the full figure set; a second mode can be mixed in for interference patterns, or morphed through continuously. Tune the drive frequency to a resonance on the CRT scope and the plate rings up, the figure brightens and the synth sings the mode's own pitch; off resonance the glow fades and the sand barely stirs. Drag to rake the sand, click or press space to strike the plate, and save the result as a captioned PNG. Synthesized sound, pause, pointer and touch input, and reduced-motion support.
 
+**Percy.** A fake installer starring a progress bar with a face. Percy is loading something and has opinions about it: his percentage goes backwards, a fake-out races to 97% and is taken back, he asks you to look away because he has stage fright, and the last percent creeps through 99.9, 99.99 and 99.999 while his estimate stays at "1 second (since 12:00)". The page reacts to you. Pressing Hurry up makes him slower and eventually suspends the button, Cancel starts a second bar to do the cancelling, and the window X is declared decorative. Poking his face squashes him, wiggling the mouse gets called out, switching tabs makes him sulk on your return, and the desktop icons talk back. His eyes follow the cursor, his mood changes the face, colour and particles, and the tab title shows the live percentage. After 100% a receipt counts your hurry-ups, cancels, pokes and absences and gives a verdict. Optional synthesized blips and fanfare, a run counter in local storage, reduced-motion support.
+
 ## Viewing
 
 The portfolio is live at https://dyrits.github.io/AI-XPERIENCE/. Locally, open `index.html` in a recent browser. It is a portfolio page listing the pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
@@ -112,6 +115,7 @@ AI-XPERIENCE/
     ├── night-atlas.html
     ├── nodal.html
     ├── paperborough.html
+    ├── percy.html
     ├── replace-you.html
     ├── somewhere-softly.html
     ├── starshard.html
