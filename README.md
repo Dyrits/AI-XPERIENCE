@@ -29,13 +29,14 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Longhand](https://dyrits.github.io/AI-XPERIENCE/pages/longhand.html) | Canvas 2D, drawn-line runner | GLM-5.3 | 1 + 1 | 34 KB |
 | [Loaded](https://dyrits.github.io/AI-XPERIENCE/pages/loaded.html) | Canvas 2D, dice roguelike | Claude Opus 5.5 | 1 + 1 | 96 KB |
 | [Enough](https://dyrits.github.io/AI-XPERIENCE/pages/enough.html) | Canvas 2D, motion graphic | Claude Opus 5.5 | 1 | 32 KB |
-| [Replace you](https://dyrits.github.io/AI-XPERIENCE/pages/replace-you.html) | Canvas 2D, motion graphic | GTP-5 Astra | 1 | 15 KB |
+| [Replace you](https://dyrits.github.io/AI-XPERIENCE/pages/replace-you.html) | Canvas 2D, motion graphic | GPT-6 Astra | 1 | 15 KB |
 | [Tick](https://dyrits.github.io/AI-XPERIENCE/pages/tick.html) | DOM + Canvas 2D, scroll-driven explainer | Claude Opus 5.5 | 1 | 60 KB |
 | [Murmur](https://dyrits.github.io/AI-XPERIENCE/pages/murmur.html) | Canvas 2D, 3D flocking | Claude Opus 5.5 | 1 | 44 KB |
 | [Somewhere, softly](https://dyrits.github.io/AI-XPERIENCE/pages/somewhere-softly.html) | Canvas 2D, projected 3D mobile | GTP-6 Astra | 1 | 33 KB |
 | [Paperborough](https://dyrits.github.io/AI-XPERIENCE/pages/paperborough.html) | Canvas 2D, isometric city builder | GTP-6 Astra | 1 | 59 KB |
 | [Nodal](https://dyrits.github.io/AI-XPERIENCE/pages/nodal.html) | Canvas 2D, particle transport + wave simulation | Space Bunny | 1 + 1 | 52 KB |
 | [Percy](https://dyrits.github.io/AI-XPERIENCE/pages/percy.html) | DOM + Canvas 2D, fake installer comedy | Claude Sonnet 5.5 | 1 | 44 KB |
+| [Carbon copy](https://dyrits.github.io/AI-XPERIENCE/pages/carbon-copy.html) | Canvas 2D, recorded-ghost puzzle | GPT-6 | 1 | 35 KB |
 | [Drizzle](https://dyrits.github.io/AI-XPERIENCE/pages/drizzle.html) | Canvas 2D, animated short film | Claude Sonnet 5.5 | 1 | 49 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
@@ -91,6 +92,8 @@ The Abyss and Mercurial correction rounds fixed small issues: tentacles glitchin
 
 **Percy.** A fake installer starring a progress bar with a face. Percy is loading something and has opinions about it: his percentage goes backwards, a fake-out races to 97% and is taken back, he asks you to look away because he has stage fright, and the last percent creeps through 99.9, 99.99 and 99.999 while his estimate stays at "1 second (since 12:00)". The page reacts to you. Pressing Hurry up makes him slower and eventually suspends the button, Cancel starts a second bar to do the cancelling, and the window X is declared decorative. Poking his face squashes him, wiggling the mouse gets called out, switching tabs makes him sulk on your return, and the desktop icons talk back. His eyes follow the cursor, his mood changes the face, colour and particles, and the tab title shows the live percentage. After 100% a receipt counts your hurry-ups, cancels, pokes and absences and gives a verdict. Optional synthesized blips and fanfare, a run counter in local storage, reduced-motion support.
 
+**Carbon copy.** A time-loop puzzle in a department of repeated efforts, drawn on cream paper with carbon-blue ghosts, brass gates and a red original. Move through a room, stop on a pressure plate and seal a copy of the attempt. Each copy replays the recorded route and stays at its final position, holding a switch while the original moves on. Five chambers build from one switch to a chain of gates held by four copies, with a release slip that only the original can collect and carry back to the exit. Every attempt has thirty seconds, and the clock starts when you move. Includes undo, chamber hints, unlocked-chamber selection, local progress saves, optional synthesized sound, pause, keyboard and touch controls, and reduced-motion support.
+
 ## Viewing
 
 The portfolio is live at https://dyrits.github.io/AI-XPERIENCE/. Locally, open `index.html` in a recent browser. It is a portfolio page listing the pieces. Hovering a card loads a live preview, and each card has a button that opens the page in a new tab.
@@ -105,6 +108,7 @@ AI-XPERIENCE/
 ├── README.md
 └── pages/
     ├── abyss.html
+    ├── carbon-copy.html
     ├── drizzle.html
     ├── echo-ward.html
     ├── echoveil.html

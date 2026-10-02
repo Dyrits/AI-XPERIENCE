@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#eee8da">
+<meta name="description" content="Make copies of your past self to solve five rooms. A self-contained time-loop puzzle game.">
+<title>Carbon copy · Department of repeated efforts</title>
+<style>
+:root{--paper:#eee8da;--ink:#263839;--faint:#cdc9bb;--blue:#397d8a;--red:#bd4b35;--mono:ui-monospace,SFMono-Regular,Consolas,monospace}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--paper);color:var(--ink);font-family:Georgia,'Times New Roman',serif;min-height:100svh;background-image:radial-gradient(#53574b12 .65px,transparent .65px);background-size:5px 5px}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible,canvas:focus-visible{outline:3px solid var(--red);outline-offset:4px}button:disabled{opacity:.4;cursor:default}button:hover:not(:disabled){background:#ded9ca}button{border:1px solid #26383945;color:var(--ink);background:transparent;padding:10px 14px;border-radius:3px;transition:background .15s}button.primary{background:var(--ink);border-color:var(--ink);color:#f9f3e6}button.primary:hover:not(:disabled){background:#3e5353}.mono{font-family:var(--mono);font-size:10px;letter-spacing:1.4px;text-transform:uppercase}header{max-width:1400px;margin:auto;padding:24px 38px 17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--faint)}header a{color:inherit;text-decoration:none}.department{display:flex;align-items:center;gap:12px}.mark{width:26px;height:30px;border:1px solid var(--ink);box-shadow:4px 4px 0 var(--paper),5px 5px 0 var(--ink);display:grid;place-items:center;font-size:17px}header .tools{display:flex;gap:8px}header button{padding:7px 10px;font-family:var(--mono);font-size:10px}main{max-width:1400px;margin:auto;padding:32px 38px 20px}.masthead{display:flex;justify-content:space-between;align-items:end;margin-bottom:28px}h1{font-size:clamp(45px,6.2vw,88px);line-height:.95;letter-spacing:-5px;font-weight:normal;margin:0;position:relative}h1 span{color:var(--blue);display:inline-block;text-shadow:2px 2px 0 #eee8da,4px 4px 0 #397d8a30;font-style:italic}.subtitle{font-size:15px;margin:12px 0 0;color:#526060}.file{border:1px solid var(--faint);padding:12px 18px;transform:rotate(2deg);text-align:center;line-height:1.8}.file strong{display:block;color:var(--red);font-size:15px;letter-spacing:2px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 248px;gap:28px}.work{min-width:0}.room-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.record-indicator{display:flex;gap:8px;align-items:center}.record-indicator i{width:6px;height:6px;border-radius:50%;background:var(--red)}.room-wrap{position:relative;border:1px solid #83908b;background:#e4dfd1;padding:9px;box-shadow:3px 3px 0 #c4c4b3,9px 10px 25px #26383912;overflow:hidden}.room-wrap:before,.room-wrap:after{content:'';position:absolute;z-index:2;background:#858b78;width:7px;height:7px;border-radius:50%;top:4px;pointer-events:none}.room-wrap:before{left:4px}.room-wrap:after{right:4px}canvas{display:block;width:100%;aspect-ratio:5/3;outline:none;touch-action:none}.overlay{position:absolute;inset:9px;display:flex;align-items:center;justify-content:center;background:#eee8dadb;backdrop-filter:blur(3px);z-index:3;padding:18px}.overlay[hidden]{display:none}.card{max-width:460px;text-align:center;padding:24px 30px;background:#f7f2e5;border:1px solid #b9bdac;box-shadow:5px 5px 0 #26383914}.card .stamp{display:inline-block;border:2px solid var(--red);color:var(--red);padding:5px 12px;transform:rotate(-5deg);margin-bottom:14px}.card h2{font-weight:normal;font-size:36px;letter-spacing:-1.4px;margin:0 0 12px}.card p{font-size:15px;line-height:1.55;color:#4a5c59;margin:0 0 17px}.card .instructions{text-align:left;font-family:var(--mono);font-size:11px;line-height:1.8;border-top:1px solid #c9cbbc;padding-top:12px}.card button{margin-top:5px}.card .secondary{display:block;margin:10px auto 0;font-size:12px;border:0;text-decoration:underline}.clockbar{margin-top:17px;display:flex;align-items:center;gap:15px}.clock{font-family:var(--mono);font-size:25px;letter-spacing:-1.5px;min-width:76px}.tape{position:relative;flex:1;height:24px;border-bottom:1px solid #a8ae9e;background:repeating-linear-gradient(90deg,#66776e60 0 1px,transparent 1px 5%)}.tape-fill{position:absolute;inset:12px auto 1px 0;background:#397d8a38;width:0}.tape-head{position:absolute;top:-2px;bottom:-5px;border-left:2px solid var(--red);left:0}.tape-head:before{content:'';position:absolute;top:0;left:-4px;border-top:6px solid var(--red);border-left:3px solid transparent;border-right:3px solid transparent}.tape-end{font-family:var(--mono);font-size:10px;color:#68766e}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.actions button{font-family:var(--mono);font-size:11px;letter-spacing:.2px}.actions .primary{flex:1;text-align:left;display:flex;justify-content:space-between;gap:12px}.actions kbd{font:inherit;opacity:.6}.tipline{min-height:35px;margin:13px 0 0;font-size:12px;color:#59685d;line-height:1.5}.sidebar{border-left:1px solid var(--faint);padding-left:25px}.label{color:#66746b;margin:2px 0 12px}.sidebar h2{font-size:27px;letter-spacing:-1px;font-weight:normal;margin:0 0 10px}.brief{font-size:14px;line-height:1.6;margin:0 0 20px;color:#526357}.chambers{display:flex;gap:6px;margin-bottom:24px}.chambers button{padding:6px 0;width:31px;font-family:var(--mono);font-size:11px}.chambers button[aria-current=true]{background:var(--ink);color:var(--paper)}.copies{display:grid;gap:8px;margin:12px 0 22px}.copy{border:1px solid #b6bfae;padding:10px;display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:10px;min-height:43px;gap:8px}.copy .dot{display:inline-block;width:8px;height:8px;border:1px solid currentColor;border-radius:50%;margin-right:7px}.copy.empty{border-style:dashed;color:#758177}.copy small{font-size:9px;letter-spacing:.3px;color:#596e66}.legend{display:grid;gap:9px;font:10px var(--mono);padding-top:18px;border-top:1px solid var(--faint)}.legend span{display:flex;gap:9px;align-items:center}.legend i{display:inline-block;width:10px;height:10px;border:1.5px solid var(--blue);border-radius:50%}.legend .you{background:var(--red);border-color:var(--red)}.legend .plate{border-radius:2px;border-color:#797961}.legend .exit{border-color:var(--blue);border-radius:0;transform:rotate(45deg)}.hint{font:11px var(--mono);margin-top:20px;padding:8px 12px}.hint-text{font-size:12px;line-height:1.65;color:#59685d;margin:10px 0 0}.footer{border-top:1px solid var(--faint);margin-top:26px;padding-top:13px;display:flex;justify-content:space-between;gap:20px;color:#68756b;font:9px var(--mono);letter-spacing:.7px}.touch{display:none;justify-content:space-between;align-items:center;margin-top:14px;gap:15px}.dpad{display:grid;grid-template:repeat(3,40px)/repeat(3,46px);gap:3px}.dpad button{padding:0;touch-action:none;font-family:var(--mono);font-size:18px;background:#e4dfd1}.dpad [data-dir=up]{grid-area:1/2}.dpad [data-dir=left]{grid-area:2/1}.dpad [data-dir=down]{grid-area:2/2}.dpad [data-dir=right]{grid-area:2/3}.touch p{max-width:170px;font-size:12px;color:#526357;line-height:1.6}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-width:1050px){main{padding:26px 24px}header{padding:20px 24px}.layout{grid-template-columns:minmax(0,1fr) 210px;gap:20px}.sidebar{padding-left:18px}h1{letter-spacing:-3px}.card{padding:18px 24px}.card h2{font-size:30px}}
+@media(max-width:760px){header{padding:16px}.department .mono{font-size:8px;letter-spacing:.8px}header .tools{gap:5px}header button{padding:7px}.back{display:none}main{padding:24px 16px 16px}.masthead{margin-bottom:22px}.file{display:none}h1{font-size:54px;letter-spacing:-3px}.subtitle{font-size:13px}.layout{grid-template-columns:1fr;gap:24px}.sidebar{border-left:0;border-top:1px solid var(--faint);padding:20px 0 0;display:grid;grid-template-columns:1fr 1fr;column-gap:25px}.sidebar .overview{grid-column:1}.sidebar .archive{grid-column:2;grid-row:1}.legend,.hint,.hint-text{grid-column:1/-1}.brief{font-size:13px}.chambers{margin-bottom:0}.copies{margin:10px 0 0}.copy{min-height:35px;padding:7px}.card{padding:15px 18px;max-width:430px}.card h2{font-size:28px;margin-bottom:8px}.card p{font-size:12px;line-height:1.5;margin-bottom:10px}.card .stamp{font-size:8px;margin-bottom:10px}.card .instructions{font-size:9px;padding-top:8px}.overlay{padding:8px}.room-wrap:has(.overlay:not([hidden])){min-height:280px}.actions button{padding:11px 9px;font-size:10px}.legend{display:flex;flex-wrap:wrap;gap:14px}.footer{font-size:8px;line-height:1.5}.room-top{font-size:8px;letter-spacing:.8px}}
+@media(pointer:coarse){.touch{display:flex}.keyboard-note{display:none}}@media(max-width:420px){.room-wrap{padding:5px}.overlay{inset:5px}.card .instructions{display:none}.card h2{font-size:26px}.card button{padding:8px 12px}.clock{font-size:21px;min-width:64px}.copy small{font-size:8px}.department .mono{max-width:130px;line-height:1.5}.sidebar{column-gap:16px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}.file{transform:none}}
+</style>
+</head>
+<body>
+<header><div class="department"><span class="mark" aria-hidden="true">c</span><span class="mono">Department of<br>repeated efforts</span></div><div class="tools"><a class="back mono" href="../index.html" style="align-self:center;margin-right:12px">Index ↗</a><button id="sound" aria-pressed="false">Sound off</button><button id="pause" aria-pressed="false">Pause</button></div></header>
+<main>
+<div class="masthead"><div><h1>Carbon <span>copy.</span></h1><p class="subtitle">You can't be everywhere. You have been somewhere.</p></div><div class="file mono">Form CC / 05<strong>Keep all copies</strong>Original to be released</div></div>
+<div class="layout">
+<section class="work" aria-label="Puzzle room">
+<div class="room-top mono"><span id="room-label">Chamber 01 / 05</span><span class="record-indicator"><i id="record-light"></i><span id="record-status">Awaiting original</span></span></div>
+<div class="room-wrap"><canvas id="room" width="1200" height="720" tabindex="0" aria-label="Puzzle room. Move with arrow keys or W A S D. Space makes a copy. Pressure plates open their matching gates." aria-describedby="brief"></canvas><div id="overlay" class="overlay" role="dialog" aria-labelledby="modal-title" aria-describedby="modal-text"><div class="card"><div id="modal-stamp" class="stamp mono">Instructions for the original</div><h2 id="modal-title">Many hands. One you.</h2><p id="modal-text">Stand on a switch. Make a copy. Your past self repeats the journey and stays on the switch while you find the way out.</p><p id="modal-help" class="instructions">Move with WASD or arrow keys.<br>Space seals a copy and rewinds the room.<br>Copies keep their final position. You have 30 seconds.</p><button id="modal-action" class="primary">Begin the first attempt ↗</button><button id="modal-alt" class="secondary" hidden>Start at chamber one</button></div></div></div>
+<div class="clockbar"><span class="clock" id="clock">00.00</span><div class="tape" aria-hidden="true"><div class="tape-fill" id="tape-fill"></div><div class="tape-head" id="tape-head"></div></div><span class="tape-end">30 SEC</span></div>
+<div class="actions"><button id="copy" class="primary" disabled><span>Make a copy ↶</span><kbd>SPACE</kbd></button><button id="undo" disabled>Undo copy</button><button id="restart">Reset room</button></div>
+<p id="tip" class="tipline" aria-live="polite">A copy is a recording of your route, not a second player.</p>
+<div class="touch"><div class="dpad" aria-label="Movement controls"><button data-dir="up" aria-label="Move up">↑</button><button data-dir="left" aria-label="Move left">←</button><button data-dir="down" aria-label="Move down">↓</button><button data-dir="right" aria-label="Move right">→</button></div><p>Hold an arrow to move.<br>Stop on a switch, then tap Make a copy.</p></div>
+</section>
+<aside class="sidebar"><div class="overview"><p class="label mono">Your assignment</p><h2 id="level-title">One witness</h2><p class="brief" id="brief">The gate only stays open while someone stands on A. Leave a copy there.</p><nav id="chambers" class="chambers" aria-label="Chambers"></nav></div><div class="archive"><p class="label mono">Copies on file <span id="copy-count">0 / 4</span></p><div id="copies" class="copies"></div></div><div class="legend"><span><i class="you"></i>You, the original</span><span><i></i>Your past selves</span><span><i class="plate"></i>Hold to open a gate</span><span><i class="exit"></i>Exit, originals only</span></div><button id="hint" class="hint" aria-expanded="false">Need a hint?</button><p id="hint-text" class="hint-text" hidden></p></aside>
+</div>
+<div class="footer"><span class="keyboard-note">WASD / ARROWS · SPACE COPY · BACKSPACE UNDO · R RESET · ESC PAUSE</span><span>Every attempt leaves a useful trace.</span><span>CC / ARCHIVE 001</span></div>
+<p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
+</main>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const canvas = $('room'), ctx = canvas.getContext('2d');
+const W = 800, H = 480, DT = 1 / 60, LIMIT = 1800, RADIUS = 11, SPEED = 150;
+const colors = ['#397d8a','#775e97','#77844e','#ac7837'];
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+const plate = (id,x,y) => ({id,x,y,active:false});
+const wall = (x,y,w,h) => ({x,y,w,h});
+const partition = (x,y) => [wall(x,40,20,y-40),wall(x,y+80,20,440-y-80)];
+const gate = (id,x,y,needs) => ({id,x,y,w:20,h:80,needs,open:false,amount:0});
+const levels = [
+ {name:'One witness',brief:'The gate only stays open while someone stands on A. Leave a copy there.',hint:'Walk to A, stop inside the square and press Space. On the next attempt, move to start the replay, wait for your copy to reach A, then walk through the gate to OUT.',spawn:{x:100,y:240},exit:{x:700,y:240},plates:[plate('A',200,120)],walls:partition(500,200),gates:[gate('A',500,200,['A'])],note:'A witness must remain.'},
+ {name:'Both signatures',brief:'Two signatures are required. A and B must be held at the same time.',hint:'Make one copy ending on A and another ending on B. Both recordings start together, so wait until both copies are on their switches before crossing the gate.',spawn:{x:100,y:240},exit:{x:700,y:240},plates:[plate('A',180,120),plate('B',340,360)],walls:partition(520,200),gates:[gate('AB',520,200,['A','B'])],note:'Please sign in duplicate.'},
+ {name:'Chain of custody',brief:'A opens the first gate. B is beyond it and opens the second. Build your escape one copy at a time.',hint:'Leave copy 1 on A. Follow it through gate A and leave copy 2 on B. On attempt 3, wait for each gate to open, then reach OUT in the right-hand room.',spawn:{x:100,y:240},exit:{x:700,y:160},plates:[plate('A',160,360),plate('B',420,120)],walls:[...partition(300,160),...partition(540,280)],gates:[gate('A',300,160,['A']),gate('B',540,280,['B'])],note:'Forward to the next department.'},
+ {name:'Return to sender',brief:'Your release slip is behind the gate. Collect it, then return to the exit where you started. Only the original can carry it.',hint:'Leave copies on A and B. Cross the gate and collect the brass release slip in the upper right. Return through the same gate to OUT in the upper left. The slip resets when you rewind.',spawn:{x:100,y:300},exit:{x:100,y:100},key:{x:690,y:110},plates:[plate('A',180,110),plate('B',420,350)],walls:[...partition(560,200),wall(240,220,200,20)],gates:[gate('AB',560,200,['A','B'])],note:'Release slip required.'},
+ {name:'The original',brief:'Four switches. Three gates. Every copy has a job. Give your past selves time to catch up, then leave together.',hint:'Seal copies on A, then B, then C, then D. A opens the lower first gate. B opens the upper second gate. C and D together open the final gate. On the last attempt, follow the same zigzag through all three gates to OUT.',spawn:{x:100,y:240},exit:{x:710,y:120},plates:[plate('A',160,100),plate('B',360,360),plate('C',540,100),plate('D',540,360)],walls:[...partition(280,300),...partition(460,120),...partition(620,260)],gates:[gate('A',280,300,['A']),gate('B',460,120,['B']),gate('CD',620,260,['C','D'])],note:'Retain all four carbon sheets.'}
+];
+let saved = {unlocked:0,best:{}};
+try { const s = JSON.parse(localStorage.getItem('carbon-copy-v1')); if(s && Number.isInteger(s.unlocked)) saved = {unlocked:Math.max(0,Math.min(4,s.unlocked)),best:s.best && typeof s.best === 'object' ? s.best : {}}; } catch {}
+let current = saved.unlocked, room, player, copies = [], tape = [], tick = 0, mode = 'intro';
+let rewind = null, pausedFrom = 'playing', moved = false, last = 0, accumulator = 0;
+let audio = null, soundOn = false, hintShown = false;
+const keys = new Set(), touch = new Map();
+function announce(text) { $('announcement').textContent = text; }
+function store() { try {localStorage.setItem('carbon-copy-v1',JSON.stringify(saved));} catch {} }
+function tone(freq=440,duration=.12,volume=.04,type='sine',delay=0) {
+ if(!soundOn || !audio) return;
+ try { const start=audio.currentTime+delay, osc=audio.createOscillator(), gain=audio.createGain(); osc.type=type;osc.frequency.setValueAtTime(freq,start);osc.frequency.exponentialRampToValueAtTime(freq*.7,start+duration);gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(volume,start+.008);gain.gain.exponentialRampToValueAtTime(.0001,start+duration);osc.connect(gain);gain.connect(audio.destination);osc.start(start);osc.stop(start+duration+.01); } catch {}
+}
+function clearInput(){keys.clear();touch.clear();}
+function sample(n){return copies.map(c=>c.frames[Math.min(n,c.frames.length-1)]);}
+function actors(){return [player,...sample(tick)];}
+function evaluate(silent=false){
+ const all=actors();
+ for(const p of room.plates){const active=all.some(a=>Math.hypot(a.x-p.x,a.y-p.y)<19);if(active!==p.active&&!silent)tone(active?520:240,.08,.025);p.active=active;}
+ for(const g of room.gates){const open=g.needs.every(id=>room.plates.find(p=>p.id===id).active);if(open!==g.open&&!silent){tone(open?170:100,.16,.025,'triangle');announce(`Gate ${g.id} ${open?'open':'closed'}.`);}g.open=open;}
+}
+function resetRun(){player={...room.spawn,dx:1,dy:0,hasKey:false};tick=0;tape=[{x:player.x,y:player.y,dx:1,dy:0}];moved=false;accumulator=0;clearInput();evaluate(true);updateUI();}
+function loadLevel(i){current=i;room=structuredClone(levels[i]);copies=[];rewind=null;hintShown=false;$('hint-text').hidden=true;$('hint').setAttribute('aria-expanded','false');$('hint').textContent='Need a hint?';$('hint-text').textContent=room.hint;$('level-title').textContent=room.name;$('brief').textContent=room.brief;$('room-label').textContent=`Chamber ${String(i+1).padStart(2,'0')} / 05`;resetRun();renderNav();}
+function renderNav(){
+ $('chambers').replaceChildren();
+ levels.forEach((l,i)=>{const b=document.createElement('button');b.textContent=String(i+1).padStart(2,'0');b.disabled=i>saved.unlocked;b.setAttribute('aria-label',`Chamber ${i+1}: ${l.name}${i>saved.unlocked?', locked':''}`);b.setAttribute('aria-current',String(i===current));b.onclick=()=>{loadLevel(i);mode='playing';hideModal();$('tip').textContent='A fresh original. Your recordings begin when you move.';updateUI();canvas.focus({preventScroll:true});};$('chambers').append(b);});
+}
+function updateUI(){
+ const active=mode==='playing';$('copy').disabled=!active||copies.length>=4||!moved;$('undo').disabled=!active||copies.length===0;$('restart').disabled=mode==='rewinding';$('pause').disabled=['intro','won','complete'].includes(mode);$('pause').textContent=mode==='paused'?'Resume':'Pause';$('pause').setAttribute('aria-pressed',String(mode==='paused'));$('copy-count').textContent=`${copies.length} / 4`;
+ $('record-status').textContent=mode==='rewinding'?'Rewinding':mode==='paused'?'On hold':mode==='won'?'Original released':mode==='complete'?'All originals released':mode==='intro'?'Awaiting original':moved?'Recording original':'Move to begin';
+ $('record-light').style.background=mode==='playing'&&moved?'#bd4b35':'#8c9580';
+ const list=$('copies');list.replaceChildren();
+ for(let i=0;i<4;i++){const c=copies[i],row=document.createElement('div');row.className='copy'+(c?'':' empty');if(c){row.style.color=colors[i];const label=document.createElement('span');label.innerHTML='<i class="dot"></i>';label.append(`COPY ${String(i+1).padStart(2,'0')}`);const state=document.createElement('small');state.id=`copy-state-${i}`;row.append(label,state);}else row.textContent=`${String(i+1).padStart(2,'0')} / UNUSED SHEET`;list.append(row);}
+ updateClock();
+}
+function updateClock(){
+ const t=tick/60;$('clock').textContent=`${String(Math.floor(t)).padStart(2,'0')}.${String(Math.floor(t%1*100)).padStart(2,'0')}`;$('tape-fill').style.width=`${tick/LIMIT*100}%`;$('tape-head').style.left=`${tick/LIMIT*100}%`;
+ copies.forEach((c,i)=>{const end=c.frames[c.frames.length-1],p=room.plates.find(p=>Math.hypot(end.x-p.x,end.y-p.y)<19);const state=$(`copy-state-${i}`);if(state)state.textContent=tick>=c.frames.length-1?(p?`Holding ${p.id}`:'Standing by'):`${((c.frames.length-1)/60).toFixed(1)}s · replay`;});
+}
+function showModal(stamp,title,text,button,help=''){$('modal-stamp').textContent=stamp;$('modal-title').textContent=title;$('modal-text').textContent=text;$('modal-help').textContent=help;$('modal-help').hidden=!help;$('modal-action').textContent=button;$('modal-alt').hidden=true;$('overlay').hidden=false;$('modal-action').focus({preventScroll:true});}
+function hideModal(){$('overlay').hidden=true;}
+function makeCopy(){
+ if(mode!=='playing'||!moved)return;
+ if(copies.length>=4){$('tip').textContent='All four sheets are in use. Undo a copy or reset the room to change the plan.';return;}
+ clearInput();copies.push({frames:tape.map(p=>({...p}))});
+ tone(90,.2,.055,'sawtooth');tone(650,.06,.025,'triangle',.1);
+ const lastPoint=tape[tape.length-1],p=room.plates.find(p=>Math.hypot(lastPoint.x-p.x,lastPoint.y-p.y)<19);
+ $('tip').textContent=p?`Copy ${copies.length} will hold ${p.id}. Move to start the replay, then wait for it to reach the switch.`:`Copy ${copies.length} will stand where you stopped. Copies hold switches only when they stand inside them.`;
+ if(reduce.matches){resetRun();mode='playing';updateUI();}else{mode='rewinding';rewind={frames:tape,start:performance.now(),duration:650};updateUI();}
+ announce(`Copy ${copies.length} sealed.${p?` It will hold switch ${p.id}.`:''}`);
+}
+function blocked(x,y){
+ if(x-RADIUS<40||x+RADIUS>760||y-RADIUS<40||y+RADIUS>440)return true;
+ const solids=[...room.walls,...room.gates.filter(g=>!g.open)];
+ return solids.some(b=>{const nx=Math.max(b.x,Math.min(x,b.x+b.w)),ny=Math.max(b.y,Math.min(y,b.y+b.h));return (x-nx)**2+(y-ny)**2<RADIUS**2;});
+}
+function move(dx,dy){
+ const n=Math.hypot(dx,dy);if(!n)return;dx/=n;dy/=n;player.dx=dx;player.dy=dy;
+ const nx=player.x+dx*SPEED*DT;if(!blocked(nx,player.y))player.x=nx;
+ const ny=player.y+dy*SPEED*DT;if(!blocked(player.x,ny))player.y=ny;
+}
+function finish(){
+ mode='won';clearInput();const old=saved.best[current];if(old===undefined||copies.length<old)saved.best[current]=copies.length;saved.unlocked=Math.max(saved.unlocked,Math.min(4,current+1));store();renderNav();tone(440,.25,.04);tone(554,.25,.04,'sine',.12);tone(660,.4,.04,'sine',.24);
+ const final=current===4;mode=final?'complete':'won';
+ showModal(final?'Filed. All five chambers.':'Original released',final?'You were enough.':'A useful past.',final?`Four carbon sheets stayed behind so the original could leave. You solved all five chambers. The department thanks every version of you.`:`Chamber ${current+1} cleared with ${copies.length} ${copies.length===1?'copy':'copies'}. Your recordings have served their purpose. A new room is waiting.`,final?'Return to chamber one ↗':'Next chamber ↗');
+ $('tip').textContent=final?'All five chambers cleared. Select any chamber to try a different solution.':'Room filed. Your progress is saved on this device.';announce(final?'All five chambers complete.':`Chamber ${current+1} complete.`);updateUI();
+}
+function step(){
+ if(mode!=='playing')return;
+ let dx=Number(keys.has('ArrowRight')||keys.has('KeyD'))-Number(keys.has('ArrowLeft')||keys.has('KeyA')),dy=Number(keys.has('ArrowDown')||keys.has('KeyS'))-Number(keys.has('ArrowUp')||keys.has('KeyW'));
+ for(const d of touch.values()){if(d==='left')dx--;if(d==='right')dx++;if(d==='up')dy--;if(d==='down')dy++;}
+ if(!moved&&!dx&&!dy)return;
+ if(!moved){moved=true;updateUI();}
+ tick++;evaluate();move(dx,dy);evaluate();
+ tape.push({x:player.x,y:player.y,dx:player.dx,dy:player.dy});
+ if(room.key&&!player.hasKey&&Math.hypot(player.x-room.key.x,player.y-room.key.y)<24){player.hasKey=true;tone(880,.25,.04);$('tip').textContent='Release slip collected. Bring it back to OUT. Rewinding resets the slip.';announce('Release slip collected. Return to the exit.');}
+ if(Math.hypot(player.x-room.exit.x,player.y-room.exit.y)<23&&(!room.key||player.hasKey)){finish();return;}
+ if(tick>=LIMIT){if(copies.length<4)makeCopy();else{resetRun();$('tip').textContent='Thirty seconds elapsed. Your four copies are safe. Try the original again.';announce('New attempt. Your four copies are kept.');}}
+ if(tick%6===0)updateClock();
+}
+function pause(){
+ if(mode==='playing'||mode==='rewinding'){pausedFrom=mode;mode='paused';clearInput();if(rewind)rewind.elapsed=performance.now()-rewind.start;showModal('The department is on hold','Take your time.','All copies are waiting. The recording clock is stopped.','Resume attempt ↗');updateUI();}
+ else if(mode==='paused'){mode=pausedFrom;if(rewind)rewind.start=performance.now()-(rewind.elapsed||0);hideModal();accumulator=0;updateUI();canvas.focus({preventScroll:true});}
+}
+function undo(){if(mode!=='playing'||!copies.length)return;copies.pop();resetRun();tone(200,.15,.03);$('tip').textContent='Last copy removed. The remaining recordings start again with you.';announce('Last copy removed.');}
+function restart(){if(mode==='rewinding')return;loadLevel(current);mode='playing';hideModal();updateUI();$('tip').textContent='Room reset. All four sheets are available again.';canvas.focus({preventScroll:true});}
+function round(x,y,w,h,r=3){ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
+function line(x1,y1,x2,y2,color,width=1){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+function text(s,x,y,size=10,color='#6e8177',align='left',font='monospace'){ctx.font=`${size}px ${font}`;ctx.fillStyle=color;ctx.textAlign=align;ctx.fillText(s,x,y);}
+function circle(x,y,r,color){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();}
+function wire(p,g){
+ const x=g.x+g.w/2,y=g.y+g.h/2;
+ ctx.save();ctx.strokeStyle=p.active?'#397d8a80':'#8d9b8855';ctx.lineWidth=p.active?1.8:1;ctx.setLineDash(p.active?[]:[3,5]);ctx.beginPath();ctx.moveTo(p.x,p.y);const bend=p.x+(x-p.x)*.55;ctx.lineTo(bend,p.y);ctx.lineTo(bend,y);ctx.lineTo(x,y);ctx.stroke();ctx.restore();
+}
+function drawWall(b){
+ if(b.w<=0||b.h<=0)return;
+ ctx.fillStyle='#183b3c13';ctx.fillRect(b.x+4,b.y+5,b.w,b.h);ctx.fillStyle='#bbc3b4';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.strokeStyle='#85958a';ctx.lineWidth=1;ctx.strokeRect(b.x+.5,b.y+.5,b.w-1,b.h-1);
+ ctx.save();ctx.beginPath();ctx.rect(b.x,b.y,b.w,b.h);ctx.clip();for(let x=b.x-b.h;x<b.x+b.w+b.h;x+=9)line(x,b.y,x+b.h,b.y+b.h,'#899a8740');ctx.restore();line(b.x+1,b.y+1,b.x+b.w-1,b.y+1,'#f9f8eb');
+}
+function drawActor(a,i,now,standing=false){
+ const original=i<0,color=original?'#bd4b35':colors[i];ctx.save();ctx.translate(a.x,a.y);const phase=reduce.matches?0:Math.sin(now*.006+i)*.6;
+ if(!original){ctx.globalAlpha=.75;ctx.setLineDash([2,3]);ctx.strokeStyle=color;ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,19,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
+ ctx.fillStyle=original?'#26383926':color+'18';ctx.beginPath();ctx.ellipse(2,11,12,5,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=original?'#bd4b35':color+'28';ctx.strokeStyle=color;ctx.lineWidth=original?2:1.5;round(-10,-11+phase,20,22,7);ctx.fill();ctx.stroke();
+ if(!original){ctx.save();ctx.beginPath();ctx.rect(-9,-10,18,20);ctx.clip();for(let k=-24;k<22;k+=5)line(k,-11,k+20,11,color+'50');ctx.restore();}
+ circle(-3+a.dx*2,-3+a.dy*2+phase,1.4,original?'#fff6e4':color);circle(3+a.dx*2,-3+a.dy*2+phase,1.4,original?'#fff6e4':color);
+ line(-4,13,0,10,color,2);line(4,13,1,10,color,2);
+ text(original?'YOU':String(i+1).padStart(2,'0'),0,-25,8,color,'center');
+ ctx.restore();
+}
+function draw(now){
+ const ratio=canvas.width/W;ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,W,H);
+ ctx.fillStyle='#e8e5d7';ctx.fillRect(0,0,W,H);
+ const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#edf0e4');bg.addColorStop(1,'#dadfce');ctx.fillStyle=bg;ctx.fillRect(40,40,720,400);
+ ctx.save();ctx.beginPath();ctx.rect(40,40,720,400);ctx.clip();for(let x=40;x<=760;x+=40)line(x,40,x,440,'#788f7d1c');for(let y=40;y<=440;y+=40)line(40,y,760,y,'#788f7d1c');for(let x=60;x<760;x+=40)for(let y=60;y<440;y+=40){line(x-2,y,x+2,y,'#788f7d35');line(x,y-2,x,y+2,'#788f7d35');}
+ for(const g of room.gates)for(const id of g.needs)wire(room.plates.find(p=>p.id===id),g);
+ // Each carbon route is drawn from the actual recorded positions.
+ copies.forEach((c,i)=>{ctx.beginPath();ctx.strokeStyle=colors[i]+'23';ctx.lineWidth=1;ctx.setLineDash([2,5]);for(let n=0;n<c.frames.length;n+=7){const a=c.frames[n];n?ctx.lineTo(a.x,a.y):ctx.moveTo(a.x,a.y);}ctx.stroke();ctx.setLineDash([]);});
+ ctx.restore();
+ for(const b of [wall(20,20,760,20),wall(20,440,760,20),wall(20,40,20,400),wall(760,40,20,400),...room.walls])drawWall(b);
+ for(const p of room.plates){ctx.fillStyle='#26383916';round(p.x-20,p.y-17,40,40,4);ctx.fill();ctx.fillStyle=p.active?'#b3cfc3':'#d7d7bc';ctx.strokeStyle=p.active?'#286471':'#8e977c';ctx.lineWidth=1.5;round(p.x-20,p.y-20,40,40,4);ctx.fill();ctx.stroke();ctx.strokeStyle=p.active?'#f3f0d870':'#f6f4df';ctx.strokeRect(p.x-15,p.y-15,30,30);if(!p.active)text(p.id,p.x,p.y+5,15,'#677859','center');text(`${p.id} / ${p.active?'HELD':'HOLD'}`,p.x,p.y+34,7,p.active?'#397d8a':'#798775','center');}
+ for(const g of room.gates){g.amount+=(Number(g.open)-g.amount)*(reduce.matches?1:.18);ctx.fillStyle='#26383912';ctx.fillRect(g.x-3,g.y,26,g.h);ctx.save();ctx.beginPath();ctx.rect(g.x-2,g.y,24,g.h);ctx.clip();const height=g.h*(1-g.amount)/2;for(const y of [g.y,g.y+g.h-height]){ctx.fillStyle='#b2a774';ctx.fillRect(g.x,y,g.w,height);for(let sy=y+4;sy<y+height;sy+=8)line(g.x+2,sy,g.x+g.w-2,sy,'#7e835f',1.5);}ctx.restore();line(g.x-2,g.y,g.x+g.w+2,g.y,'#687e64',3);line(g.x-2,g.y+g.h,g.x+g.w+2,g.y+g.h,'#687e64',3);text(g.id,g.x+g.w/2,g.y-8,9,'#6b7658','center');circle(g.x+g.w/2,g.y-18,2.5,g.open?'#397d8a':'#bd4b35');}
+ const e=room.exit,available=!room.key||player.hasKey;
+ ctx.save();ctx.translate(e.x,e.y);ctx.rotate(Math.PI/4);ctx.fillStyle=available?'#397d8a1b':'#a2824c12';ctx.strokeStyle=available?'#397d8a':'#9b8c65';ctx.lineWidth=1.5;round(-20,-20,40,40,3);ctx.fill();ctx.stroke();ctx.strokeRect(-14,-14,28,28);ctx.restore();text(available?'OUT':'SLIP?',e.x,e.y+4,10,available?'#397d8a':'#87774e','center');text('ORIGINAL ONLY',e.x,e.y+39,7,'#758875','center');
+ if(room.key&&!player.hasKey){const k=room.key;ctx.fillStyle='#a68a41';ctx.strokeStyle='#7b703d';ctx.lineWidth=1;round(k.x-13,k.y-17,26,34,2);ctx.fill();ctx.stroke();line(k.x-8,k.y-8,k.x+8,k.y-8,'#f0df9e');line(k.x-8,k.y-3,k.x+4,k.y-3,'#f0df9e');text('CC',k.x,k.y+10,9,'#f6ebc3','center');text('RELEASE SLIP',k.x,k.y+33,7,'#8b7a4d','center');}
+ text('IN',room.spawn.x,room.spawn.y+32,8,'#89988b','center');
+ let displayTick=tick,displayPlayer=player;
+ if(rewind&&(mode==='rewinding'||mode==='paused'&&pausedFrom==='rewinding')){const progress=mode==='paused'?(rewind.elapsed||0)/rewind.duration:(now-rewind.start)/rewind.duration;displayTick=Math.floor(Math.max(0,1-progress)**2*(rewind.frames.length-1));displayPlayer=rewind.frames[Math.min(displayTick,rewind.frames.length-1)];}
+ copies.forEach((c,i)=>{if(rewind&&i===copies.length-1)return;const a=c.frames[Math.min(displayTick,c.frames.length-1)];drawActor(a,i,now,displayTick>=c.frames.length-1);});drawActor(displayPlayer,-1,now);
+ if(player.hasKey){ctx.fillStyle='#aa8e41';ctx.fillRect(displayPlayer.x+10,displayPlayer.y-13,8,11);}
+ text('CC / '+String(current+1).padStart(2,'0'),40,14,8,'#7d8a7e');text(room.note,760,473,8,'#7d8a7e','right');
+ if(mode==='rewinding'&&!reduce.matches){const progress=Math.min(1,(now-rewind.start)/rewind.duration);ctx.fillStyle='#e9eee435';ctx.fillRect(0,0,W,H);line(W*(1-progress),20,W*(1-progress),460,'#397d8a70',2);text('DUPLICATING ORIGINAL',400,245,17,'#397d8a','center');}
+}
+function frame(now){
+ if(!last)last=now;const delta=Math.min((now-last)/1000,.1);last=now;
+ if(mode==='rewinding'&&now-rewind.start>=rewind.duration){rewind=null;mode='playing';resetRun();}
+ if(mode==='playing'){accumulator+=delta;while(accumulator>=DT){accumulator-=DT;step();if(mode!=='playing'){accumulator=0;break;}}}else accumulator=0;
+ draw(now);requestAnimationFrame(frame);
+}
+function resize(){const dpr=Math.min(devicePixelRatio||1,2),w=Math.max(320,canvas.clientWidth);canvas.width=Math.round(w*dpr);canvas.height=Math.round(w*.6*dpr);}
+$('copy').onclick=makeCopy;$('undo').onclick=undo;$('restart').onclick=restart;$('pause').onclick=pause;
+$('hint').onclick=()=>{hintShown=!hintShown;$('hint-text').hidden=!hintShown;$('hint').setAttribute('aria-expanded',String(hintShown));$('hint').textContent=hintShown?'Hide hint':'Need a hint?';};
+$('sound').onclick=async()=>{soundOn=!soundOn;try{if(soundOn){audio ||= new (window.AudioContext||window.webkitAudioContext)();await audio.resume();tone(460,.14,.035);}}catch{soundOn=false;}$('sound').textContent=soundOn?'Sound on':'Sound off';$('sound').setAttribute('aria-pressed',String(soundOn));};
+$('modal-action').onclick=()=>{if(mode==='paused'){pause();return;}if(mode==='won'){loadLevel(current+1);}else if(mode==='complete'){loadLevel(0);}mode='playing';hideModal();updateUI();canvas.focus({preventScroll:true});announce(`Chamber ${current+1}: ${room.name}. Move to begin.`);};
+$('modal-alt').onclick=()=>{loadLevel(0);mode='playing';hideModal();updateUI();canvas.focus({preventScroll:true});};
+window.addEventListener('keydown',e=>{
+ if(e.ctrlKey||e.metaKey||e.altKey)return;
+ const movement=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD'];
+ if(movement.includes(e.code)){if(mode==='playing'){e.preventDefault();keys.add(e.code);canvas.focus({preventScroll:true});}return;}
+ if(e.repeat)return;
+ if(e.code==='Escape'){e.preventDefault();pause();return;}
+ if(e.code==='Space'&&mode==='playing'&&!(e.target instanceof HTMLButtonElement)){e.preventDefault();makeCopy();}
+ if(e.code==='Backspace'&&mode==='playing'){e.preventDefault();undo();}
+ if(e.code==='KeyR'&&mode==='playing'){e.preventDefault();restart();}
+});
+window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{clearInput();if(mode==='playing'||mode==='rewinding')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();if(mode==='playing'||mode==='rewinding')pause();}});
+for(const b of document.querySelectorAll('[data-dir]')){b.addEventListener('pointerdown',e=>{e.preventDefault();if(mode!=='playing')return;b.setPointerCapture(e.pointerId);touch.set(e.pointerId,b.dataset.dir);});const release=e=>touch.delete(e.pointerId);b.addEventListener('pointerup',release);b.addEventListener('pointercancel',release);b.addEventListener('lostpointercapture',release);}
+canvas.addEventListener('pointerdown',()=>canvas.focus({preventScroll:true}));window.addEventListener('resize',resize);
+loadLevel(current);mode='intro';updateUI();
+if(saved.unlocked>0){$('modal-action').textContent=`Continue at chamber ${saved.unlocked+1} ↗`;$('modal-alt').hidden=false;}
+resize();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
