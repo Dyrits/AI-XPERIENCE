@@ -1805,7 +1805,10 @@ function commitEntry(keep) {
   liveEntry();
   editing = null;
   entry.style.display = 'none';
-  if (!keep && !el.text.trim() && isNew) {
+  // Only an untouched text run is thrown away — it drew nothing, so there is
+  // nothing to keep. A sticky note is a real object the moment it is placed,
+  // and must survive switching tools before a word has been written on it.
+  if (!keep && isNew && el.k === 'text' && !el.text.trim()) {
     S.els = S.els.filter(x => x.eid !== el.eid);
     S.sel.delete(el.eid);              // never leave the selection pointing at a deleted mark
   } else S.sel = new Set([el.eid]);
@@ -2426,7 +2429,7 @@ function sheetHTML(name) {
         ['drag the strip', 'Scrub back through what you drew'],
       ]],
       ['Editing', [
-        ['⌘Z', 'Undo'], ['⇧⌘Z', 'Redo'], ['⌘A', 'Select everything'], ['⌘D', 'Duplicate'],
+        ['esc', 'Finish writing · ↵ starts a new line'], ['⌘Z', 'Undo'], ['⇧⌘Z', 'Redo'], ['⌘A', 'Select everything'], ['⌘D', 'Duplicate'],
         ['⌫', 'Delete'], ['↑ ↓ ← →', 'Nudge · with ⇧ for ten'], ['[ ]', 'Stroke weight'],
         ['⌘S', 'Save a PNG'], ['⌘O', 'Open a board'], ['Esc', 'Back to now'],
       ]],
