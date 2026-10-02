@@ -405,7 +405,7 @@ const S = {
   noteTone: 0,
   ph: Infinity,                              // playhead: a timestamp, or Infinity for "now"
   t0: 0, t1: 0,                              // the span the reel covers
-  playing: false,
+  playing: false, rate: 1,
   morph: null, ping: null, wipe: null,
   eraserR: 10,
   ghosts: true,
@@ -543,19 +543,32 @@ function inShape(shape, x, y, w, h, px, py, tol) {
   return px >= x - tol && px <= x + w + tol && py >= y - tol && py <= y + h + tol;
 }
 
-/* Where a line leaving the centre of a shape crosses its outline. */
-function borderPoint(el, tx, ty) {
+/* Where a connector meets a shape. The anchor remembers which side it grabbed
+   and how far along it, so a box that moves carries its connectors with it
+   instead of sliding them around the outline. */
+function anchorTo(el, tx, ty) {
   const b = elBounds(el);
   const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
-  let dx = tx - cx, dy = ty - cy;
-  if (Math.abs(dx) < 1e-9 && Math.abs(dy) < 1e-9) return { x: cx, y: cy };
-  const m = Math.hypot(dx, dy); dx /= m; dy /= m;
-  const hw = Math.max(b.w / 2, 1e-6), hh = Math.max(b.h / 2, 1e-6);
-  let t;
-  if (el.shape === 'ellipse') t = 1 / Math.hypot(dx / hw, dy / hh);
-  else if (el.shape === 'diamond') t = 1 / (Math.abs(dx) / hw + Math.abs(dy) / hh);
-  else t = 1 / Math.max(Math.abs(dx) / hw, Math.abs(dy) / hh);
-  return { x: cx + dx * t, y: cy + dy * t };
+  const dx = tx - cx, dy = ty - cy, hw = Math.max(b.w / 2, 1e-6), hh = Math.max(b.h / 2, 1e-6);
+  const along = (t, p) => ({ d: t, u: clamp(p, 0, 1) });
+  const sides = {
+    e: along(dx / hw, (ty - b.y) / Math.max(b.h, 1e-6)),
+    w: along(-dx / hw, (ty - b.y) / Math.max(b.h, 1e-6)),
+    s: along(dy / hh, (tx - b.x) / Math.max(b.w, 1e-6)),
+    n: along(-dy / hh, (tx - b.x) / Math.max(b.w, 1e-6)),
+  };
+  let side = 'e';
+  for (const k in sides) if (sides[k].d > sides[side].d) side = k;
+  return { id: el.eid, side, u: sides[side].u };
+}
+function anchorPoint(an) {
+  const el = findEl(an.id);
+  if (!el) return null;
+  const b = elBounds(el);
+  if (an.side === 'e') return { x: b.x + b.w, y: b.y + b.h * an.u };
+  if (an.side === 'w') return { x: b.x, y: b.y + b.h * an.u };
+  if (an.side === 's') return { x: b.x + b.w * an.u, y: b.y + b.h };
+  return { x: b.x + b.w * an.u, y: b.y };
 }
 
 /* --------------------------------- ink ----------------------------------- */
@@ -724,8 +737,8 @@ function ptsUpTo(el, ph) {
 
 function lineEnds(el) {
   let a = { x: el.x1, y: el.y1 }, b = { x: el.x2, y: el.y2 };
-  if (el.a) { const t = findEl(el.a); if (t) a = borderPoint(t, b.x, b.y); }
-  if (el.b) { const t = findEl(el.b); if (t) b = borderPoint(t, a.x, a.y); }
+  if (el.a) { const p = anchorPoint(el.a); if (p) a = p; }
+  if (el.b) { const p = anchorPoint(el.b); if (p) b = p; }
   return [a, b];
 }
 
@@ -923,29 +936,46 @@ function paint() {
 function drawSelection() {
   const s = S.cam.s, inv = 1 / s;
   const px = 1 / s;
-  if (S.sel.size) {
+  const list = S.sel.size ? S.els.filter(e => S.sel.has(e.eid)) : [];
+  const b = list.length ? unionBounds(list) : null;
+  if (list.length && b) {
     ctx.save();
     ctx.lineWidth = px;
     ctx.setLineDash([5 * inv, 4 * inv]);
     ctx.strokeStyle = 'rgba(200,64,47,.75)';
-    for (const el of S.els) {
-      if (!S.sel.has(el.eid)) continue;
-      ctx.stroke(elementPath(el));
-    }
+    for (const el of list) ctx.stroke(elementPath(el));
     ctx.setLineDash([]);
-    const list = S.els.filter(e => S.sel.has(e.eid));
-    const b = unionBounds(list);
     ctx.strokeStyle = ACCENT;
     ctx.beginPath();
     ctx.rect(b.x - 3 * inv, b.y - 3 * inv, b.w + 6 * inv, b.h + 6 * inv);
     ctx.stroke();
-    if (list.length === 1 && list[0].k !== 'stroke' && list[0].k !== 'line') {
+    if (list.length === 1 && list[0].k === 'line') {
+      const [ea, eb] = lineEnds(list[0]);
+      ctx.fillStyle = '#fff';
+      for (const q of [ea, eb]) {
+        ctx.beginPath();
+        ctx.arc(q.x, q.y, 4.5 * inv, 0, TAU);
+        ctx.fill(); ctx.stroke();
+      }
+    } else if (list.length === 1 && list[0].k !== 'stroke') {
       ctx.fillStyle = '#fff'; ctx.strokeStyle = ACCENT;
       const hs = list[0].k === 'text' ? handlePoints(b).filter(h => h.k.length === 2) : handlePoints(b);
       for (const h of hs) {
         ctx.fillRect(h.x - 3.5 * inv, h.y - 3.5 * inv, 7 * inv, 7 * inv);
         ctx.strokeRect(h.x - 3.5 * inv, h.y - 3.5 * inv, 7 * inv, 7 * inv);
       }
+    }
+    ctx.restore();
+  }
+  if (S.bindHint && (S.bindHint.a || S.bindHint.b)) {
+    ctx.save();
+    ctx.strokeStyle = ACCENT;
+    ctx.globalAlpha = .55;
+    ctx.lineWidth = 1.5 / s;
+    ctx.setLineDash([6 * inv, 4 * inv]);
+    for (const an of [S.bindHint.a, S.bindHint.b]) {
+      const el = an && findEl(an.id);
+      if (el) ctx.stroke(elementPath(el));
     }
     ctx.restore();
   }
@@ -1023,9 +1053,10 @@ function hitEl(el, p, tol) {
   }
 }
 
-function pick(p, tol) {
+function pick(p, tol, skip) {
   for (let i = S.els.length - 1; i >= 0; i--) {
     const el = S.els[i];
+    if (skip && el.eid === skip) continue;
     if (el.t > S.ph) continue;
     if (hitEl(el, p, tol)) return el;
   }
@@ -1033,6 +1064,25 @@ function pick(p, tol) {
 }
 
 const isResizable = el => el.k === 'shape' || el.k === 'note' || el.k === 'text';
+
+/* Connectors attach to shapes and notes only — never to ink, never to another
+   connector, and never to themselves. Binding an arrow to its own bounding box
+   is what used to collapse it into a stub. Ink lying on top of a box must not
+   stop the arrow underneath it from attaching, so binding searches separately. */
+const bindable = el => !!el && (el.k === 'shape' || el.k === 'note');
+function bindTarget(p, tol, skip) {
+  for (let i = S.els.length - 1; i >= 0; i--) {
+    const el = S.els[i];
+    if (skip && el.eid === skip) continue;
+    if (el.t > S.ph || !bindable(el)) continue;
+    if (hitEl(el, p, tol)) return el;
+  }
+  return null;
+}
+function bindEnds(el, p1, p2, from, to) {
+  el.a = bindable(from) ? anchorTo(from, p2.x, p2.y) : null;
+  el.b = bindable(to) && to.eid !== (from && from.eid) ? anchorTo(to, p1.x, p1.y) : null;
+}
 const cloneEl = el => JSON.parse(JSON.stringify(el));
 const inkCol = () => INKS[S.ink].c;
 const nowT = () => performance.now();
@@ -1101,7 +1151,7 @@ function fitView(pad = 90, ph = S.ph) {
 /* -------------------------------- pointers ------------------------------- */
 
 const pointers = new Map();
-const P = { mode: null, el: null, pts: [], start: null, prev: null, base: null, orig: null, handle: null, moved: false, pinch: null };
+const P = { mode: null, el: null, pts: [], start: null, prev: null, base: null, orig: null, handle: null, which: null, moved: false, pinch: null };
 let spaceDown = false;
 /* One undo entry per gesture that actually changes something: a click that only
    moves the selection must not cost the user an undo step. */
@@ -1147,6 +1197,7 @@ on(board, 'pointerdown', e => {
 
   const p = toWorld(e.clientX, e.clientY);
   P.moved = false;
+  P.which = null;
   edited = false;
   hideHint();
 
@@ -1204,6 +1255,15 @@ on(board, 'pointerdown', e => {
         const h = handleAt(elBounds(list[0]), p, tol * 1.5);
         if (h) {
           P.mode = 'resize'; P.handle = h; P.base = cloneEl(list[0]); P.start = p;
+          return;
+        }
+      }
+      if (list.length === 1 && list[0].k === 'line') {
+        const [ea, eb] = lineEnds(list[0]);
+        const which = d2(ea.x, ea.y, p.x, p.y) <= tol * 1.4 ? 'a'
+          : d2(eb.x, eb.y, p.x, p.y) <= tol * 1.4 ? 'b' : null;
+        if (which) {
+          P.mode = 'end'; P.which = which; P.base = cloneEl(list[0]); P.start = p;
           return;
         }
       }
@@ -1281,6 +1341,10 @@ on(window, 'pointermove', e => {
     }
     case 'move': {
       updateMove(p, e);
+      break;
+    }
+    case 'end': {
+      updateEnd(p, e);
       break;
     }
     case 'resize': {
@@ -1406,10 +1470,11 @@ function updateShape(p, e) {
       dx = Math.cos(ang) * len; dy = Math.sin(ang) * len;
     }
     el.x2 = a.x + dx; el.y2 = a.y + dy;
-    const from = pick({ x: el.x1, y: el.y1 }, 12 / S.cam.s);
-    const to = pick({ x: el.x2, y: el.y2 }, 12 / S.cam.s);
-    if (from) el.a = from.eid;
-    if (to) el.b = to.eid;
+    const tol = 12 / S.cam.s;
+    bindEnds(el, { x: el.x1, y: el.y1 }, { x: el.x2, y: el.y2 },
+      bindTarget({ x: el.x1, y: el.y1 }, tol, el.eid),
+      bindTarget({ x: el.x2, y: el.y2 }, tol, el.eid));
+    S.bindHint = { a: el.a, b: el.b };
   } else {
     let dx = p.x - a.x, dy = p.y - a.y;
     if (e.shiftKey && el.k === 'shape') {
@@ -1435,17 +1500,33 @@ function finishShape() {
   }
   if (el.k === 'note') { el.lines = null; S.sel = new Set([el.eid]); openEntry(el, true); }
   else S.sel = new Set([el.eid]);
+  S.bindHint = null;
   syncDoc();
   click();
 }
 
 /* --------------------------- move, snap, resize -------------------------- */
 
+/* Pulling a connector off a shape keeps it exactly where it was drawn: the
+   rendered endpoints are written back before the anchors are dropped, so the
+   arrow never springs out to the length it happened to be dragged with. */
+function detach(el) {
+  if (!el.a && !el.b) return;
+  const [a, b] = lineEnds(el);
+  el.x1 = a.x; el.y1 = a.y; el.x2 = b.x; el.y2 = b.y;
+  el.a = null; el.b = null;
+}
+
 function updateMove(p, e) {
   const dx = p.x - P.start.x, dy = p.y - P.start.y;
-  if (!edited && (Math.abs(dx) > .5 || Math.abs(dy) > .5)) editStart();
   const live = S.els.filter(el => S.sel.has(el.eid));
   if (!live.length) return;
+  if (!edited && (Math.abs(dx) > .5 || Math.abs(dy) > .5)) {
+    editStart();
+    // Grabbing a connector pulls it off whatever it was attached to. The
+    // originals are what get written back on every move, so detach there too.
+    for (const el of P.orig) if (el.k === 'line') detach(el);
+  }
   const ghost = P.orig.map(cloneEl);
   ghost.forEach((el, i) => translateEl(el, dx, dy));
 
@@ -1481,6 +1562,14 @@ function updateMove(p, e) {
     Object.assign(el, cloneEl(g), { lines: g.lines });
   });
   S.guides = guides.length ? guides : null;
+}
+
+function updateEnd(p, e) {
+  const el = P.el || (P.el = S.els.find(x => S.sel.has(x.eid)));
+  if (!el || !P.base) return;
+  if (!edited && (Math.abs(p.x - P.start.x) > .5 || Math.abs(p.y - P.start.y) > .5)) editStart();
+  if (P.which === 'a') { el.x1 = p.x; el.y1 = p.y; el.a = null; }
+  else { el.x2 = p.x; el.y2 = p.y; el.b = null; }
 }
 
 function updateResize(p, e) {
@@ -1662,6 +1751,12 @@ function finishResolve(el, r) {
   } else {
     made = { ...base, k: 'line', shape: r.shape, x1: r.pts[0].x, y1: r.pts[0].y, x2: r.pts[r.pts.length - 1].x, y2: r.pts[r.pts.length - 1].y, sw: el.w };
   }
+  if (made.k === 'line') {
+    const tol = 14 / S.cam.s;
+    bindEnds(made, { x: made.x1, y: made.y1 }, { x: made.x2, y: made.y2 },
+      bindTarget({ x: made.x1, y: made.y1 }, tol, made.eid),
+      bindTarget({ x: made.x2, y: made.y2 }, tol, made.eid));
+  }
   if (at === -1) S.els.push(made); else S.els[at] = made;
   S.sel = new Set([made.eid]);
   syncDoc(); mark();
@@ -1710,8 +1805,10 @@ function commitEntry(keep) {
   liveEntry();
   editing = null;
   entry.style.display = 'none';
-  if (!keep && !el.text.trim() && isNew) S.els = S.els.filter(x => x.eid !== el.eid);
-  else S.sel = new Set([el.eid]);
+  if (!keep && !el.text.trim() && isNew) {
+    S.els = S.els.filter(x => x.eid !== el.eid);
+    S.sel.delete(el.eid);              // never leave the selection pointing at a deleted mark
+  } else S.sel = new Set([el.eid]);
   syncDoc(); mark(); syncInspector();
 }
 on(entry, 'input', liveEntry);
@@ -1978,6 +2075,9 @@ function togglePlay() {
   if (!S.els.length) return toast('Draw something first');
   if (S.playing) { S.playing = false; updatePastUI(); return; }
   if (S.ph === Infinity || S.ph >= S.t1) S.ph = S.t0;
+  // A session left open for an hour would take an hour to play back, so the
+  // pace eases up until a replay costs about nine seconds. The rate is shown.
+  S.rate = clamp((S.t1 - S.t0) / 9000, 1, 400);
   S.playing = true; updatePastUI(); mark();
 }
 function updatePastUI() {
@@ -2042,8 +2142,9 @@ function drawReel() {
   }
 
   const marks = S.els.length;
+  const rate = S.playing && S.rate > 1.05 ? ` <span style="opacity:.55">·</span> ${S.rate < 10 ? S.rate.toFixed(1) : Math.round(S.rate)}×` : '';
   clockEl.innerHTML = marks
-    ? `<b>${marks}</b> mark${marks === 1 ? '' : 's'} <span style="opacity:.4">·</span> ${fmt(S.t1 - S.t0)}`
+    ? `<b>${marks}</b> mark${marks === 1 ? '' : 's'} <span style="opacity:.4">·</span> ${fmt(S.t1 - S.t0)}${rate}`
     : `<span style="opacity:.55">an empty sheet</span>`;
 }
 
@@ -2067,6 +2168,7 @@ function load() {
     if (!Array.isArray(d.els) || !d.els.length) return false;
     S.els = d.els;
     S.ghosts = d.ghosts !== false;
+    S.sel.clear();
     for (const el of S.els) { el.lines = null; el.pts?.forEach(p => (p.p ??= 1)); }
     return true;
   } catch (_) { return false; }
@@ -2092,6 +2194,7 @@ function syncDoc() {
 
 function syncInspector() {
   const sel = S.els.filter(e => S.sel.has(e.eid));
+  if (sel.length !== S.sel.size) S.sel = new Set(sel.map(e => e.eid));   // drop ids that no longer exist
   $('#align').classList.toggle('on', sel.filter(isResizable).length >= 2);
   if (sel.length === 1) {
     const i = INKS.findIndex(c => c.c === sel[0].col);
@@ -2145,6 +2248,7 @@ on(fileIn, 'change', async () => {
     pushHistory();
     S.els = d.els;
     for (const el of S.els) { el.lines = null; el.pts?.forEach(p => (p.p ??= 1)); }
+    S.sel.clear();
     toNow(); syncDoc(); fitView();
     toast(`Opened ${S.els.length} marks`);
   } catch (_) { toast('That file is not a board'); }
@@ -2155,9 +2259,10 @@ function importJSON() { fileIn.click(); }
 function clearBoard() {
   if (!S.els.length) return;
   pushHistory();
+  S.sel.clear();
   if (!motion) { S.els = []; syncDoc(); mark(); return; }
   S.wipe = { t0: nowT(), dur: 360 };
-  setTimeout(() => { S.els = []; S.wipe = null; syncDoc(); mark(); }, 380);
+  setTimeout(() => { S.els = []; S.sel.clear(); S.wipe = null; syncDoc(); mark(); }, 380);
 }
 
 /* --------------------------------- sound --------------------------------- */
@@ -2395,11 +2500,17 @@ function frame(now) {
   if (S.ping) { if (now - S.ping.t0 >= S.ping.dur) S.ping = null; else mark(); }
   if (S.wipe) { if (now - S.wipe.t0 >= S.wipe.dur) { S.wipe = null; S.els = []; syncDoc(); } else mark(); }
   if (S.playing) {
-    S.ph += dt;
+    S.ph += dt * (S.rate || 1);
     if (S.ph >= S.t1) { S.ph = Infinity; S.playing = false; updatePastUI(); }
     mark();
   }
-  if (dirty) { dirty = false; paint(); drawReel(); }
+  if (dirty) {
+    dirty = false;
+    // One bad frame must never take the whole board down with it: a frozen
+    // canvas looks exactly like lost work.
+    try { paint(); drawReel(); }
+    catch (err) { console.error('palimpsest: frame failed', err); }
+  }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
