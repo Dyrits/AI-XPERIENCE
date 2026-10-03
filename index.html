@@ -207,6 +207,14 @@
   @keyframes rwbob { 50% { transform: scale(1.06, .94); } }
   @keyframes rwtape { to { transform: translateX(64px); } }
   @keyframes rwblink { 50% { opacity: .3; } }
+  .art-beatloom { background: radial-gradient(ellipse at 50% 46%, #241a22, #0a0610 75%); }
+  .art-beatloom svg { width: 100%; height: 100%; }
+  .art-beatloom .bl-arc { animation: blglow 4.4s ease-in-out infinite; }
+  .art-beatloom .bl-arc.a2 { animation-delay: .6s; }
+  .art-beatloom .bl-arc.a3 { animation-delay: 1.2s; }
+  .art-beatloom .bl-shuttle { transform-origin: 320px 200px; animation: blorbit 7s linear infinite; }
+  @keyframes blglow { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+  @keyframes blorbit { to { transform: rotate(360deg); } }
   .art-needle { background: #080a0f; }
   .art-needle svg { width: 100%; height: 100%; }
   .art-needle .nd-hit { animation: ndpulse2 3.4s ease-in-out infinite; }
@@ -418,7 +426,7 @@
     <div class="meta">
       <span>Claude + Codex + GLM + DeepSeek</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">26 pieces</span>
+      <span class="live">30 pieces</span>
     </div>
   </header>
 
@@ -1824,10 +1832,52 @@
         <a class="open mono" href="pages/rewind.html" target="_blank" rel="noopener"><span>Play in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+    <article class="card" data-src="pages/beatloom.html" style="--accent: #ffb26a; animation-delay: 5.55s;">
+      <div class="preview">
+        <div class="art art-beatloom">
+          <svg viewBox="0 0 640 400" aria-hidden="true">
+            <g stroke="#fff" stroke-opacity=".06">
+              <line x1="320" y1="90" x2="320" y2="310"/>
+              <line x1="210" y1="140" x2="430" y2="260"/>
+              <line x1="210" y1="260" x2="430" y2="140"/>
+              <line x1="245" y1="106" x2="395" y2="294"/>
+              <line x1="395" y1="106" x2="245" y2="294"/>
+            </g>
+            <g fill="none" stroke-linecap="round">
+              <circle class="bl-arc a1" cx="320" cy="200" r="34" stroke="#ff6a5c" stroke-width="5" stroke-dasharray="20 194"/>
+              <circle class="bl-arc a2" cx="320" cy="200" r="48" stroke="#ffb26a" stroke-width="5" stroke-dasharray="18 284" transform="rotate(70 320 200)"/>
+              <circle class="bl-arc a3" cx="320" cy="200" r="62" stroke="#ffe39a" stroke-width="4" stroke-dasharray="14 374" transform="rotate(140 320 200)"/>
+              <circle class="bl-arc a1" cx="320" cy="200" r="76" stroke="#6ad9cf" stroke-width="5" stroke-dasharray="20 458" transform="rotate(210 320 200)"/>
+              <circle class="bl-arc a2" cx="320" cy="200" r="90" stroke="#8f7bff" stroke-width="5" stroke-dasharray="18 548" transform="rotate(300 320 200)"/>
+              <circle class="bl-arc a3" cx="320" cy="200" r="104" stroke="#ff9fd0" stroke-width="4" stroke-dasharray="14 640" transform="rotate(20 320 200)"/>
+            </g>
+            <g stroke-width="1" stroke-opacity=".18">
+              <line x1="337" y1="166" x2="400" y2="236" stroke="#ffb26a"/>
+              <line x1="303" y1="166" x2="245" y2="130" stroke="#6ad9cf"/>
+              <line x1="320" y1="234" x2="368" y2="296" stroke="#ff9fd0"/>
+            </g>
+            <circle class="bl-shuttle" cx="320" cy="96" r="4" fill="#fff6e0"/>
+          </svg>
+        </div>
+        <span class="tag mono">DOM + Canvas 2D · Generative sequencer</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Beatloom</h2><span class="num mono">Nº 31</span></div>
+        <p>A step sequencer that weaves its own portrait. Six synthesized instruments sit on six concentric rings; toggle steps to build a loop in one pentatonic key, and every beat that fires draws a glowing thread onto a tapestry that never clears. Kick and snare hits become hubs that pull a faint chord toward whatever else just played, so a plain rhythm slowly grows into a crossing, spirograph-like web that keeps building the longer the loom runs.</p>
+        <div class="chips mono"><span>Step sequencer</span><span>Generative tapestry</span><span>Web Audio</span><span>PNG export</span><span>Local saves</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Claude Sonnet 5.5</dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>36 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/beatloom.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Built with Claude Opus 5.5, Claude Sonnet 5.5, GPT-6 models, GPT-6 Astra, GLM-5.3, DeepSeek V4 Pro and Space Bunny.</span>
+    <span class="note">Built with Claude Opus 5.5, Claude Sonnet 5.5, Claude Sonnet 5, GPT-6 models, GPT-6 Astra, GLM-5.3, DeepSeek V4 Pro and Space Bunny.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>

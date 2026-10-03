@@ -42,6 +42,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Needle](https://dyrits.github.io/AI-XPERIENCE/pages/needle.html) | DOM + Canvas 2D, regex workbench | Space Bunny | 1 | 73 KB |
 | [Palimpsest](https://dyrits.github.io/AI-XPERIENCE/pages/palimpsest.html) | Canvas 2D, ink recognition + time scrubbing | Space Bunny | 1 + 2 | 96 KB |
 | [Rewind](https://dyrits.github.io/AI-XPERIENCE/pages/rewind.html) | DOM + SVG, deckbuilder roguelike | Claude Opus 5.5 | 1 | 130 KB |
+| [Beatloom](https://dyrits.github.io/AI-XPERIENCE/pages/beatloom.html) | DOM + Canvas 2D, generative rhythm loom | Claude Sonnet 5 | 1 | 36 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -103,6 +104,8 @@ Includes optional synthesized sound, pause, timeline scrubbing, keyboard frame s
 
 **Rewind.** A Slay the Spire-style deckbuilder where time is a resource. Every turn is saved as a frame on a film strip, and Sand, gained one grain a turn, pays for the time tricks. Rewinding the turn goes back to the start of the previous one: your HP, hand, piles, tonics and the enemies all return, enemies repeat what they did unless something changes, and a note shows what they did in the erased timeline. Cards sent into the Time Capsule beforehand arrive in the past as free Ghosts, and every rewind slips a Paradox into the draw pile. Forty cards rewind just yourself to undo damage, Unmake an enemy to strip the Strength and Block it built or erase a minion summoned later, step plans back, freeze foes in Stasis, echo cards into the next turn and set delayed bombs. Two acts on a branching map of fights, elites, shops, events, nap spots and treasure, with cartoon blobs drawn in SVG: cuckoos that wind up a big BONG, a fog blob whose plans are hidden until you rewind, a pickpocket, a knight that turns its own HP back, and Old Pip, an older you, as the final boss. Relics, tonics, synthesized sound and music, keyboard controls, local saves and reduced-motion support.
 
+**Beatloom.** A step sequencer that weaves its own portrait. Six synthesized instruments — kick, snare, hat, pluck, bass and chime — sit on six concentric rings around the loom's centre; toggle steps to build a sixteen-step loop, all tuned to one pentatonic key so nothing you play can sound wrong. Every beat that fires draws a glowing thread onto a tapestry that never clears, and kick and snare hits act as hubs that pull a faint chord toward whatever else just played, so a plain rhythm slowly grows into a crossing, spirograph-like web. Every full loop pushes the whole ring band one notch further from the centre, like a rug built up row by row, until it settles into a mandala that keeps quietly brightening the longer the loom runs. Includes swing, four dye palettes, musically-weighted randomize, a PNG export of the tapestry, per-track mute, local saves, optional synthesized sound, keyboard shortcuts and reduced-motion support.
+
 ## Correction rounds
 
 Most pieces needed none. The ones that did:
@@ -123,6 +126,7 @@ AI-XPERIENCE/
 ├── README.md
 └── pages/
     ├── abyss.html
+    ├── beatloom.html
     ├── carbon-copy.html
     ├── drizzle.html
     ├── echo-ward.html
