@@ -1,0 +1,2016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#04060b">
+<title>Living Atlas — a procedural world</title>
+<style>
+  :root {
+    --bg: #04060b;
+    --panel: rgba(12, 17, 28, .58);
+    --line: rgba(255, 255, 255, .10);
+    --ink: #e9eff6;
+    --dim: rgba(233, 239, 246, .56);
+    --faint: rgba(233, 239, 246, .16);
+    --acc: #ffc47d;
+    --acc-soft: rgba(255, 196, 125, .16);
+    --ease: cubic-bezier(.16, 1, .3, 1);
+    --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink); overflow: hidden;
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased; user-select: none; touch-action: none;
+  }
+  .mono { font-family: var(--mono); }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #vignette {
+    position: fixed; inset: 0; pointer-events: none; z-index: 2;
+    background: radial-gradient(125% 95% at 50% 44%, transparent 58%, rgba(0, 0, 0, .5) 100%);
+  }
+
+  /* ---------- HUD ---------- */
+  .hud { position: fixed; z-index: 5; opacity: 0; transform: translateY(8px); transition: opacity 1.1s var(--ease), transform 1.1s var(--ease); }
+  .hud.on { opacity: 1; transform: none; }
+
+  .brand { left: 1.6rem; top: 1.4rem; pointer-events: none; }
+  .brand h1 { font-size: 1.05rem; font-weight: 300; letter-spacing: .5em; text-transform: uppercase; text-indent: .5em; white-space: nowrap; }
+  .brand p { margin-top: .45rem; font-size: .6rem; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); }
+  .brand p b { color: var(--acc); font-weight: 500; }
+
+  #data { right: 1.6rem; top: 1.4rem; text-align: right; pointer-events: none; }
+  #data .row { display: flex; justify-content: flex-end; gap: .9rem; align-items: baseline; margin-bottom: .42rem; }
+  #data .lbl { font-size: .55rem; letter-spacing: .24em; text-transform: uppercase; color: rgba(233, 239, 246, .68); }
+  #data .val { font-size: .78rem; color: var(--ink); font-variant-numeric: tabular-nums; min-width: 9.5ch; }
+  #data .val.acc { color: var(--acc); }
+
+  /* glass panels */
+  .glass {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+    backdrop-filter: blur(18px) saturate(1.25); -webkit-backdrop-filter: blur(18px) saturate(1.25);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
+  }
+
+  /* command dock */
+  #dock { left: 1.5rem; bottom: 1.5rem; width: 292px; padding: 1rem 1.05rem 1.1rem; }
+  #dock .sec { margin-bottom: .95rem; }
+  #dock .sec:last-child { margin-bottom: 0; }
+  #dock .lbl { font-size: .55rem; letter-spacing: .26em; text-transform: uppercase; color: var(--dim); margin-bottom: .5rem; display: flex; justify-content: space-between; }
+  #dock .lbl output { color: var(--acc); letter-spacing: .1em; }
+
+  .seedrow { display: flex; gap: .45rem; }
+  #seedInput {
+    flex: 1; min-width: 0; background: rgba(255, 255, 255, .045); border: 1px solid var(--line); border-radius: 9px;
+    color: var(--ink); font-family: var(--mono); font-size: .72rem; padding: .5rem .65rem; outline: none; transition: border-color .25s;
+  }
+  #seedInput:focus { border-color: var(--acc); }
+  .iconbtn {
+    width: 36px; flex: none; border-radius: 9px; border: 1px solid var(--line); background: rgba(255, 255, 255, .045);
+    color: var(--dim); cursor: pointer; font-size: .8rem; line-height: 1; display: grid; place-items: center;
+    transition: color .2s, border-color .2s, background .2s; font-family: var(--mono);
+  }
+  .iconbtn:hover { color: var(--ink); border-color: var(--faint); }
+  .iconbtn:active { transform: translateY(1px); }
+
+  .btnrow { display: flex; gap: .45rem; }
+  .btn {
+    flex: 1; padding: .55rem .3rem; border-radius: 9px; border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .04); color: var(--dim); font-size: .58rem; letter-spacing: .16em;
+    text-transform: uppercase; cursor: pointer; font-family: inherit; transition: all .22s; white-space: nowrap;
+  }
+  .btn:hover { color: var(--ink); border-color: var(--faint); background: rgba(255, 255, 255, .07); }
+  .btn.active { color: #0a0c12; background: var(--acc); border-color: var(--acc); font-weight: 600; }
+  .btn.touring { color: #0a0c12; background: var(--acc); border-color: var(--acc); font-weight: 600; }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 2px; background: var(--faint);
+    border-radius: 2px; outline: none; margin-top: .55rem; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%; background: var(--ink);
+    cursor: pointer; box-shadow: 0 0 0 4px var(--acc-soft);
+  }
+  input[type="range"]::-moz-range-thumb { width: 13px; height: 13px; border: 0; border-radius: 50%; background: var(--ink); cursor: pointer; }
+  input[type="range"]:focus-visible::-webkit-slider-thumb { background: var(--acc); }
+
+  /* minimap */
+  #mapWrap { right: 1.5rem; bottom: 1.5rem; padding: .65rem .7rem .55rem; }
+  #mapWrap .lbl { font-size: .53rem; letter-spacing: .26em; text-transform: uppercase; color: var(--dim); margin-bottom: .5rem; display: flex; justify-content: space-between; }
+  #mapWrap .lbl span:last-child { color: var(--acc); }
+  #map { display: block; width: 232px; height: 116px; border-radius: 7px; cursor: crosshair; border: 1px solid var(--line); }
+
+  /* field note */
+  #note {
+    right: 1.5rem; top: 50%; transform: translateY(-50%) translateX(24px); width: 316px; max-height: min(76vh, 620px);
+    overflow-y: auto; padding: 1.15rem 1.2rem 1.25rem; opacity: 0; pointer-events: none;
+    transition: opacity .5s var(--ease), transform .5s var(--ease);
+    scrollbar-width: thin; scrollbar-color: var(--faint) transparent;
+  }
+  #note.open { opacity: 1; transform: translateY(-50%); pointer-events: auto; }
+  #note::-webkit-scrollbar { width: 4px; } #note::-webkit-scrollbar-thumb { background: var(--faint); border-radius: 4px; }
+  #note .kind { font-size: .55rem; letter-spacing: .3em; text-transform: uppercase; color: var(--acc); margin-bottom: .55rem; display: flex; justify-content: space-between; align-items: center; }
+  #noteClose { background: none; border: 0; color: var(--dim); cursor: pointer; font-size: .95rem; padding: 0 .1rem; line-height: 1; font-family: var(--mono); }
+  #noteClose:hover { color: var(--ink); }
+  #noteName { font-size: 1.3rem; font-weight: 300; letter-spacing: .06em; margin-bottom: .2rem; }
+  #noteSub { font-size: .62rem; color: var(--dim); font-family: var(--mono); letter-spacing: .05em; margin-bottom: .95rem; }
+  #note .facts { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: .6rem 0; margin-bottom: .95rem; }
+  #note .facts .fr { display: flex; justify-content: space-between; font-size: .66rem; padding: .17rem 0; }
+  #note .facts .fr span:first-child { color: var(--dim); letter-spacing: .14em; text-transform: uppercase; font-size: .55rem; }
+  #note .facts .fr span:last-child { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  #note h3 { font-size: .55rem; letter-spacing: .26em; text-transform: uppercase; color: var(--dim); font-weight: 500; margin: .95rem 0 .45rem; }
+  #note p, #note li { font-size: .74rem; line-height: 1.65; color: rgba(233, 239, 246, .82); font-weight: 300; }
+  #note b { font-weight: 500; color: var(--ink); }
+  #note ul { list-style: none; }
+  #note li { margin-bottom: .5rem; padding-left: .9rem; position: relative; }
+  #note li::before { content: ""; position: absolute; left: 0; top: .55em; width: 5px; height: 5px; border-radius: 50%; background: var(--acc); opacity: .7; }
+  #note .bars { display: flex; gap: .8rem; margin-top: .7rem; }
+  #note .bar { flex: 1; }
+  #note .bar .t { font-size: .52rem; letter-spacing: .2em; text-transform: uppercase; color: var(--dim); display: flex; justify-content: space-between; margin-bottom: .3rem; }
+  #note .bar .rail { height: 2px; background: var(--faint); border-radius: 2px; position: relative; }
+  #note .bar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 2px; background: var(--acc); }
+  #note .bar.cool .fill { background: #7fd4e8; }
+
+  /* hint + toast */
+  #hint {
+    left: 50%; top: 1.5rem; transform: translateX(-50%); pointer-events: none; text-align: center;
+    font-size: .62rem; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); line-height: 2.1;
+    background: rgba(4, 6, 11, .45); padding: .45rem 1.1rem; border-radius: 99px;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); white-space: nowrap;
+    transition: opacity 1.4s ease; max-width: min(72vw, 760px); overflow: hidden; text-overflow: ellipsis;
+  }
+  #toast {
+    left: 50%; bottom: 5.4rem; transform: translateX(-50%) translateY(6px); pointer-events: none;
+    font-size: .66rem; letter-spacing: .14em; color: var(--ink); background: var(--panel); border: 1px solid var(--line);
+    padding: .55rem 1.1rem; border-radius: 99px; opacity: 0; transition: opacity .4s var(--ease), transform .4s var(--ease);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%); }
+
+  /* intro */
+  #intro {
+    position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; pointer-events: none;
+    background: radial-gradient(120% 100% at 50% 40%, rgba(4, 6, 11, .25), rgba(4, 6, 11, .85));
+  }
+  #intro .in { text-align: center; transition: opacity 1.6s ease; }
+  #intro h1 { font-size: clamp(1.4rem, 4.5vw, 2.3rem); font-weight: 200; letter-spacing: .62em; text-indent: .62em; text-transform: uppercase; }
+  #intro p { margin-top: 1.1rem; font-size: .6rem; letter-spacing: .3em; text-transform: uppercase; color: var(--dim); }
+  #intro p b { color: var(--acc); font-weight: 500; }
+  #intro.gone { opacity: 0; }
+
+  #fail {
+    position: fixed; inset: 0; z-index: 20; display: none; place-items: center; background: var(--bg); text-align: center; padding: 2rem;
+  }
+  #fail.show { display: grid; }
+  #fail h2 { font-weight: 300; letter-spacing: .3em; text-transform: uppercase; font-size: 1rem; margin-bottom: .8rem; }
+  #fail p { color: var(--dim); font-size: .8rem; line-height: 1.7; }
+
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 1px solid var(--acc); outline-offset: 2px; }
+
+  @media (max-width: 760px) {
+    .brand { left: 1rem; top: 1rem; }
+    .brand h1 { font-size: .85rem; }
+    #data { right: 1rem; top: 1rem; }
+    #data .row { margin-bottom: .3rem; }
+    #data .val { font-size: .68rem; min-width: 8ch; }
+    #dock { left: .8rem; right: .8rem; bottom: .8rem; width: auto; padding: .85rem .9rem .9rem; }
+    #mapWrap { right: .8rem; bottom: auto; top: 6.9rem; padding: .5rem .55rem .45rem; }
+    #map { width: 132px; height: 66px; }
+    #note { left: .8rem; right: .8rem; width: auto; top: auto; bottom: 11.6rem; transform: translateY(14px); max-height: 44vh; }
+    #note.open { transform: none; }
+    #hint { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hud, #note, #toast { transition-duration: .25s; }
+    #intro .in { transition-duration: .5s; }
+  }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="vignette"></div>
+
+<div class="hud glass" id="mapWrap">
+  <div class="lbl"><span>Survey chart</span><span>click to fly</span></div>
+  <canvas id="map" width="232" height="116" title="Equirectangular chart — click to fly there"></canvas>
+</div>
+
+<div class="hud brand">
+  <h1>Living Atlas</h1>
+  <p id="seedLabel">seed · <b>meridian</b></p>
+</div>
+
+<div class="hud" id="data">
+  <div class="row"><span class="lbl">Altitude</span><span class="val mono" id="altV">—</span></div>
+  <div class="row"><span class="lbl">Local sun time</span><span class="val mono" id="timeV">—</span></div>
+  <div class="row"><span class="lbl">Season</span><span class="val mono" id="seasonV">—</span></div>
+  <div class="row"><span class="lbl">Sky</span><span class="val mono acc" id="wxV">—</span></div>
+</div>
+
+<div class="hud glass" id="dock">
+  <div class="sec">
+    <div class="lbl"><span>World seed</span></div>
+    <div class="seedrow">
+      <input id="seedInput" spellcheck="false" autocomplete="off" maxlength="24" title="World seed — every seed is a different world">
+      <button class="iconbtn" id="diceBtn" title="New random world">⚄</button>
+      <button class="iconbtn" id="linkBtn" title="Copy a link to this world">⧉</button>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="btnrow">
+      <button class="btn" id="tourBtn" title="Cinematic tour — any input takes over">Tour</button>
+      <button class="btn" id="timeBtn" title="Flow of time">Time 1×</button>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="lbl"><span>Deep time</span><output id="epochV">now</output></div>
+    <input type="range" id="epochRange" min="-100" max="100" value="0" step="1" title="Scrub ±180 million years — tectonic drift and erosion">
+  </div>
+  <div class="sec">
+    <div class="btnrow">
+      <button class="btn" id="soundBtn" title="Ambient sound">Sound</button>
+      <button class="btn" id="musicBtn" title="Generative music">Music</button>
+    </div>
+  </div>
+</div>
+
+<aside class="hud glass" id="note" aria-live="polite">
+  <div class="kind"><span>Field note</span><button id="noteClose" title="Close">✕</button></div>
+  <h2 id="noteName">—</h2>
+  <p id="noteSub">—</p>
+  <div class="facts">
+    <div class="fr"><span>Position</span><span id="notePos">—</span></div>
+    <div class="fr"><span>Elevation</span><span id="noteElev">—</span></div>
+    <div class="fr"><span>Biome</span><span id="noteBiome">—</span></div>
+    <div class="fr"><span>Settlement</span><span id="noteCity">—</span></div>
+  </div>
+  <h3>Climate</h3>
+  <p id="noteClim">—</p>
+  <div class="bars">
+    <div class="bar cool"><div class="t"><span>Warmth</span><span id="noteT">—</span></div><div class="rail"><div class="fill" id="noteTB"></div></div></div>
+    <div class="bar"><div class="t"><span>Moisture</span><span id="noteM">—</span></div><div class="rail"><div class="fill" id="noteMB"></div></div></div>
+  </div>
+  <h3>Wildlife</h3>
+  <ul id="noteWild"></ul>
+  <h3>History</h3>
+  <p id="noteHist"></p>
+</aside>
+
+<div class="hud" id="hint">drag to orbit · scroll to descend · drag the sun to move day and night · click the ground for field notes</div>
+<div id="toast" class="mono"></div>
+
+<div id="intro"><div class="in"><h1>Living Atlas</h1><p>a procedural world · seed <b id="introSeed">meridian</b></p></div></div>
+<div id="fail"><div><h2>Living Atlas</h2><p id="failMsg">This page needs WebGL to draw its planet.<br>Please open it in a recent browser with hardware acceleration enabled.</p></div></div>
+
+<script>
+(() => {
+"use strict";
+addEventListener("error", e => {
+  const f = document.getElementById("fail"), m = document.getElementById("failMsg");
+  if (f && m && !f.classList.contains("show")) {
+    m.innerHTML = "Something went wrong while drawing the world.<br>" + (e.message || e.error || "Unknown error");
+    f.classList.add("show");
+  }
+});
+/* ============================================================
+   LIVING ATLAS — a procedural planet, from deep space to flight
+   One file. No libraries. WebGL + Web Audio + lots of noise.
+   The GPU noise and the JS noise are the same function, kept
+   bit-exact by design (every intermediate stays under 2^24), so
+   the chart, the weather and the field notes agree with the sky.
+   ============================================================ */
+
+const $ = id => document.getElementById(id);
+const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
+const lerp = (a, b, t) => a + (b - a) * t;
+const fract = x => x - Math.floor(x);
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const TAU = Math.PI * 2;
+const RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const IS_TOUCH = matchMedia("(pointer: coarse)").matches;
+
+let toastT = 0;
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2400);
+}
+
+/* ---------------- RNG ---------------- */
+function xmur3(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return () => {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return (h ^= h >>> 16) >>> 0;
+  };
+}
+function mulberry32(a) {
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------------- shared noise (mirrors the shader exactly) ---------------- */
+function hash3(x, y, z) {
+  let a = fract(x * 0.3183099 + 0.71), b = fract(y * 0.3183099 + 0.113), c = fract(z * 0.3183099 + 0.419);
+  a *= 17; b *= 17; c *= 17;
+  return fract(a * b * c * (a + b + c));
+}
+function vnoise(x, y, z) {
+  const ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
+  const fx = x - ix, fy = y - iy, fz = z - iz;
+  const ux = fx * fx * fx * (fx * (fx * 6 - 15) + 10);
+  const uy = fy * fy * fy * (fy * (fy * 6 - 15) + 10);
+  const uz = fz * fz * fz * (fz * (fz * 6 - 15) + 10);
+  const n000 = hash3(ix, iy, iz),         n100 = hash3(ix + 1, iy, iz);
+  const n010 = hash3(ix, iy + 1, iz),     n110 = hash3(ix + 1, iy + 1, iz);
+  const n001 = hash3(ix, iy, iz + 1),     n101 = hash3(ix + 1, iy, iz + 1);
+  const n011 = hash3(ix, iy + 1, iz + 1), n111 = hash3(ix + 1, iy + 1, iz + 1);
+  const nx00 = n000 + (n100 - n000) * ux, nx10 = n010 + (n110 - n010) * ux;
+  const nx01 = n001 + (n101 - n001) * ux, nx11 = n011 + (n111 - n011) * ux;
+  const nxy0 = nx00 + (nx10 - nx00) * uy, nxy1 = nx01 + (nx11 - nx01) * uy;
+  return nxy0 + (nxy1 - nxy0) * uz;
+}
+const n3 = (x, y, z) => vnoise(x, y, z) * 2 - 1;
+// orthonormal octave rotation (matches rotO in the shader)
+function rotO(x, y, z) {
+  return [0.36 * x - 0.8 * y + 0.48 * z, 0.48 * x + 0.6 * y + 0.64 * z, -0.8 * x + 0.6 * z];
+}
+function fbmN(x, y, z, oct) {
+  let s = 0, a = 0.5;
+  for (let i = 0; i < oct; i++) {
+    s += a * n3(x, y, z);
+    a *= 0.5;
+    const r = rotO(x * 2.07, y * 2.07, z * 2.07);
+    x = r[0] + 0.31; y = r[1] + 0.71; z = r[2] + 0.53;
+  }
+  return s;
+}
+function ridgeN(x, y, z, oct) {
+  let s = 0, a = 0.5;
+  for (let i = 0; i < oct; i++) {
+    let n = 1 - Math.abs(n3(x, y, z)); n *= n;
+    s += a * n; a *= 0.52;
+    const r = rotO(x * 2.15, y * 2.15, z * 2.15);
+    x = r[0] + 0.47; y = r[1] + 0.21; z = r[2] + 0.63;
+  }
+  return s;
+}
+function rotY3(x, y, z, a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return [c * x + s * z, y, -s * x + c * z];
+}
+function rotAxis(v, a, ang) { // Rodrigues, a normalized
+  const c = Math.cos(ang), s = Math.sin(ang);
+  const cr = [a[1] * v[2] - a[2] * v[1], a[2] * v[0] - a[0] * v[2], a[0] * v[1] - a[1] * v[0]];
+  const d = a[0] * v[0] + a[1] * v[1] + a[2] * v[2];
+  return [v[0] * c + cr[0] * s + a[0] * d * (1 - c),
+          v[1] * c + cr[1] * s + a[1] * d * (1 - c),
+          v[2] * c + cr[2] * s + a[2] * d * (1 - c)];
+}
+
+/* ---------------- world parameters from seed ---------------- */
+const DEFAULT_SEED = "meridian";
+let seedStr = DEFAULT_SEED;
+let W = null;
+
+function makeWorld(seed) {
+  const g = xmur3(seed);
+  const r = mulberry32(g());
+  const off = () => [(g() % 2000) / 10 - 100, (g() % 2000) / 10 - 100, (g() % 2000) / 10 - 100];
+  const w = {
+    seed,
+    o1: off(), o2: off(), o3: off(), o4: off(), o5: off(),
+    sea: 0.04 + r() * 0.12,
+    declMax: 0.24 + r() * 0.18,
+    cloud: 0.40 + r() * 0.22,
+    wind: 0.0035 + r() * 0.005,
+    aurora: 0.55 + r() * 0.9,
+    city: 0.35 + r() * 0.65,
+    stormy: 0.35 + r() * 0.65,
+    tint: [0.93 + r() * 0.12, 0.93 + r() * 0.12, 0.93 + r() * 0.12],
+    moonDist: 2.7 + r() * 1.0,
+    moonR: 0.10 + r() * 0.06,
+    moonSpeed: (0.008 + r() * 0.02) * (r() < 0.5 ? 1 : -1),
+    moonTilt: r() * 0.5,
+    moonPhase: r() * TAU,
+    culture: Math.floor(r() * 4),
+    root: [220, 196, 246.94, 174.61][Math.floor(r() * 4)],
+    easter: seed.toLowerCase() === "aurelia"
+  };
+  w.megaN = [Math.sin(w.moonTilt + 1.9), Math.cos(w.moonTilt + 1.9) * 0.3, Math.cos(w.moonTilt + 1.9)].map(v => v); // tilt basis, normalized below
+  const mn = Math.hypot(w.megaN[0], w.megaN[1], w.megaN[2]);
+  w.megaN = [w.megaN[0] / mn, w.megaN[1] / mn, w.megaN[2] / mn];
+  return w;
+}
+
+/* --------- JS terrain mirrors of the shader (same math, same order) --------- */
+function plateDriftJS(l) { // l = [x,y,z] local unit dir
+  const d = rotY3(l[0], l[1], l[2], state.drift * n3(l[0] * 1.35 + W.o3[0], l[1] * 1.35 + W.o3[1], l[2] * 1.35 + W.o3[2]) * 0.9);
+  return d;
+}
+function elevJS(l) {
+  const d = plateDriftJS(l);
+  const qx = d[0] * 1.9 + W.o1[0], qy = d[1] * 1.9 + W.o1[1], qz = d[2] * 1.9 + W.o1[2];
+  const wv = n3(qx * 0.9 + W.o2[0], qy * 0.9 + W.o2[1], qz * 0.9 + W.o2[2]) * 0.55 +
+             n3(qx * 1.8 + W.o4[0], qy * 1.8 + W.o4[1], qz * 1.8 + W.o4[2]) * 0.3;
+  const qxq = qx + wv * 0.8, qyq = qy + wv * 0.8, qzq = qz + wv * 0.8;
+  let e = fbmN(qxq, qyq, qzq, 5);
+  const mmr = n3(qx * 0.85 + W.o5[0], qy * 0.85 + W.o5[1], qz * 0.85 + W.o5[2]);
+  const mm = smooth(0.02, 0.46, mmr);
+  const rid = ridgeN(qxq * 2.1 + W.o2[0], qyq * 2.1 + W.o2[1], qzq * 2.1 + W.o2[2], 4);
+  e += mm * rid * 0.42 * (1 - 0.5 * state.erode);
+  e += (1 - mm) * fbmN(qx * 3.1 + W.o4[0], qy * 3.1 + W.o4[1], qz * 3.1 + W.o4[2], 2) * 0.07 * (0.35 + 0.9 * state.erode);
+  return e;
+}
+function moistJS(l, e) {
+  const p = plateDriftJS(l);
+  let m = fbmN(p[0] * 2.2 + W.o4[0], p[1] * 2.2 + W.o4[1], p[2] * 2.2 + W.o4[2], 3) * 0.5 + 0.5;
+  const y = p[1];
+  m += 0.16 * Math.exp(-y * y * 22);
+  m -= 0.13 * Math.exp(-(y - 0.42) * (y - 0.42) * 40);
+  m -= 0.13 * Math.exp(-(y + 0.42) * (y + 0.42) * 40);
+  const land = e - W.sea;
+  m += smooth(0.10, 0.0, land) * 0.22;
+  return clamp(m, 0, 1);
+}
+function tempJS(l, e) {
+  let t = 1 - Math.abs(l[1]) * 1.28;
+  t += state.decl * l[1] * 0.55;
+  t -= Math.max(e - W.sea, 0) * 1.9;
+  return t;
+}
+function riverJS(l) {
+  const p = plateDriftJS(l);
+  return Math.abs(n3(p[0] * 3.4 + W.o5[0], p[1] * 3.4 + W.o5[1], p[2] * 3.4 + W.o5[2]) +
+                  n3(p[0] * 1.7 + W.o2[0], p[1] * 1.7 + W.o2[1], p[2] * 1.7 + W.o2[2]) * 0.5);
+}
+function cityJS(l, e) {
+  const p = plateDriftJS(l);
+  const c = n3(p[0] * 7 + W.o5[0], p[1] * 7 + W.o5[1], p[2] * 7 + W.o5[2]);
+  const cs = smooth(0.28, 0.62, c);
+  const land = e - W.sea;
+  return cs * smooth(0.14, 0.02, land) * (e >= W.sea ? 1 : 0) * W.city;
+}
+function cloudDensJS(l, tim) {
+  let px = l[0], py = l[1], pz = l[2];
+  const dr = rotY3(px, py, pz, -W.wind * tim);
+  px = dr[0]; py = dr[1]; pz = dr[2];
+  for (let i = 0; i < storms.length && i < 4; i++) {
+    const s = storms[i];
+    if (s.i > 0.002) {
+      const dc = clamp(px * s.x + py * s.y + pz * s.z, -1, 1);
+      const ang = Math.acos(dc);
+      const infl = s.i * Math.exp(-ang * ang * 26);
+      const rot = rotAxis([px, py, pz], [s.x, s.y, s.z], infl * 1.5);
+      px = rot[0]; py = rot[1]; pz = rot[2];
+    }
+  }
+  const wv = n3(px * 2.2 + W.o2[0], py * 2.2 + W.o2[1], pz * 2.2 + W.o2[2]) * 0.55 +
+             n3(px * 3.3 + W.o4[0], py * 3.3 + W.o4[1], pz * 3.3 + W.o4[2]) * 0.3;
+  let d = fbmN(px * 2.6 + wv, py * 2.6 + wv, pz * 2.6 + wv, 4);
+  d = d * 0.5 + 0.5;
+  let dens = smooth(W.cloud, W.cloud + 0.26, d);
+  for (let i = 0; i < storms.length && i < 4; i++) {
+    const s = storms[i];
+    if (s.i > 0.002) {
+      const dc = clamp(l[0] * s.x + l[1] * s.y + l[2] * s.z, -1, 1);
+      const a = Math.acos(dc);
+      dens += s.i * 0.85 * Math.exp(-a * a * 30);
+    }
+  }
+  return clamp(dens, 0, 1.2);
+}
+
+/* ---------------- WebGL ---------------- */
+const canvas = $("gl");
+const gl = canvas.getContext("webgl", { antialias: false, alpha: false, powerPreference: "high-performance" })
+        || canvas.getContext("experimental-webgl");
+if (!gl) { $("fail").classList.add("show"); return; }
+
+const VERT = "attribute vec2 aP; void main(){ gl_Position = vec4(aP, 0.0, 1.0); }";
+
+const FRAG = `
+precision highp float;
+
+uniform vec2  uRes;
+uniform float uTime, uIntro, uExpo, uGrain, uTwinkle;
+uniform vec3  uCamPos, uSun;
+uniform mat3  uCam;
+uniform vec2  uProj;
+uniform float uSpin, uDrift, uErode, uSea, uCloud, uWind, uCity, uDecl, uAurora, uRain;
+uniform vec3  uO1, uO2, uO3, uO4, uO5, uTint;
+uniform vec4  uStorm[4];
+uniform vec4  uLight;
+uniform vec3  uMoonPos, uMegaN;
+uniform float uMoonR, uRing, uMega;
+uniform vec2  uDetail;
+
+const float PI = 3.14159265;
+const float RA = 1.046;    // top of atmosphere
+const float RC = 1.0085;   // cloud shell
+const vec3  SUNCOL = vec3(1.0, 0.955, 0.885);
+
+/* ---- noise: value noise with a bounded hash (bit-stable) ---- */
+float hash3(vec3 c){
+  c = fract(c * 0.3183099 + vec3(0.71, 0.113, 0.419));
+  c *= 17.0;
+  return fract(c.x * c.y * c.z * (c.x + c.y + c.z));
+}
+float vnoise(vec3 p){
+  vec3 i = floor(p);
+  vec3 f = p - i;
+  vec3 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+  float n000 = hash3(i);
+  float n100 = hash3(i + vec3(1.0, 0.0, 0.0));
+  float n010 = hash3(i + vec3(0.0, 1.0, 0.0));
+  float n110 = hash3(i + vec3(1.0, 1.0, 0.0));
+  float n001 = hash3(i + vec3(0.0, 0.0, 1.0));
+  float n101 = hash3(i + vec3(1.0, 0.0, 1.0));
+  float n011 = hash3(i + vec3(0.0, 1.0, 1.0));
+  float n111 = hash3(i + vec3(1.0, 1.0, 1.0));
+  return mix(mix(mix(n000, n100, u.x), mix(n010, n110, u.x), u.y),
+             mix(mix(n001, n101, u.x), mix(n011, n111, u.x), u.y), u.z);
+}
+float n3(vec3 p){ return vnoise(p) * 2.0 - 1.0; }
+vec3 rotO(vec3 p){
+  return vec3(0.36 * p.x - 0.8 * p.y + 0.48 * p.z,
+              0.48 * p.x + 0.6 * p.y + 0.64 * p.z,
+             -0.8 * p.x + 0.6 * p.z);
+}
+float fbm2(vec3 p){ float s = 0.5 * n3(p); p = rotO(p * 2.07) + vec3(0.31, 0.71, 0.53); s += 0.25 * n3(p); return s; }
+float fbm3(vec3 p){ float s = 0.5 * n3(p); p = rotO(p * 2.07) + vec3(0.31, 0.71, 0.53); s += 0.25 * n3(p); p = rotO(p * 2.07) + vec3(0.31, 0.71, 0.53); s += 0.125 * n3(p); return s; }
+float fbm4(vec3 p){ float s = 0.5 * n3(p); p = rotO(p * 2.07) + vec3(0.31, 0.71, 0.53); s += 0.25 * n3(p); p = rotO(p * 2.07) + vec3(0.31, 0.71, 0.53); s += 0.125 * n3(p); p = rotO(p * 2.07) + vec3(0.31, 0.71, 0.53); s += 0.0625 * n3(p); return s; }
+float fbm5(vec3 p){ float s = 0.5 * n3(p); p = rotO(p * 2.07) + vec3(0.31, 0.71, 0.53); s += 0.25 * n3(p); p = rotO(p * 2.07) + vec3(0.31, 0.71, 0.53); s += 0.125 * n3(p); p = rotO(p * 2.07) + vec3(0.31, 0.71, 0.53); s += 0.0625 * n3(p); p = rotO(p * 2.07) + vec3(0.31, 0.71, 0.53); s += 0.03125 * n3(p); return s; }
+float ridge4(vec3 p){
+  float s = 0.0, a = 0.5;
+  for (int i = 0; i < 4; i++) {
+    float n = 1.0 - abs(n3(p)); n *= n;
+    s += a * n; a *= 0.52;
+    p = rotO(p * 2.15) + vec3(0.47, 0.21, 0.63);
+  }
+  return s;
+}
+vec3 rotY(vec3 p, float a){ float c = cos(a), s = sin(a); return vec3(c * p.x + s * p.z, p.y, -s * p.x + c * p.z); }
+vec3 rotAxis(vec3 p, vec3 a, float ang){
+  float c = cos(ang), s = sin(ang);
+  return p * c + cross(a, p) * s + a * dot(a, p) * (1.0 - c);
+}
+
+/* ---- terrain (world mirrors these exactly) ---- */
+vec3 plateDrift(vec3 l){ return rotY(l, uDrift * n3(l * 1.35 + uO3) * 0.9); }
+float elevL(vec3 l){
+  vec3 d = plateDrift(l);
+  vec3 q = d * 1.9 + uO1;
+  float w = n3(q * 0.9 + uO2) * 0.55 + n3(q * 1.8 + uO4) * 0.3;
+  vec3 qq = q + vec3(w * 0.8);
+  float e = fbm5(qq);
+  float mm = smoothstep(0.02, 0.46, n3(q * 0.85 + uO5));
+  float rid = ridge4(qq * 2.1 + uO2);
+  e += mm * rid * 0.42 * (1.0 - 0.5 * uErode);
+  e += (1.0 - mm) * fbm2(q * 3.1 + uO4) * 0.07 * (0.35 + 0.9 * uErode);
+  return e;
+}
+float moistL(vec3 l, float e){
+  vec3 p = plateDrift(l);
+  float m = fbm3(p * 2.2 + uO4) * 0.5 + 0.5;
+  float y = p.y;
+  m += 0.16 * exp(-y * y * 22.0);
+  m -= 0.13 * exp(-(y - 0.42) * (y - 0.42) * 40.0);
+  m -= 0.13 * exp(-(y + 0.42) * (y + 0.42) * 40.0);
+  float land = e - uSea;
+  m += smoothstep(0.10, 0.0, land) * 0.22;
+  return clamp(m, 0.0, 1.0);
+}
+float tempL(vec3 l, float e){
+  float t = 1.0 - abs(l.y) * 1.28;
+  t += uDecl * l.y * 0.55;
+  t -= max(e - uSea, 0.0) * 1.9;
+  return t;
+}
+float riverV(vec3 l){
+  vec3 p = plateDrift(l);
+  return abs(n3(p * 3.4 + uO5) + n3(p * 1.7 + uO2) * 0.5);
+}
+float cityD(vec3 l, float e){
+  float c = n3(plateDrift(l) * 7.0 + uO5);
+  c = smoothstep(0.28, 0.62, c);
+  float land = e - uSea;
+  return c * smoothstep(0.14, 0.02, land) * step(uSea, e) * uCity;
+}
+
+/* ---- clouds ---- */
+float cloudDens(vec3 l, float tim){
+  vec3 p = rotY(l, -uWind * tim);
+  for (int i = 0; i < 4; i++) {
+    vec4 s = uStorm[i];
+    if (s.w > 0.002) {
+      float ang = acos(clamp(dot(p, s.xyz), -1.0, 1.0));
+      float infl = s.w * exp(-ang * ang * 26.0);
+      p = rotAxis(p, s.xyz, infl * 1.5);
+    }
+  }
+  float wv = n3(p * 2.2 + uO2) * 0.55 + n3(p * 3.3 + uO4) * 0.3;
+  float d = fbm4(p * 2.6 + vec3(wv));
+  d = d * 0.5 + 0.5;
+  float dens = smoothstep(uCloud, uCloud + 0.26, d);
+  for (int i = 0; i < 4; i++) {
+    vec4 s = uStorm[i];
+    if (s.w > 0.002) {
+      float a = acos(clamp(dot(l, s.xyz), -1.0, 1.0));
+      dens += s.w * 0.85 * exp(-a * a * 30.0);
+    }
+  }
+  return clamp(dens, 0.0, 1.2);
+}
+
+/* ---- geometry ---- */
+bool sph(vec3 ro, vec3 rd, float r, out float t){
+  float b = dot(ro, rd);
+  float c = dot(ro, ro) - r * r;
+  float h = b * b - c;
+  if (h < 0.0) return false;
+  h = sqrt(h);
+  t = -b - h;
+  return t > 0.0;
+}
+
+/* ---- background ---- */
+vec3 starsBG(vec3 rd){
+  vec3 col = vec3(0.0);
+  // faint nebula wash
+  float nb = vnoise(rd * 3.0 + uO2) * 0.6 + vnoise(rd * 7.0 + uO4) * 0.35;
+  float band = exp(-abs(dot(rd, normalize(vec3(0.3, 0.85, -0.4)))) * 2.4);
+  col += (vec3(0.28, 0.36, 0.62) * max(nb - 0.45, 0.0) * 2.0 + vec3(0.5, 0.3, 0.3) * max(0.35 - nb, 0.0)) * band * 0.16;
+  // two star layers
+  for (int i = 0; i < 2; i++) {
+    float fi = float(i);
+    vec3 p = rd * (170.0 + fi * 130.0);
+    vec3 id = floor(p);
+    vec3 f = p - id - 0.5;
+    float h = hash3(id + fi * 17.0);
+    if (h > 0.986) {
+      vec3 q = vec3(hash3(id + 3.1), hash3(id + 5.7), hash3(id + 9.3)) - 0.5;
+      float d = length(f - q * 0.7);
+      float b = exp(-d * d * 320.0);
+      float mag = (h - 0.986) * 72.0;
+      float tw = 1.0 - uTwinkle * 0.5 * (1.0 - cos(uTime * (1.0 + h * 7.0) + h * 60.0));
+      vec3 tintc = mix(vec3(0.75, 0.83, 1.0), vec3(1.0, 0.85, 0.7), hash3(id + 21.0));
+      col += tintc * b * mag * tw;
+    }
+  }
+  return col;
+}
+
+/* ---- surface shading ---- */
+vec3 shadePlanet(vec3 p, vec3 l, float dcam){
+  vec3 n = normalize(p);
+  vec3 sunL = rotY(uSun, -uSpin);
+  float e = elevL(l);
+  float land = (e - uSea) * 0.62;
+  float m = moistL(l, e);
+  float t = tempL(l, e);
+
+  vec3 albedo;
+  float spec = 0.0;
+  if (land < 0.0) {
+    float depth = smoothstep(0.0, 0.14, -land);
+    albedo = mix(vec3(0.086, 0.38, 0.42), vec3(0.016, 0.075, 0.16), depth);
+    spec = 1.0;
+  } else {
+    vec3 warm = mix(mix(vec3(0.76, 0.65, 0.42), vec3(0.62, 0.60, 0.33), smoothstep(0.18, 0.5, m)),
+                    mix(vec3(0.30, 0.42, 0.21), vec3(0.13, 0.30, 0.16), smoothstep(0.3, 0.72, m)),
+                    smoothstep(0.22, 0.5, m));
+    if (t > 0.72 && m > 0.62) warm = mix(warm, vec3(0.10, 0.26, 0.12), smoothstep(0.62, 0.8, m) * smoothstep(0.72, 0.9, t));
+    vec3 cold = mix(vec3(0.58, 0.60, 0.50), vec3(0.22, 0.34, 0.28), smoothstep(0.3, 0.6, m));
+    albedo = mix(cold, warm, smoothstep(0.22, 0.45, t));
+    albedo = mix(vec3(0.76, 0.70, 0.52), albedo, smoothstep(0.008, 0.028, land)); // beach
+    float rockA = smoothstep(0.22, 0.34, land);
+    albedo = mix(albedo, vec3(0.42, 0.39, 0.36), rockA);
+    float snowA = smoothstep(0.24, 0.13, t) * smoothstep(0.30, 0.42, land + smoothstep(0.18, 0.05, t) * 0.5);
+    albedo = mix(albedo, vec3(0.90, 0.93, 0.96), snowA);
+    // rivers
+    float rw = 0.05 * (0.55 + 0.45 * uErode);
+    float rv = riverV(l);
+    float riverM = smoothstep(rw, rw * 0.3, rv) * step(0.012, land) * step(land, 0.4) * step(0.3, m) * step(0.16, t);
+    albedo = mix(albedo, vec3(0.10, 0.24, 0.32), riverM * 0.85);
+  }
+  // sea ice and polar caps
+  float iceA = smoothstep(0.14, 0.02, t);
+  albedo = mix(albedo, vec3(0.88, 0.92, 0.97), iceA);
+  spec = mix(spec, 0.15, iceA);
+  albedo *= uTint;
+  // close-range surface grain
+  float micro = n3(l * uDetail.x + uO5);
+  albedo *= 1.0 - uDetail.y * 0.35 + uDetail.y * 0.7 * micro;
+
+  // bumped normal (land only, near only)
+  vec3 gn = n;
+  if (land > 0.0 && uDetail.y > 0.01) {
+    vec3 t1 = normalize(cross(n, abs(n.y) > 0.93 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0)));
+    vec3 t2 = cross(n, t1);
+    float eps = clamp((dcam - 1.0) * 0.012, 0.0004, 0.003);
+    float e1 = elevL(normalize(l + t1 * eps));
+    float e2 = elevL(normalize(l + t2 * eps));
+    gn = normalize(n + (t1 * (e1 - e) + t2 * (e2 - e)) * (70.0 * uDetail.y));
+  }
+
+  float ndl = dot(gn, sunL);
+  float day = smoothstep(-0.06, 0.14, ndl);
+  float diff = max(ndl, 0.0);
+  float shadow = 1.0;
+  if (diff > 0.005) shadow = 1.0 - 0.62 * cloudDens(normalize(l + sunL * 0.09), uTime);
+  vec3 light = SUNCOL * diff * shadow;
+  // terminator warmth
+  light = mix(light, light * vec3(1.25, 0.75, 0.5), smoothstep(0.32, 0.02, ndl) * day);
+  vec3 col = albedo * (light + vec3(0.012, 0.016, 0.026));
+
+  // ocean sun glint
+  if (spec > 0.5 && diff > 0.0) {
+    vec3 h = normalize(sunL - normalize(uCamPos));
+    float gl = pow(max(dot(gn, h), 0.0), 90.0) * 0.7;
+    gl *= 1.0 - 0.85 * cloudDens(normalize(l + sunL * 0.09), uTime);
+    col += SUNCOL * gl * spec;
+  }
+  // night side
+  float night = 1.0 - day;
+  if (night > 0.01) {
+    float city = cityD(l, e);
+    col += vec3(1.0, 0.72, 0.42) * city * night * (0.75 + 0.25 * hash3(l * 40.0));
+    float pole = smoothstep(0.66, 0.84, abs(l.y));
+    col += vec3(0.05, 0.16, 0.11) * pole * night * uAurora * 0.35;
+  }
+  // lightning on the ground
+  if (uLight.w > 0.002) {
+    float la = acos(clamp(dot(l, rotY(normalize(uLight.xyz), -uSpin)), -1.0, 1.0));
+    col += vec3(0.75, 0.82, 1.0) * uLight.w * (exp(-la * 22.0) * 0.5 + exp(-la * 5.0) * 0.06);
+  }
+  return col;
+}
+
+vec3 shadeMoon(vec3 p){
+  vec3 n = normalize(p - uMoonPos);
+  float cr = vnoise(n * 5.0 + uO2) * 0.5 + vnoise(n * 12.0 + uO4) * 0.3;
+  float mare = smoothstep(0.42, 0.75, vnoise(n * 2.4 + uO1));
+  vec3 albedo = mix(vec3(0.44, 0.42, 0.40), vec3(0.24, 0.24, 0.27), mare) * (0.8 + 0.4 * cr);
+  float d = max(dot(n, uSun), 0.0);
+  float soft = smoothstep(-0.08, 0.2, dot(n, uSun));
+  return albedo * (SUNCOL * d * soft + vec3(0.014, 0.016, 0.022));
+}
+
+/* ---- atmosphere with single scattering + aurora ---- */
+vec3 atmosphere(vec3 ro, vec3 rd, float tMax, float auroraMul){
+  float b = dot(ro, rd);
+  float c = dot(ro, ro) - RA * RA;
+  float h = b * b - c;
+  if (h < 0.0) return vec3(0.0);
+  h = sqrt(h);
+  float t0 = max(-b - h, 0.0);
+  float t1 = min(-b + h, tMax);
+  if (t1 <= t0) return vec3(0.0);
+  const int N = 10;
+  float dt = (t1 - t0) / float(N);
+  float mu = dot(rd, uSun);
+  float phR = 3.0 / (16.0 * PI) * (1.0 + mu * mu);
+  float g = 0.76;
+  float phM = 3.0 / (8.0 * PI) * ((1.0 - g * g) * (1.0 + mu * mu)) / ((2.0 + g * g) * pow(1.0 + g * g - 2.0 * g * mu, 1.5));
+  vec3 betaR = vec3(9.5, 20.0, 46.0);
+  float betaM = 2.6;
+  vec3 sumR = vec3(0.0);
+  float sumM = 0.0;
+  vec3 aur = vec3(0.0);
+  for (int i = 0; i < N; i++) {
+    vec3 pos = ro + rd * (t0 + (float(i) + 0.5) * dt);
+    float r = length(pos);
+    float hh = r - 1.0;
+    float dens = exp(-hh / 0.015) * step(1.0, r);
+    // sun chord for transmittance
+    float chi = dot(pos / r, uSun);
+    float cc = -r * chi + sqrt(max(r * r * chi * chi - r * r + RA * RA, 0.0));
+    float odS = dens * cc;
+    vec3 T = exp(-(betaR * odS + betaM * odS));
+    sumR += dens * T * phR * dt;
+    sumM += dens * (T.x + T.y + T.z) * 0.3333 * phM * dt;
+    // aurora
+    if (uAurora > 0.001 && hh > 0.008 && hh < 0.042) {
+      vec3 lo = rotY(pos / r, -uSpin);
+      float pole = smoothstep(0.62, 0.8, abs(lo.y));
+      float nmask = smoothstep(0.12, -0.18, dot(lo, rotY(uSun, -uSpin)));
+      if (pole * nmask > 0.001) {
+        float lon = atan(lo.x, lo.z);
+        float wav = sin(lon * 7.0 + uTime * 0.16 + sin(lon * 2.3 - uTime * 0.07) * 1.8);
+        float cur = 0.45 + 0.55 * wav * wav;
+        float vfade = sin((hh - 0.008) / 0.034 * PI);
+        vec3 acol = mix(vec3(0.16, 0.95, 0.55), vec3(0.55, 0.35, 0.95), (hh - 0.008) / 0.034);
+        aur += acol * pole * nmask * cur * vfade * dt * 5.0 * uAurora * auroraMul;
+      }
+    }
+  }
+  return SUNCOL * (sumR * betaR + sumM * betaM * 0.62) + aur;
+}
+
+/* ---- main ---- */
+void main(){
+  vec2 ndc = (gl_FragCoord.xy / uRes) * 2.0 - 1.0;
+  vec3 rd = normalize(uCam * normalize(vec3(ndc.x * uProj.y * uProj.x, ndc.y * uProj.x, 1.0)));
+  vec3 ro = uCamPos;
+
+  float introS = smoothstep(0.0, 0.35, uIntro);
+  vec3 col = starsBG(rd) * introS;
+
+  // sun disc + halo
+  float sd = dot(rd, uSun);
+  float disc = smoothstep(0.99965, 0.99993, sd);
+  col += (SUNCOL * disc * 14.0 + SUNCOL * pow(max(sd, 0.0), 48.0) * 0.10 + SUNCOL * pow(max(sd, 0.0), 350.0) * 0.9) * introS;
+
+  // opaque hits
+  float tSurf = 1e9;
+  vec3 surfCol = vec3(0.0);
+  float tP;
+  if (sph(ro, rd, 1.0, tP)) {
+    tSurf = tP;
+    vec3 p = ro + rd * tP;
+    surfCol = shadePlanet(p, rotY(p, -uSpin), length(ro));
+  }
+  float tM;
+  if (uMoonR > 0.0 && sph(ro - uMoonPos, rd, uMoonR, tM)) {
+    if (tM < tSurf) { tSurf = tM; surfCol = shadeMoon(ro + rd * tM); }
+  }
+
+  // ruined orbital ring (easter seed)
+  if (uMega > 0.5) {
+    float dn = dot(rd, uMegaN);
+    if (abs(dn) > 1e-4) {
+      float tA = -dot(ro, uMegaN) / dn;
+      if (tA > 0.0 && tA < tSurf) {
+        vec3 q = ro + rd * tA;
+        float r = length(q);
+        if (r > 2.18 && r < 2.44) {
+          vec3 u1 = normalize(cross(uMegaN, vec3(0.2, 0.9, 0.3)));
+          vec3 u2 = cross(uMegaN, u1);
+          float phi = atan(dot(q, u2), dot(q, u1));
+          float k = phi / 6.2831853 * 7.0 + 3.5;
+          float seg = floor(k);
+          float fk = fract(k);
+          float alive = step(hash3(vec3(seg, 7.0, 1.0)), 0.62);
+          float edge = smoothstep(0.0, 0.05, fk) * smoothstep(1.0, 0.95, fk) *
+                       smoothstep(2.18, 2.23, r) * smoothstep(2.44, 2.38, r);
+          if (alive * edge > 0.001) {
+            float ribs = 0.5 + 0.5 * sin(r * 240.0);
+            float lit = 0.25 + 0.75 * max(dot(uMegaN, uSun), 0.0);
+            vec3 ring = vec3(0.24, 0.25, 0.29) * (0.35 + 0.5 * ribs) * lit;
+            float spark = step(0.993, hash3(vec3(floor(r * 200.0), seg, 5.0)));
+            ring += vec3(1.0, 0.75, 0.45) * spark * 0.35 * (0.5 + 0.5 * sin(uTime * 3.0 + r * 90.0));
+            col = mix(col, ring, alive * edge * 0.97 * uIntro);
+          }
+        }
+      }
+    }
+  }
+
+  if (tSurf < 1e8) col = mix(col, surfCol, uIntro);
+
+  // moon ring (easter seed)
+  if (uRing > 0.5) {
+    vec3 nn = normalize(cross(vec3(sin(uMoonPos.x * 3.0 + 0.7), 0.5, cos(uMoonPos.z * 2.0)), uMoonPos - vec3(0.0)));
+    float dn = dot(rd, nn);
+    if (abs(dn) > 1e-4) {
+      float tR = dot(uMoonPos - ro, nn) / dn;
+      if (tR > 0.0 && tR < tSurf) {
+        vec3 q = ro + rd * tR;
+        vec3 rel = q - uMoonPos;
+        float r = length(rel);
+        float rIn = uMoonR * 1.75, rOut = uMoonR * 2.65;
+        if (r > rIn && r < rOut) {
+          float bands = 0.55 + 0.45 * vnoise(vec3(r * 60.0 / uMoonR, 0.0, 0.0));
+          float edge = smoothstep(rIn, rIn * 1.05, r) * smoothstep(rOut, rOut * 0.94, r);
+          float lit = 0.3 + 0.7 * max(dot(nn, uSun), 0.0);
+          // planet shadow on the ring
+          vec3 toSun = uSun;
+          vec3 qs = q - toSun * dot(q, toSun);
+          float psh = 1.0 - 0.85 * step(length(qs), 1.0) * step(0.0, -dot(q, toSun));
+          vec3 ring = vec3(0.75, 0.72, 0.68) * bands * lit * psh;
+          col = mix(col, ring, edge * 0.72 * uIntro);
+        }
+      }
+    }
+  }
+
+  // clouds
+  {
+    float bC = dot(ro, rd);
+    float cC = dot(ro, ro) - RC * RC;
+    float hC = bC * bC - cC;
+    float camR = length(ro);
+    if (hC > 0.0) {
+      hC = sqrt(hC);
+      float tIn = -bC - hC, tOut = -bC + hC;
+      vec3 sunL = rotY(uSun, -uSpin);
+      if (camR > RC) {                       // above the deck: single shell sample
+        if (tIn < tSurf && tIn > 0.0) {
+          vec3 p = ro + rd * tIn;
+          vec3 l = rotY(p, -uSpin);
+          float dens = cloudDens(l, uTime);
+          if (dens > 0.004) {
+            float sunT = exp(-2.3 * cloudDens(normalize(l + sunL * 0.10), uTime));
+            float hi = smoothstep(0.0, 0.6, dens);
+            vec3 cc = mix(vec3(0.9, 0.93, 0.98), vec3(0.32, 0.34, 0.4), smoothstep(0.35, 1.0, dens));
+            cc *= 0.05 + SUNCOL * sunT * (0.75 + 0.45 * hi);
+            float rim = pow(1.0 - abs(dot(rd, uSun)), 4.0) * sunT;
+            cc += SUNCOL * rim * 0.35;
+            if (uLight.w > 0.002) {
+              vec3 lw = rotY(normalize(uLight.xyz), -uSpin);
+              float la = acos(clamp(dot(l, lw), -1.0, 1.0));
+              cc += vec3(0.85, 0.9, 1.0) * uLight.w * (exp(-la * la * 60.0) * 3.0 + exp(-la * 3.0) * 0.10);
+            }
+            col = mix(col, cc, clamp(dens, 0.0, 0.97) * uIntro);
+          }
+        }
+      } else {                               // inside/below the deck: fog toward the exit
+        float tEnd = min(tOut, tSurf);
+        if (tEnd > 0.0) {
+          vec3 pA = ro + rd * max(tIn, 0.0);
+          vec3 pB = ro + rd * tOut;
+          float dA = cloudDens(rotY(pA, -uSpin), uTime);
+          float dB = tOut < tSurf + 0.001 ? cloudDens(rotY(pB, -uSpin), uTime) : 0.0;
+          float fog = clamp(dA * 0.75 + dB * 0.6, 0.0, 1.0);
+          if (fog > 0.004) {
+            float sunT = exp(-2.3 * cloudDens(normalize(rotY(ro, -uSpin) + sunL * 0.10), uTime));
+            vec3 cc = mix(vec3(0.85, 0.88, 0.95), vec3(0.3, 0.32, 0.38), smoothstep(0.35, 1.0, fog)) *
+                      (0.05 + SUNCOL * sunT * 0.8);
+            if (uLight.w > 0.002) {
+              vec3 lw = rotY(normalize(uLight.xyz), -uSpin);
+              float la = acos(clamp(dot(rotY(ro, -uSpin), lw), -1.0, 1.0));
+              cc += vec3(0.85, 0.9, 1.0) * uLight.w * (exp(-la * la * 50.0) * 2.5 + 0.12);
+            }
+            col = mix(col, cc, clamp(fog, 0.0, 0.97) * uIntro);
+          }
+        }
+      }
+    }
+  }
+
+  // atmosphere (occluded by whatever surface won)
+  float tAmax = tSurf < 1e8 ? tSurf : 1e9;
+  col += atmosphere(ro, rd, tAmax, 1.0) * uIntro;
+
+  // rain streaks (screen space, only in rain)
+  if (uRain > 0.003) {
+    vec2 uv = gl_FragCoord.xy / uRes;
+    float acc = 0.0;
+    for (int i = 0; i < 2; i++) {
+      float fi = float(i);
+      float n = 44.0 + fi * 34.0;
+      vec2 gv = vec2(uv.x * n + uv.y * n * 0.16, uv.y * (2.0 + fi * 1.7) - uTime * (15.0 + fi * 10.0));
+      vec2 id = floor(gv);
+      float hh = hash3(vec3(id, fi * 7.0 + 1.0));
+      float on = step(0.82 - uRain * 0.25, hh);
+      float dx = abs(fract(gv.x) - (0.25 + 0.5 * fract(hh * 13.0)));
+      acc += smoothstep(0.12, 0.01, dx) * on * (0.4 + 0.6 * fract(hh * 29.0));
+    }
+    col += vec3(0.5, 0.58, 0.7) * acc * uRain * 0.34;
+  }
+
+  // grade
+  col *= uExpo;
+  col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+  col = pow(clamp(col, 0.0, 1.0), vec3(0.4545));
+  col += (hash3(vec3(gl_FragCoord.xy, fract(uTime) * 61.0)) - 0.5) * uGrain;
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+function compile(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) + "\n" + src);
+  return s;
+}
+let prog, U = {};
+try {
+  prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+} catch (e) {
+  $("failMsg").innerHTML = "The planet shader failed to build in this browser.<br>" + String(e.message).split("\n")[0];
+  $("fail").classList.add("show");
+  return;
+}
+gl.useProgram(prog);
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+const aP = gl.getAttribLocation(prog, "aP");
+gl.enableVertexAttribArray(aP);
+gl.vertexAttribPointer(aP, 2, gl.FLOAT, false, 0, 0);
+["uRes","uTime","uIntro","uExpo","uGrain","uTwinkle","uCamPos","uSun","uCam","uProj","uSpin","uDrift","uErode","uSea","uCloud","uWind","uCity","uDecl","uAurora","uRain","uO1","uO2","uO3","uO4","uO5","uTint","uStorm","uLight","uMoonPos","uMegaN","uMoonR","uRing","uMega","uDetail"].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+
+/* ---------------- state ---------------- */
+const state = {
+  drift: 0, erode: 0.5, decl: 0, spin: 0,
+  simTime: 0, timeScale: 1, timeIdx: 1,
+  intro: 0, started: performance.now(),
+  rain: 0, rainT: 0,
+  expo: 1.1,
+  tour: null, tourT: 0,
+  epochDeb: 0,
+  hoverLon: null, lastCamLon: null
+};
+const TIME_STEPS = [
+  { s: 0, label: "Time paused" }, { s: 1, label: "Time 1×" }, { s: 8, label: "Time 8×" }, { s: 60, label: "Time 60×" }
+];
+const DAY = 300;      // sim seconds per planetary day at 1x
+const YEAR = DAY * 16;
+
+const cam = {
+  lon: -0.6, lat: 0.25, dist: 5.6,
+  lonT: -0.6, latT: 0.25, distT: 5.6,
+  vlon: 0, vlat: 0,
+  fovBase: 0.62
+};
+function curFov() { return cam.fovBase * (1 + smooth(1.2, 1.005, cam.dist) * 0.55); }
+cam.follow = null; // { lon, lat } in the planet's frame: co-rotate over a chart target
+const MIN_DIST = 1.2355; // ~1500 km: an orbital floor — the closest view the terrain detail can carry
+const sun = { dir: (() => { const d = [Math.cos(-0.8), 0.3, Math.sin(-0.8)]; const l = Math.hypot(d[0], d[1], d[2]); return [d[0] / l, d[1] / l, d[2] / l]; })() };
+
+let storms = [];       // {x,y,z, i, born, life, drift}
+let lightning = { pos: [0, 1.0085, 0], t0: -10, dur: 0.5, power: 0 };
+let strike = null;     // audio event
+
+/* ---------------- seeding ---------------- */
+function parseSeed() {
+  const h = decodeURIComponent(location.hash.replace(/^#/, ""));
+  if ( /^[A-Za-z0-9\-_]{1,24}$/.test(h) ) return h;
+  const q = new URLSearchParams(location.search).get("seed");
+  if (q && /^[A-Za-z0-9\-_]{1,24}$/.test(q)) return q;
+  try {
+    const sv = JSON.parse(localStorage.getItem("living-atlas") || "{}");
+    if (sv.seed && /^[A-Za-z0-9\-_]{1,24}$/.test(sv.seed)) return sv.seed;
+  } catch (e) {}
+  return DEFAULT_SEED;
+}
+function savePrefs() {
+  try { localStorage.setItem("living-atlas", JSON.stringify({ seed: seedStr, snd: audio.on, mus: audio.music })); } catch (e) {}
+}
+function setSeed(s, quiet) {
+  seedStr = s;
+  W = makeWorld(s);
+  $("seedInput").value = s;
+  $("seedLabel").innerHTML = "seed · <b>" + s + "</b>";
+  $("introSeed").textContent = s;
+  try { history.replaceState(null, "", "#" + encodeURIComponent(s)); } catch (e) { /* file:// */ }
+  storms.length = 0;
+  closeNote();
+  mapDirty = true;
+  savePrefs();
+  if (!quiet) toast("world " + s + " — every seed is a different planet");
+}
+W = makeWorld(seedStr = parseSeed());
+$("seedInput").value = seedStr;
+$("seedLabel").innerHTML = "seed · <b>" + seedStr + "</b>";
+$("introSeed").textContent = seedStr;
+
+/* ---------------- camera math ---------------- */
+function camPos() {
+  const cl = Math.cos(cam.lat), sl = Math.sin(cam.lat), co = Math.cos(cam.lon), so = Math.sin(cam.lon);
+  return [cam.dist * cl * co, cam.dist * sl, cam.dist * cl * so];
+}
+function camBasis() {
+  const p = camPos();
+  const fwd0 = [-p[0] / cam.dist, -p[1] / cam.dist, -p[2] / cam.dist];
+  const close = smooth(1.6, 1.02, cam.dist);
+  const pitch = close * 1.08; // ~62 deg at the deck
+  let right = [-fwd0[2], 0, fwd0[0]];
+  const rl = Math.hypot(right[0], right[2]) || 1;
+  right = [right[0] / rl, 0, right[2] / rl];
+  const up = [right[1] * fwd0[2] - right[2] * fwd0[1], right[2] * fwd0[0] - right[0] * fwd0[2], right[0] * fwd0[1] - right[1] * fwd0[0]];
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const fwd = [fwd0[0] * cp + up[0] * sp, fwd0[1] * cp + up[1] * sp, fwd0[2] * cp + up[2] * sp];
+  const rright = [up[1] * fwd[2] - up[2] * fwd[1], up[2] * fwd[0] - up[0] * fwd[2], up[0] * fwd[1] - up[1] * fwd[0]];
+  const rup = [fwd[1] * rright[2] - fwd[2] * rright[1], fwd[2] * rright[0] - fwd[0] * rright[2], fwd[0] * rright[1] - fwd[1] * rright[0]];
+  return { pos: p, fwd, right: rright, up: rup };
+}
+function projectDir(dir) { // -> [x,y] css px or null
+  const b = camBasis();
+  const x = dir[0] * b.right[0] + dir[1] * b.right[1] + dir[2] * b.right[2];
+  const y = dir[0] * b.up[0] + dir[1] * b.up[1] + dir[2] * b.up[2];
+  const z = dir[0] * b.fwd[0] + dir[1] * b.fwd[1] + dir[2] * b.fwd[2];
+  if (z < 0.05) return null;
+  const aspect = canvas.width / canvas.height;
+  const fov = curFov();
+  const sx = (x / (z * Math.tan(fov * 0.5) * aspect) * 0.5 + 0.5) * innerWidth;
+  const sy = (1 - (y / (z * Math.tan(fov * 0.5)) * 0.5 + 0.5)) * innerHeight;
+  return [sx, sy];
+}
+function rayThrough(px, py) {
+  const b = camBasis();
+  const aspect = canvas.width / canvas.height;
+  const fov = curFov();
+  const nx = (px / innerWidth) * 2 - 1, ny = 1 - (py / innerHeight) * 2;
+  const cx = nx * aspect * Math.tan(fov * 0.5), cy = ny * Math.tan(fov * 0.5);
+  const d = [b.fwd[0] + b.right[0] * cx + b.up[0] * cy,
+             b.fwd[1] + b.right[1] * cx + b.up[1] * cy,
+             b.fwd[2] + b.right[2] * cx + b.up[2] * cy];
+  const l = Math.hypot(d[0], d[1], d[2]);
+  return { o: b.pos, d: [d[0] / l, d[1] / l, d[2] / l] };
+}
+function hitPlanet(px, py) {
+  const { o, d } = rayThrough(px, py);
+  const b = o[0] * d[0] + o[1] * d[1] + o[2] * d[2];
+  const c = o[0] * o[0] + o[1] * o[1] + o[2] * o[2] - 1;
+  const h = b * b - c;
+  if (h < 0) return null;
+  const t = -b - Math.sqrt(h);
+  if (t <= 0) return null;
+  return rotY3(o[0] + d[0] * t, o[1] + d[1] * t, o[2] + d[2] * t, -state.spin);
+}
+function subCameraLocal() { // planet-local direction under the camera
+  return rotY3(...camPos().map(v => v / cam.dist), -state.spin);
+}
+
+/* ---------------- input ---------------- */
+const pointers = new Map();
+let dragMode = null; // "orbit" | "sun" | "pinch"
+let pinchD = 0, downAt = 0, downXY = [0, 0], lastMove = [0, 0], lastMoveT = 0, moved = 0;
+
+function sunNear(px, py) {
+  const s = projectDir(sun.dir);
+  return s && Math.hypot(s[0] - px, s[1] - py) < Math.max(34, innerWidth * 0.035);
+}
+canvas.addEventListener("pointerdown", e => {
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* synthetic or inactive pointer */ }
+  pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pointers.size === 2) {
+    dragMode = "pinch";
+    const pts = [...pointers.values()];
+    pinchD = Math.hypot(pts[0][0] - pts[1][0], pts[0][1] - pts[1][1]);
+    return;
+  }
+  downAt = performance.now(); downXY = [e.clientX, e.clientY]; moved = 0;
+  lastMove = [e.clientX, e.clientY];
+  lastMoveT = e.timeStamp || downAt;
+  dragMode = sunNear(e.clientX, e.clientY) ? "sun" : "orbit";
+  if (dragMode === "orbit") cam.follow = null;
+  if (state.tour) endTour();
+  audio.wake();
+});
+canvas.addEventListener("pointermove", e => {
+  if (!pointers.has(e.pointerId)) {
+    const h = sunNear(e.clientX, e.clientY);
+    canvas.style.cursor = h ? "grab" : "default";
+    return;
+  }
+  pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (dragMode === "pinch" && pointers.size === 2) {
+    const pts = [...pointers.values()];
+    const d = Math.hypot(pts[0][0] - pts[1][0], pts[0][1] - pts[1][1]);
+    if (pinchD > 0) zoomBy(pinchD / d);
+    pinchD = d;
+    return;
+  }
+  const dx = e.clientX - lastMove[0], dy = e.clientY - lastMove[1];
+  lastMove = [e.clientX, e.clientY];
+  moved += Math.abs(dx) + Math.abs(dy);
+  if (dragMode === "sun") {
+    const b = camBasis();
+    const k = 0.0045;
+    let s = rotAxis(sun.dir, b.up, -dx * k);
+    s = rotAxis(s, b.right, dy * k);
+    const L = Math.hypot(s[0], s[1], s[2]);
+    s = [s[0] / L, s[1] / L, s[2] / L];
+    sun.dir = s;
+    sunManual = true;
+  } else if (dragMode === "orbit") {
+    const rot = 0.0032 * smooth(1.05, 2.6, cam.dist) + 0.0009;
+    cam.lonT -= dx * rot;
+    cam.latT = clamp(cam.latT + dy * rot, -1.45, 1.45);
+    const mdt = Math.max(0.008, (e.timeStamp - lastMoveT) / 1000);
+    cam.vlon = clamp(-dx * rot / mdt, -2.0, 2.0);
+    cam.vlat = clamp(dy * rot / mdt, -1.5, 1.5);
+    lastMoveT = e.timeStamp;
+    hideHint();
+  }
+});
+function endPointer(e) {
+  pointers.delete(e.pointerId);
+  if (dragMode === "pinch") {
+    if (pointers.size === 1) { dragMode = "orbit"; lastMove = [...pointers.values()][0]; moved = 99; }
+    else if (pointers.size === 0) dragMode = null;
+    return;
+  }
+  const wasSun = dragMode === "sun";
+  dragMode = null;
+  if (!wasSun && moved < 7 && performance.now() - downAt < 450) {
+    const hit = hitPlanet(e.clientX, e.clientY);
+    if (hit) openNote(hit); else closeNote();
+  }
+}
+canvas.addEventListener("pointerup", endPointer);
+canvas.addEventListener("pointercancel", endPointer);
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  if (state.tour) endTour();
+  zoomBy(Math.exp(-e.deltaY * 0.0011)); // scroll down = descend
+  audio.wake();
+  hideHint();
+}, { passive: false });
+
+function zoomBy(f) {
+  cam.distT = clamp(cam.distT * f, MIN_DIST, 6.5);
+}
+let sunManual = false;
+addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  const k = e.key;
+  if (k === "ArrowLeft") { cam.lonT -= 0.12; cam.follow = null; }
+  else if (k === "ArrowRight") { cam.lonT += 0.12; cam.follow = null; }
+  else if (k === "ArrowUp") { cam.latT = clamp(cam.latT + 0.1, -1.45, 1.45); cam.follow = null; }
+  else if (k === "ArrowDown") { cam.latT = clamp(cam.latT - 0.1, -1.45, 1.45); cam.follow = null; }
+  else if (k === "+" || k === "=") zoomBy(0.88);
+  else if (k === "-") zoomBy(1.14);
+  else if (k === " ") { e.preventDefault(); cycleTime(); }
+  else if (k === "t" || k === "T") state.tour ? endTour() : startTour();
+  else if (k === "Escape") closeNote();
+  if (state.tour && "ArrowLeft ArrowRight ArrowUp ArrowDown + -".includes(k)) endTour();
+  audio.wake();
+});
+
+/* ---------------- storms & lightning ---------------- */
+function spawnStorm(forceLonLat) {
+  if (storms.length >= 4) return;
+  let dir;
+  if (forceLonLat) { dir = llToVec(forceLonLat[0], forceLonLat[1]); }
+  else {
+    for (let tries = 0; tries < 8; tries++) {
+      const la = (Math.random() - 0.5) * 1.9;
+      const lo = Math.random() * TAU;
+      dir = llToVec(la, lo);
+      if (cloudDensJS(dir, state.simTime) > 0.55 && Math.abs(dir[1]) < 0.75) break;
+      dir = null;
+    }
+    if (!dir) return;
+  }
+  // keep away from existing storms
+  for (const s of storms) if (s.x * dir[0] + s.y * dir[1] + s.z * dir[2] > 0.9) return;
+  storms.push({ x: dir[0], y: dir[1], z: dir[2], i: 0.05, born: state.simTime, life: 70 + Math.random() * 130, phase: Math.random() * TAU });
+}
+function llToVec(la, lo) {
+  return [Math.cos(la) * Math.cos(lo), Math.sin(la), Math.cos(la) * Math.sin(lo)];
+}
+function vecToLL(v) {
+  return [Math.asin(clamp(v[1], -1, 1)), Math.atan2(v[2], v[0])];
+}
+function updateStorms(dt) {
+  if (Math.random() < dt * 0.05 * W.stormy * 3 && storms.length < 3) spawnStorm();
+  for (let i = storms.length - 1; i >= 0; i--) {
+    const s = storms[i];
+    const age = state.simTime - s.born;
+    const env = age < 12 ? age / 12 : age > s.life ? Math.max(0, 1 - (age - s.life) / 25) : 1;
+    s.i = 0.9 * env * (0.6 + 0.4 * Math.sin(age * 0.05 + s.phase));
+    if (age > s.life + 25) { storms.splice(i, 1); continue; }
+    // drift with the wind
+    const d = rotY3(s.x, s.y, s.z, -W.wind * dt * state.timeScale * 0.4);
+    s.x = d[0]; s.y = d[1]; s.z = d[2];
+    // lightning
+    const camL = subCameraLocal();
+    const vis = s.x * camL[0] + s.y * camL[1] + s.z * camL[2];
+    if (s.i > 0.35 && vis > 0.35 && Math.random() < dt * (0.12 + s.i * 0.5)) {
+      const wob = 0.06;
+      const p = rotAxis([s.x, s.y, s.z], [Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5], Math.random() * wob);
+      lightning.pos = rotY3(p[0], p[1], p[2], state.spin).map(v => v * 1.0085);
+      lightning.t0 = state.simTime;
+      lightning.dur = 0.4 + Math.random() * 0.3;
+      lightning.power = 0.7 + Math.random() * 0.6;
+      // thunder, delayed by distance
+      const cp = camPos();
+      const dist = Math.hypot(cp[0] - lightning.pos[0], cp[1] - lightning.pos[1], cp[2] - lightning.pos[2]);
+      strike = { at: performance.now() / 1000 + 0.25 + dist * 0.55, dist, power: lightning.power };
+    }
+  }
+}
+function lightningEnv() {
+  const t = state.simTime - lightning.t0;
+  if (t < 0 || t > lightning.dur) return 0;
+  const f = t / lightning.dur;
+  return lightning.power * (Math.exp(-f * 14) * (f < 0.08 ? f / 0.08 : 1) + 0.5 * Math.exp(-Math.abs(f - 0.35) * 16));
+}
+
+/* ---------------- weather under the camera ---------------- */
+let wx = { cloud: 0, stormNear: 9, rain: 0, ocean: 0, label: "clear" };
+function sampleWeather() {
+  const l = subCameraLocal();
+  const e = elevJS(l);
+  const cd = cloudDensJS(l, state.simTime);
+  let stormNear = 9, stormI = 0;
+  for (const s of storms) {
+    const d = Math.acos(clamp(s.x * l[0] + s.y * l[1] + s.z * l[2], -1, 1));
+    if (d < stormNear) { stormNear = d; stormI = s.i; }
+  }
+  const belowDeck = cam.dist < 1.0085;
+  const inCell = stormNear < 0.24 && stormI > 0.25;
+  wx.cloud = cd; wx.stormNear = stormNear;
+  wx.ocean = e < W.sea ? 1 : 0;
+  wx.rain = belowDeck && inCell ? clamp((0.24 - stormNear) * 6 * stormI * 1.6, 0, 1) : 0;
+  wx.label =
+    wx.rain > 0.55 ? "heavy rain" :
+    wx.rain > 0.12 ? "rain" :
+    (stormNear < 0.3 && stormI > 0.4) ? "storm cell — lightning" :
+    cd > 0.72 ? "overcast" : cd > 0.4 ? "broken cloud" : cd > 0.14 ? "scattered cloud" : "clear";
+}
+
+/* ---------------- audio ---------------- */
+const audio = {
+  ctx: null, on: true, music: true, ready: false,
+  wake() {
+    if (this.ctx || !this.on) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      this.ctx = new AC();
+      const c = this.ctx;
+      this.master = c.createGain(); this.master.gain.value = 0.0;
+      this.comp = c.createDynamicsCompressor();
+      this.comp.threshold.value = -18; this.comp.ratio.value = 6;
+      this.master.connect(this.comp); this.comp.connect(c.destination);
+      // shared noise buffer
+      const nb = c.createBuffer(1, c.sampleRate * 2, c.sampleRate);
+      const ch = nb.getChannelData(0);
+      for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+      this.noiseBuf = nb;
+      const noiseSrc = (dest) => { const s = c.createBufferSource(); s.buffer = nb; s.loop = true; s.connect(dest); s.start(); return s; };
+      // space drone
+      this.droneG = c.createGain(); this.droneG.gain.value = 0;
+      const dFilt = c.createBiquadFilter(); dFilt.type = "lowpass"; dFilt.frequency.value = 160; dFilt.Q.value = 0.5;
+      const o1 = c.createOscillator(); o1.type = "sawtooth"; o1.frequency.value = 55;
+      const o2 = c.createOscillator(); o2.type = "sine"; o2.frequency.value = 55.6;
+      const og = c.createGain(); og.gain.value = 0.5;
+      o1.connect(og); o2.connect(og); og.connect(dFilt); dFilt.connect(this.droneG); this.droneG.connect(this.master);
+      o1.start(); o2.start();
+      // wind
+      this.windG = c.createGain(); this.windG.gain.value = 0;
+      this.windF = c.createBiquadFilter(); this.windF.type = "bandpass"; this.windF.frequency.value = 500; this.windF.Q.value = 0.6;
+      noiseSrc(this.windF); this.windF.connect(this.windG); this.windG.connect(this.master);
+      // waves
+      this.waveG = c.createGain(); this.waveG.gain.value = 0;
+      const wFilt = c.createBiquadFilter(); wFilt.type = "lowpass"; wFilt.frequency.value = 240;
+      noiseSrc(wFilt); wFilt.connect(this.waveG); this.waveG.connect(this.master);
+      // rain
+      this.rainG = c.createGain(); this.rainG.gain.value = 0;
+      const rFilt = c.createBiquadFilter(); rFilt.type = "bandpass"; rFilt.frequency.value = 5200; rFilt.Q.value = 0.4;
+      noiseSrc(rFilt); rFilt.connect(this.rainG); this.rainG.connect(this.master);
+      // music bus with delay
+      this.musG = c.createGain(); this.musG.gain.value = 0;
+      this.delay = c.createDelay(2); this.delay.delayTime.value = 0.42;
+      const fb = c.createGain(); fb.gain.value = 0.34;
+      const dLP = c.createBiquadFilter(); dLP.type = "lowpass"; dLP.frequency.value = 1600;
+      this.delay.connect(dLP); dLP.connect(fb); fb.connect(this.delay);
+      this.musG.connect(this.master); this.musG.connect(this.delay); this.delay.connect(this.master);
+      this.ready = true;
+      this.applyPrefs();
+      this.nextNote = c.currentTime + 1.5;
+    } catch (e) { /* audio unavailable: stay silent */ }
+  },
+  applyPrefs() {
+    if (!this.ready) return;
+    const c = this.ctx;
+    if (c.state === "suspended") c.resume();
+    this.master.gain.setTargetAtTime(this.on ? 0.55 : 0, c.currentTime, 0.4);
+    this.musG.gain.setTargetAtTime(this.music ? 0.16 : 0, c.currentTime, 0.6);
+  },
+  update(dt, speed) {
+    if (!this.ready || !this.on) return;
+    const c = this.ctx, t = c.currentTime;
+    const dist = cam.dist;
+    const space = smooth(1.35, 2.4, dist);
+    const low = smooth(1.5, 1.02, dist);
+    this.droneG.gain.setTargetAtTime(0.055 * space, t, 0.8);
+    this.windG.gain.setTargetAtTime(0.13 * low * (0.35 + 0.65 * clamp(speed, 0, 1)) + 0.05 * wx.rain + (wx.stormNear < 0.35 ? 0.03 : 0), t, 0.4);
+    this.windF.frequency.setTargetAtTime(380 + clamp(speed, 0, 1) * 700 + wx.rain * 300, t, 0.5);
+    this.waveG.gain.setTargetAtTime(0.11 * wx.ocean * low * (0.6 + 0.4 * Math.sin(state.simTime * 0.5)), t, 0.6);
+    this.rainG.gain.setTargetAtTime(0.05 * wx.rain, t, 0.5);
+    // thunder
+    if (strike && performance.now() / 1000 >= strike.at) {
+      this.thunder(strike.dist, strike.power);
+      strike = null;
+    }
+    // generative music
+    if (this.music && t > this.nextNote) {
+      this.playNote();
+      const mood = this.mood();
+      this.nextNote = t + (mood === "storm" ? 3.5 : mood === "night" ? 3.2 : 2.2) + Math.random() * 3;
+    }
+  },
+  mood() {
+    const l = subCameraLocal();
+    const dayF = l[0] * sun.dir[0] + l[1] * sun.dir[1] + l[2] * sun.dir[2];
+    if (wx.stormNear < 0.35 && wx.cloud > 0.6) return "storm";
+    if (dayF < -0.05) return "night";
+    return "day";
+  },
+  playNote() {
+    const c = this.ctx;
+    const mood = this.mood();
+    const scale = mood === "night" ? [0, 3, 5, 7, 10, 12, 15] : [0, 2, 4, 7, 9, 12, 14, 16];
+    const oct = mood === "night" ? 0.5 : 1;
+    const semi = scale[Math.floor(Math.random() * scale.length)] + (Math.random() < 0.3 ? -12 : 0);
+    const f = W.root * oct * Math.pow(2, semi / 12);
+    const t = c.currentTime;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(mood === "storm" ? 0.09 : 0.14, t + (RM ? 0.25 : 1.1));
+    g.gain.exponentialRampToValueAtTime(0.001, t + 3.8);
+    const o1 = c.createOscillator(); o1.type = "sine"; o1.frequency.value = f;
+    const o2 = c.createOscillator(); o2.type = "triangle"; o2.frequency.value = f * 2.01;
+    const g2 = c.createGain(); g2.gain.value = 0.25;
+    o1.connect(g); o2.connect(g2); g2.connect(g);
+    if (c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = Math.random() * 1.4 - 0.7; g.connect(p); p.connect(this.musG); }
+    else g.connect(this.musG);
+    o1.start(t); o2.start(t);
+    o1.stop(t + 4); o2.stop(t + 4);
+    if (mood === "night" && Math.random() < 0.4) { // low anchor
+      const o3 = c.createOscillator(); o3.type = "sine"; o3.frequency.value = W.root * 0.5;
+      const g3 = c.createGain();
+      g3.gain.setValueAtTime(0, t); g3.gain.linearRampToValueAtTime(0.10, t + 1.6); g3.gain.exponentialRampToValueAtTime(0.001, t + 6);
+      o3.connect(g3); g3.connect(this.musG); o3.start(t); o3.stop(t + 6.2);
+    }
+  },
+  thunder(dist, power) {
+    const c = this.ctx;
+    const t = c.currentTime;
+    const src = c.createBufferSource(); src.buffer = this.noiseBuf;
+    src.playbackRate.value = 0.35;
+    const f = c.createBiquadFilter(); f.type = "lowpass";
+    f.frequency.setValueAtTime(clamp(900 / (1 + dist * 3), 90, 900), t);
+    f.frequency.exponentialRampToValueAtTime(60, t + 1.6);
+    const g = c.createGain();
+    const v = clamp(power * 0.5 / (0.6 + dist * 2.2), 0.02, 0.5);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(v, t + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 1.8 + dist);
+    src.connect(f); f.connect(g); g.connect(this.master);
+    src.start(t, Math.random()); src.stop(t + 3.2);
+  },
+  chime() {
+    if (!this.ready || !this.music) return;
+    const c = this.ctx, t = c.currentTime;
+    [880, 1318.5].forEach((f, i) => {
+      const o = c.createOscillator(); o.type = "sine"; o.frequency.value = f;
+      const g = c.createGain();
+      g.gain.setValueAtTime(0, t + i * 0.12);
+      g.gain.linearRampToValueAtTime(0.07, t + i * 0.12 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.12 + 1.4);
+      o.connect(g); g.connect(this.musG); o.start(t + i * 0.12); o.stop(t + i * 0.12 + 1.6);
+    });
+  }
+};
+try {
+  const sv = JSON.parse(localStorage.getItem("living-atlas") || "{}");
+  if (sv.snd === false) audio.on = false;
+  if (sv.mus === false) audio.music = false;
+} catch (e) {}
+$("soundBtn").classList.toggle("active", audio.on);
+$("musicBtn").classList.toggle("active", audio.music);
+$("soundBtn").addEventListener("click", () => {
+  audio.on = !audio.on;
+  $("soundBtn").classList.toggle("active", audio.on);
+  if (audio.on) { audio.wake(); audio.applyPrefs(); toast("ambient sound on — wind, waves and weather"); }
+  else if (audio.ready) audio.master.gain.setTargetAtTime(0, audio.ctx.currentTime, 0.2);
+  savePrefs();
+});
+$("musicBtn").addEventListener("click", () => {
+  audio.music = !audio.music;
+  $("musicBtn").classList.toggle("active", audio.music);
+  audio.wake(); audio.applyPrefs();
+  toast(audio.music ? "generative music on — it follows altitude, hour and weather" : "generative music off");
+  savePrefs();
+});
+addEventListener("pointerdown", () => audio.wake(), { once: false });
+document.addEventListener("visibilitychange", () => {
+  if (!audio.ready) return;
+  if (document.hidden) audio.ctx.suspend(); else if (audio.on) audio.ctx.resume();
+});
+
+/* ---------------- field notes ---------------- */
+const PHON = [
+  { on: ["b","d","f","g","k","l","m","n","r","s","t","v","sh","th","br","dr","kl","vr","st"], vw: ["a","e","i","o","u","ae","ei","oa","ia","au"], cd: ["","","","n","r","l","s","th","m"] },
+  { on: ["ael","iri","olo","nae","shi","vel","mir","thal","wen","lyr","ost","enna","ka","oro","ulu"], vw: ["a","i","o","e"], cd: ["","","n","r","l","th"] },
+  { on: ["z","x","kr","tz","q","gh","zh","dr","sk","vr"], vw: ["a","o","u","aa","uu"], cd: ["","","k","r","x","sh"] },
+  { on: ["f","h","l","m","n","s","w","y","hw","ll","mn"], vw: ["i","e","y","ai","ei"], cd: ["","","n","l","r","nn"] }
+];
+const SUFFIX = {
+  ocean: ["Deep", "Expanse", "Gyre", "Reach of Water", "Strait", "Shallows", "Abyss", "Current"],
+  coast: ["Bay", "Harbour", "Sound", "Cove", "Anchorage", "Narrows", "Point"],
+  mountain: ["Reach", "Spine", "Horn", "Massif", "Teeth", "Stair", "Watch"],
+  desert: ["Waste", "Basin", "Expanse", "Flats", "Barrens", "Erg"],
+  forest: ["Weald", "Tangle", "Grove", "Stand", "Green"],
+  ice: ["Shelf", "Waste", "White", "Crevasse"],
+  plains: ["Steppe", "Downs", "Reach", "Savanna", "Veldt"],
+  river: ["Vale", "Run", "Bend", "Falls", "Confluence"]
+};
+const ERA = ["the Long Quiet", "the Ash Wind", "the Cartographers' Republic", "the Second Green", "the Tidal Wars", "the Century of Ink", "the Brief Spring", "the Glass Peace"];
+const EVENTS = [
+  "was briefly a whaling station", "held a monastery that copied tide-tables by hand",
+  "was fought over for its amber", "was abandoned when the wells turned salty",
+  "served as a penal orchard", "became famous for a bell that rang unaided",
+  "sheltered the fleet of the losing side", "was mapped three times, differently each time",
+  "traded sulfur for salt with the near islands", "lost its harbour to a single winter of ice"
+];
+const REMN = ["a ring of standing stones", "the harbour wall", "one crooked lighthouse", "the terraces", "a rusted beacon", "the carved stair", "nothing but gulls"];
+const DEEDS = ["sailed past it twice and named it once", "claimed it for a queen who never learned of it",
+  "lost three compasses and found it anyway", "mapped it from memory, wrongly", "traded a knife for the right to land"];
+const WILD_ADJ = ["pale ", "night-", "coral ", "ash ", "glass", "dune ", "river ", "silver ", "red ", "quiet "];
+const WILD_NOUN = ["moth", "ox", "lark", "wyrm", "crane", "otter", "ray", "fox", "heron", "ape", "squid", "hare"];
+const WILD_ACT = {
+  ocean: ["hunts by the light of its own belly", "sings below the seasonal ice and the songs drift up through it", "rides the gyre for a whole life without touching land"],
+  coast: ["comes ashore only on the highest tides", "steals bright objects and arranges them by colour", "nests in the sea-cliffs and sleeps on the wing"],
+  mountain: ["seals itself in wax and sleeps the cold months", "walks the ridgelines single file, oldest first", "grazes the cloud meadows at dawn"],
+  desert: ["drinks fog through its back", "buries its eggs deeper each dry year", "navigates by the polarization of the sky"],
+  forest: ["falls silent for one minute at dusk, all of them at once", "farms a fungus it cannot eat without", "mimics rain to confuse its hunters"],
+  ice: ["grows a second coat that fluoresces under the aurora", "channels whale-song through the ice as a warning", "sleeps in the meltwater each brief summer"],
+  plains: ["migrates in a spiral that never closes", "stamps the ground in rhythms other herds answer", "grazes only where lightning struck last year"],
+  river: ["builds dams that outlive their builders", "carries a pebble for luck and mourns when it loses it", "sings to the reeds at flood season"]
+};
+function biomeKind(l, e, m, t) {
+  const land = e - W.sea;
+  if (t < 0.13) return land < 0 ? "ocean" : "ice";
+  if (land < 0) return "ocean";
+  if (land < 0.022) return "coast";
+  const rv = riverJS(l);
+  if (rv < 0.05 * (0.55 + 0.45 * state.erode) && land < 0.4 && m > 0.3 && t > 0.16) return "river";
+  if (land > 0.22) return "mountain";
+  if (t < 0.30) return m > 0.45 ? "forest" : "plains";
+  if (m < 0.24) return "desert";
+  if (t > 0.7 && m > 0.6) return "forest";
+  if (m > 0.52) return "forest";
+  return "plains";
+}
+const BIOME_NAME = { ocean: "open ocean", coast: "coastal shelf", mountain: "high ranges", desert: "arid basin", forest: "old forest", ice: "polar ice", plains: "open steppe", river: "river country" };
+function placeName(rng, kind) {
+  const ph = PHON[W.culture];
+  const syl = () => {
+    const w = ph.on[Math.floor(rng() * ph.on.length)] + ph.vw[Math.floor(rng() * ph.vw.length)] + ph.cd[Math.floor(rng() * ph.cd.length)];
+    return w;
+  };
+  let n = syl() + (rng() < 0.55 ? syl() : "");
+  n = n[0].toUpperCase() + n.slice(1);
+  if (rng() < 0.6) n += " " + SUFFIX[kind][Math.floor(rng() * SUFFIX[kind].length)];
+  return n;
+}
+function openNote(l) {
+  const [la, lo] = vecToLL(l);
+  const key = Math.round(la * 28) + 0x1000 * Math.round(lo * 28);
+  const rng = mulberry32(xmur3(W.seed + ":" + key)());
+  const e = elevJS(l), m = moistJS(l, e), t = tempJS(l, e);
+  const kind = biomeKind(l, e, m, t);
+  const name = placeName(rng, kind);
+  const land = e - W.sea;
+  const elevM = Math.round((land > 0 ? land * 7000 : land * 11000));
+  const city = cityJS(l, e);
+  $("noteName").textContent = kind === "ocean" ? ("The " + name) : name;
+  $("noteSub").textContent = BIOME_NAME[kind] + " · " + (kind === "ocean" ? "surveyed by deep sounding" : "surveyed from orbit");
+  $("notePos").textContent = fmtDeg(la, "N", "S") + " " + fmtDeg(lo, "E", "W");
+  $("noteElev").textContent = (elevM > 0 ? "+" : "−") + Math.abs(elevM).toLocaleString("en").replace(/,/g, " ") + " m";
+  $("noteBiome").textContent = BIOME_NAME[kind];
+  $("noteCity").textContent = city > 0.28 ? "fishing settlements" : city > 0.12 ? "scattered homesteads" : "uninhabited";
+  // climate
+  const tc = clamp(Math.round(t * 38 - 8), -58, 46);
+  const clim =
+    kind === "ice" ? "Polar: " + tc + " °C on average, a two-month summer that barely melts the surface." :
+    kind === "ocean" ? (Math.abs(la) < 0.4 ? "Equatorial water, warm as breath, storm-fed." : "Cold current country; fog in the mornings, long swells all year.") :
+    kind === "desert" ? "Arid interior — hot days, cold nights, rain a rumor for years at a time." :
+    kind === "mountain" ? (m > 0.45 ? "Snow-fed ranges; cloud banks stack on the windward slopes most afternoons." : "High and dry; the rock holds the day's heat until the stars come out.") :
+    kind === "forest" ? (t > 0.6 ? "Humid and close; it rains most afternoons, exactly when the birds go quiet." : "Cool and wet; moss keeps the logs soft and the paths green.") :
+    kind === "river" ? "Mild valleys with a long flood season; the river decides the calendar." :
+    kind === "coast" ? "Temperate shore, wet winters, dry summers, fog on the water at dawn." :
+    (t < 0.42 ? "Cold grassland; the wind is a resident, not a visitor." : "Open warm steppe with a hard dry season.");
+  $("noteClim").textContent = clim + " Mean " + tc + " °C, moisture " + Math.round(m * 100) + "%.";
+  $("noteT").textContent = tc + " °C";
+  $("noteTB").style.width = clamp((t) * 100, 3, 100) + "%";
+  $("noteM").textContent = Math.round(m * 100) + "%";
+  $("noteMB").style.width = clamp(m * 100, 3, 100) + "%";
+  // wildlife
+  const acts = WILD_ACT[kind] || WILD_ACT.plains;
+  const w1 = WILD_ADJ[Math.floor(rng() * WILD_ADJ.length)] + WILD_NOUN[Math.floor(rng() * WILD_NOUN.length)];
+  const w2 = WILD_ADJ[Math.floor(rng() * WILD_ADJ.length)] + WILD_NOUN[Math.floor(rng() * WILD_NOUN.length)];
+  const a1 = Math.floor(rng() * acts.length);
+  const a2 = (a1 + 1 + Math.floor(rng() * (acts.length - 1))) % acts.length;
+  $("noteWild").innerHTML =
+    "<li><b>" + w1 + "</b> — " + acts[a1] + ".</li>" +
+    "<li><b>" + w2 + "</b> — " + acts[a2] + ".</li>";
+  // history
+  const nm = name.split(" ")[0];
+  const surveyN = 1 + Math.floor(rng() * 9);
+  const ord = surveyN === 1 ? "st" : surveyN === 2 ? "nd" : surveyN === 3 ? "rd" : "th";
+  let hist = rng() < 0.5
+    ? "First charted by " + placeName(mulberry32(xmur3(W.seed + "x" + key)()), "plains").split(" ")[0] + ", who " + DEEDS[Math.floor(rng() * DEEDS.length)] + ". "
+    : "Named in the " + surveyN + ord + " survey of " + ERA[Math.floor(rng() * ERA.length)] + ". ";
+  hist += nm + " " + EVENTS[Math.floor(rng() * EVENTS.length)] + " during " + ERA[Math.floor(rng() * ERA.length)] + ", " +
+    (rng() < 0.5 ? "and " + REMN[Math.floor(rng() * REMN.length)] + " still stands." : "but nothing remains but " + REMN[Math.floor(rng() * REMN.length)] + ".");
+  if (W.easter && Math.abs(lo - 2.4) < 0.5) hist += " Every chart of this hemisphere carries the same margin note: below the Broken Ring, mind the shadow hours.";
+  $("noteHist").textContent = hist;
+  $("note").classList.add("open");
+  audio.chime();
+}
+function fmtDeg(rad, pos, neg) {
+  const d = Math.abs(rad) * 57.2958;
+  return d.toFixed(1) + "°" + (rad >= 0 ? pos : neg);
+}
+function closeNote() { $("note").classList.remove("open"); }
+$("noteClose").addEventListener("click", closeNote);
+
+/* ---------------- minimap ---------------- */
+const mapC = $("map"), mapCtx = mapC.getContext("2d");
+const MW = mapC.width, MH = mapC.height;
+let mapTerrain = null, mapOut = null, mapDirty = true, mapRow = 0;
+function mapColorAt(l) {
+  const e = elevJS(l), m = moistJS(l, e), t = tempJS(l, e);
+  const land = e - W.sea;
+  if (t < 0.13) return [222, 230, 238];
+  if (land < 0) {
+    const d = smooth(0, 0.14, -land);
+    return [lerp(30, 8, d), lerp(96, 30, d), lerp(105, 60, d)];
+  }
+  let c;
+  if (land < 0.022) c = [196, 178, 130];
+  else if (land > 0.22) c = [110, 102, 94];
+  else if (t < 0.30) c = m > 0.45 ? [56, 84, 70] : [142, 146, 128];
+  else if (m < 0.24) c = [200, 170, 108];
+  else if (t > 0.7 && m > 0.6) c = [26, 62, 34];
+  else c = m > 0.52 ? [40, 78, 42] : [86, 118, 60];
+  if (t < 0.2) { const k = smooth(0.2, 0.08, t); c = [lerp(c[0], 225, k), lerp(c[1], 231, k), lerp(c[2], 238, k)]; }
+  return c;
+}
+function buildMapRows(nRows) {
+  if (!mapTerrain) mapTerrain = mapCtx.createImageData(MW, MH);
+  const d = mapTerrain.data;
+  for (let r = 0; r < nRows && mapRow < MH; r++, mapRow++) {
+    const la = ((mapRow + 0.5) / MH - 0.5) * Math.PI;
+    const y = mapRow * MW * 4;
+    for (let x = 0; x < MW; x++) {
+      const lo = ((x + 0.5) / MW) * TAU - Math.PI;
+      const l = llToVec(la, lo);
+      const c = mapColorAt(l);
+      const i = y + x * 4;
+      d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
+    }
+  }
+  if (mapRow >= MH) { mapRow = MH; }
+}
+function drawMap() {
+  if (mapRow < MH) return; // still building
+  if (!mapOut) mapOut = mapCtx.createImageData(MW, MH);
+  const img = mapOut;
+  const s = mapTerrain.data, o = img.data;
+  const sunL = rotY3(sun.dir[0], sun.dir[1], sun.dir[2], -state.spin);
+  for (let y = 0; y < MH; y++) {
+    const la = ((y + 0.5) / MH - 0.5) * Math.PI;
+    const cy = Math.sin(la);
+    const cxz = Math.cos(la);
+    for (let x = 0; x < MW; x++) {
+      const lo = ((x + 0.5) / MW) * TAU - Math.PI;
+      const dd = cxz * Math.cos(lo) * sunL[0] + cy * sunL[1] + cxz * Math.sin(lo) * sunL[2];
+      const night = dd < 0.12 ? clamp((0.12 - dd) * 5.2, 0, 0.78) : 0;
+      const i = (y * MW + x) * 4;
+      o[i] = s[i] * (1 - night * 0.82);
+      o[i + 1] = s[i + 1] * (1 - night * 0.82);
+      o[i + 2] = s[i + 2] * (1 - night * 0.80);
+      o[i + 3] = 255;
+    }
+  }
+  mapCtx.putImageData(img, 0, 0);
+  // storms
+  mapCtx.fillStyle = "rgba(255, 196, 125, .9)";
+  for (const st of storms) {
+    if (st.i < 0.15) continue;
+    const [sla, slo] = vecToLL([st.x, st.y, st.z]);
+    const x = (slo + Math.PI) / TAU * MW, y = (0.5 - sla / Math.PI) * MH;
+    const rr = 2 + st.i * 3 + Math.sin(state.simTime * 5 + st.phase) * 0.8;
+    mapCtx.beginPath(); mapCtx.arc(x, y, rr, 0, TAU); mapCtx.fill();
+  }
+  // camera marker + heading cone
+  const cl = subCameraLocal();
+  const [cla, clo] = vecToLL(cl);
+  const cx = (clo + Math.PI) / TAU * MW, cyy = (0.5 - cla / Math.PI) * MH;
+  mapCtx.strokeStyle = "rgba(255,255,255,.9)";
+  mapCtx.lineWidth = 1.2;
+  mapCtx.beginPath(); mapCtx.arc(cx, cyy, 4.5, 0, TAU); mapCtx.stroke();
+  mapCtx.beginPath(); mapCtx.arc(cx, cyy, 1.4, 0, TAU); mapCtx.fillStyle = "#fff"; mapCtx.fill();
+}
+mapC.addEventListener("pointerdown", e => {
+  e.stopPropagation();
+  const r = mapC.getBoundingClientRect();
+  const lo = ((e.clientX - r.left) / r.width) * TAU - Math.PI;
+  const la = (0.5 - (e.clientY - r.top) / r.height) * Math.PI;
+  flyTo(lo - state.spin, la, clamp(cam.distT, MIN_DIST, 2.2));
+  cam.follow = { lon: lo, lat: la }; // hold the target as the world turns
+  toast("setting course");
+});
+function flyTo(lon, lat, dist) {
+  // choose shortest wrap
+  let dl = lon - cam.lonT;
+  dl = ((dl + Math.PI) % TAU + TAU) % TAU - Math.PI;
+  cam.lonT += dl;
+  cam.latT = clamp(lat, -1.45, 1.45);
+  if (dist) cam.distT = clamp(dist, MIN_DIST, 6.5);
+  cam.vlon = 0; cam.vlat = 0;
+  if (state.tour) endTour();
+}
+
+/* ---------------- tour ---------------- */
+function startTour() {
+  cam.follow = null;
+  state.tour = {
+    t0: performance.now() / 1000,
+    from: { lon: cam.lon, lat: cam.lat, dist: cam.dist },
+    prevTS: state.timeIdx
+  };
+  state.timeIdx = 3; state.timeScale = TIME_STEPS[3].s; syncTimeBtn();
+  if (!storms.length) spawnStorm([cam.latT + 0.1, cam.lonT + 1.1]);
+  $("tourBtn").classList.add("touring");
+  toast("cinematic tour — touch anything to take over");
+  hideHint();
+}
+function endTour() {
+  if (!state.tour) return;
+  const prev = state.tour.prevTS;
+  state.tour = null;
+  state.timeIdx = prev; state.timeScale = TIME_STEPS[prev].s;
+  syncTimeBtn();
+  $("tourBtn").classList.remove("touring");
+  cam.lonT = cam.lon; cam.latT = cam.lat; cam.distT = clamp(cam.dist, MIN_DIST, 6.5);
+  toast("the sky is yours");
+}
+const TOUR = [
+  { t: 0,   lon: 0,    lat: 0.1,  dist: 4.6 },   // establishing orbit
+  { t: 9,   lon: 0.5,  lat: 0.12, dist: 3.0 },
+  { t: 20,  lon: 1.6,  lat: 0.2,  dist: 1.6 },   // descend toward the planet
+  { t: 28,  lon: 2.3,  lat: 0.28, dist: 1.28 },  // orbital pass over the terminator
+  { t: 42,  lon: 3.4,  lat: 0.1,  dist: 1.28 },
+  { t: 54,  lon: 4.2,  lat: 0.85, dist: 1.5 },   // poleward into the aurora
+  { t: 66,  lon: 5.0,  lat: 0.7,  dist: 1.8 },
+  { t: 78,  lon: 5.8,  lat: 0.25, dist: 3.6 },   // pull back to space
+  { t: 86,  lon: 6.1,  lat: 0.15, dist: 4.4 }
+];
+function tourUpdate() {
+  const T = state.tour;
+  const now = performance.now() / 1000 - T.t0;
+  const dur = RM ? 1.6 : 1;
+  if (now > TOUR[TOUR.length - 1].t * dur) { endTour(); return; }
+  let a = TOUR[0], b = TOUR[TOUR.length - 1];
+  for (let i = 0; i < TOUR.length - 1; i++) {
+    if (now >= TOUR[i].t * dur && now <= TOUR[i + 1].t * dur) { a = TOUR[i]; b = TOUR[i + 1]; break; }
+  }
+  const span = Math.max(0.001, (b.t - a.t) * dur);
+  let u = clamp((now - a.t * dur) / span, 0, 1);
+  u = u * u * (3 - 2 * u);
+  // anchored on the state the tour started from, so there is no jump
+  cam.lon = cam.lonT = T.from.lon + (lerp(a.lon, b.lon, u) - TOUR[0].lon);
+  cam.lat = cam.latT = clamp(T.from.lat + (lerp(a.lat, b.lat, u) - TOUR[0].lat), -1.45, 1.45);
+  let d = T.from.dist + (lerp(a.dist, b.dist, u) - TOUR[0].dist);
+  if (!RM) d *= 1 + 0.015 * Math.sin(now * 0.7); // gentle breathing
+  cam.dist = cam.distT = clamp(d, MIN_DIST, 6.5);
+}
+
+/* ---------------- UI wiring ---------------- */
+$("seedInput").addEventListener("change", () => {
+  let v = $("seedInput").value.trim().replace(/[^A-Za-z0-9\-_]/g, "").slice(0, 24);
+  if (!v) { $("seedInput").value = seedStr; return; }
+  if (v === seedStr) return;
+  setSeed(v);
+});
+$("seedInput").addEventListener("keydown", e => { if (e.key === "Enter") { e.target.blur(); } e.stopPropagation(); });
+$("diceBtn").addEventListener("click", () => {
+  const words = ["aurora", "basalt", "cinder", "doldrum", "ember", "fjord", "gale", "holt", "isle", "kelp", "lagoon", "meridian", "noon", "ocelu", "pumice", "quartz", "ridge", "sirocco", "tarn", "umber", "veld", "wrack", "yarrow", "zephyr"];
+  let s = words[Math.floor(Math.random() * words.length)];
+  if (Math.random() < 0.5) s += "-" + (Math.floor(Math.random() * 89) + 10);
+  setSeed(s);
+});
+$("linkBtn").addEventListener("click", async () => {
+  const url = location.href.split("#")[0] + "#" + seedStr;
+  try {
+    await navigator.clipboard.writeText(url);
+    toast("link copied — this exact world travels with it");
+  } catch (e) {
+    toast(url);
+  }
+});
+function cycleTime() {
+  state.timeIdx = (state.timeIdx + 1) % TIME_STEPS.length;
+  state.timeScale = TIME_STEPS[state.timeIdx].s;
+  syncTimeBtn();
+}
+function syncTimeBtn() { $("timeBtn").textContent = TIME_STEPS[state.timeIdx].label; }
+$("timeBtn").addEventListener("click", cycleTime);
+$("tourBtn").addEventListener("click", () => state.tour ? endTour() : startTour());
+$("epochRange").addEventListener("input", () => {
+  const v = +$("epochRange").value / 100;
+  state.drift = v * 0.85;
+  state.erode = clamp(0.5 + v * 0.5, 0, 1);
+  const yr = Math.round(v * 180);
+  $("epochV").textContent = yr === 0 ? "now" : (yr > 0 ? "+" : "−") + Math.abs(yr) + " Myr";
+  clearTimeout(state.epochDeb);
+  state.epochDeb = setTimeout(() => { mapDirty = true; }, 240);
+});
+function hideHint() {
+  const h = $("hint");
+  if (h && !h.classList.contains("gone")) { h.classList.add("gone"); h.style.opacity = 0; }
+}
+setTimeout(hideHint, 22000);
+
+/* ---------------- resize & adaptive quality ---------------- */
+let resScale = IS_TOUCH ? 0.55 : 0.85, dpr = Math.min(devicePixelRatio || 1, 1.6);
+let frameEMA = 16, adaptT = 0;
+function resize() {
+  const w = Math.max(2, Math.round(innerWidth * dpr * resScale));
+  const h = Math.max(2, Math.round(innerHeight * dpr * resScale));
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+}
+addEventListener("resize", resize);
+resize();
+
+/* ---------------- HUD ---------------- */
+let hudT = 0;
+function updateHUD(now) {
+  if (now - hudT < 0.15) return;
+  hudT = now;
+  const altKm = (cam.dist - 1) * 6371;
+  $("altV").textContent = altKm >= 1000 ? Math.round(altKm).toLocaleString("en").replace(/,/g, " ") + " km"
+                        : altKm.toFixed(1) + " km";
+  // the clock hovers over a place: it follows the camera when you orbit,
+  // and lets the day pass beneath you when you hold still
+  const cwp = camPos();
+  const lamNow = Math.atan2(cwp[2], cwp[0]) + state.spin;
+  if (state.hoverLon === null || Math.abs(cam.lon - state.lastCamLon) > 1e-5) state.hoverLon = lamNow;
+  state.lastCamLon = cam.lon;
+  const sunAng = Math.atan2(sun.dir[2], sun.dir[0]);
+  let hrs = ((sunAng + state.spin - state.hoverLon) / TAU) * 24 + 12;
+  hrs = ((hrs % 24) + 24) % 24;
+  const hh = Math.floor(hrs), mm = Math.floor((hrs - hh) * 60);
+  $("timeV").textContent = String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
+  $("seasonV").textContent = state.decl > 0.1 ? "north summer" : state.decl < -0.1 ? "south summer" : "the equinox weeks";
+  $("wxV").textContent = cam.dist > 2.4 ? "exosphere" : wx.label;
+}
+
+/* ---------------- main loop ---------------- */
+let last = performance.now();
+let weatherT = 0, mapPaintT = 0, hudShown = false;
+function frame(nowMs) {
+  requestAnimationFrame(frame);
+  const now = (nowMs - state.started) / 1000;
+  let dt = Math.min(0.05, (nowMs - last) / 1000);
+  last = nowMs;
+  if (document.hidden) return;
+
+  // adaptive resolution
+  frameEMA = frameEMA * 0.94 + (dt * 1000) * 0.06;
+  adaptT += dt;
+  if (adaptT > 1.2) {
+    adaptT = 0;
+    if (frameEMA > 21 && resScale > 0.42) { resScale = Math.max(0.42, resScale - 0.09); resize(); }
+    else if (frameEMA < 13.5 && resScale < (IS_TOUCH ? 0.7 : 1.0)) { resScale = Math.min(IS_TOUCH ? 0.7 : 1.0, resScale + 0.07); resize(); }
+  }
+
+  // time flow
+  const tdt = dt * state.timeScale;
+  state.simTime += tdt;
+  state.spin = state.simTime / DAY * TAU;
+  state.decl = Math.sin(state.simTime / YEAR * TAU) * W.declMax;
+  if (!sunManual) { /* sun is fixed in the sky; the planet turns beneath it */ }
+
+  // intro
+  const introDur = RM ? 1.2 : 3.2;
+  if (state.intro < 1) {
+    state.intro = clamp((now - 0.3) / introDur, 0, 1);
+    if (!RM) cam.lon += dt * 0.008; // slow drift while the world fades in
+    cam.lonT = cam.lon;
+  }
+  if (state.intro > 0.55) $("intro").classList.add("gone");
+  if (state.intro >= 1 && !hudShown) {
+    hudShown = true;
+    $("intro").style.display = "none";
+    document.querySelectorAll(".hud").forEach((el, i) => setTimeout(() => el.classList.add("on"), RM ? 0 : i * 130));
+  }
+
+  // camera
+  if (state.tour) tourUpdate();
+  else {
+    if (cam.follow && !dragMode) {
+      cam.lonT = cam.follow.lon - state.spin;
+      cam.latT = clamp(cam.follow.lat, -1.45, 1.45);
+      cam.vlon = 0; cam.vlat = 0;
+    } else if (!dragMode) {
+      cam.lonT += cam.vlon * dt; cam.latT = clamp(cam.latT + cam.vlat * dt, -1.45, 1.45);
+      const f = Math.exp(-dt * 3.0);
+      cam.vlon *= f; cam.vlat *= f;
+    }
+    const k = 1 - Math.exp(-dt * 6.5);
+    let dl = cam.lonT - cam.lon; dl = ((dl + Math.PI) % TAU + TAU) % TAU - Math.PI;
+    cam.lon += dl * k;
+    cam.lat += (cam.latT - cam.lat) * k;
+    cam.dist += (cam.distT - cam.dist) * (1 - Math.exp(-dt * 4));
+  }
+
+  // world systems
+  updateStorms(dt);
+  weatherT += dt;
+  if (weatherT > 0.4) { weatherT = 0; sampleWeather(); }
+  state.rain += (wx.rain - state.rain) * Math.min(1, dt * 1.5);
+
+  // minimap build (a few rows per frame)
+  if (mapDirty) { mapDirty = false; mapRow = 0; mapTerrain = null; }
+  if (mapRow < MH) buildMapRows(9);
+  mapPaintT += dt;
+  if (mapPaintT > 0.12) { mapPaintT = 0; drawMap(); }
+
+  updateHUD(now);
+  audio.update(dt, clamp(Math.hypot(cam.vlon, cam.vlat) * 2 + (dragMode === "orbit" ? 0.5 : 0), 0, 1));
+
+  // moon position
+  const mt = state.simTime * W.moonSpeed + W.moonPhase;
+  const moonPos = [Math.cos(mt) * W.moonDist, Math.sin(mt * 0.9) * W.moonDist * 0.18 * W.moonTilt * 2, Math.sin(mt) * W.moonDist];
+
+  // render
+  const b = camBasis();
+  const fov = curFov();
+  const close = smooth(1.25, 1.005, cam.dist);
+  const aspect = canvas.width / canvas.height;
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.uniform2f(U.uRes, canvas.width, canvas.height);
+  gl.uniform1f(U.uTime, state.simTime);
+  gl.uniform1f(U.uIntro, state.intro);
+  gl.uniform1f(U.uExpo, 1.06 + close * 0.5);
+  gl.uniform1f(U.uGrain, RM ? 0 : 0.028);
+  gl.uniform1f(U.uTwinkle, RM ? 0 : 1);
+  gl.uniform3f(U.uCamPos, b.pos[0], b.pos[1], b.pos[2]);
+  gl.uniformMatrix3fv(U.uCam, false, [b.right[0], b.right[1], b.right[2], b.up[0], b.up[1], b.up[2], b.fwd[0], b.fwd[1], b.fwd[2]]);
+  gl.uniform2f(U.uProj, Math.tan(fov * 0.5), aspect);
+  gl.uniform3f(U.uSun, sun.dir[0], sun.dir[1], sun.dir[2]);
+  gl.uniform1f(U.uSpin, state.spin);
+  gl.uniform1f(U.uDrift, state.drift);
+  gl.uniform1f(U.uErode, state.erode);
+  gl.uniform1f(U.uSea, W.sea);
+  gl.uniform1f(U.uCloud, W.cloud);
+  gl.uniform1f(U.uWind, RM ? W.wind * 0.35 : W.wind);
+  gl.uniform1f(U.uCity, W.city);
+  gl.uniform1f(U.uDecl, state.decl);
+  gl.uniform1f(U.uAurora, W.aurora);
+  gl.uniform1f(U.uRain, state.rain);
+  gl.uniform3fv(U.uO1, W.o1); gl.uniform3fv(U.uO2, W.o2); gl.uniform3fv(U.uO3, W.o3);
+  gl.uniform3fv(U.uO4, W.o4); gl.uniform3fv(U.uO5, W.o5);
+  gl.uniform3fv(U.uTint, W.tint);
+  const su = new Float32Array(16);
+  for (let i = 0; i < 4; i++) {
+    const s = storms[i];
+    if (s) { su[i * 4] = s.x; su[i * 4 + 1] = s.y; su[i * 4 + 2] = s.z; su[i * 4 + 3] = s.i; }
+  }
+  gl.uniform4fv(U.uStorm, su);
+  gl.uniform4f(U.uLight, lightning.pos[0], lightning.pos[1], lightning.pos[2], lightningEnv());
+  gl.uniform3f(U.uMoonPos, moonPos[0], moonPos[1], moonPos[2]);
+  gl.uniform1f(U.uMoonR, W.moonR);
+  gl.uniform1f(U.uRing, W.easter ? 1 : 0);
+  gl.uniform1f(U.uMega, W.easter ? 1 : 0);
+  gl.uniform3fv(U.uMegaN, W.megaN);
+  gl.uniform2f(U.uDetail, lerp(60, 320, close), close * close * 0.55);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+requestAnimationFrame(frame);
+
+/* a small console handle for curious explorers */
+window.atlas = {
+  get seed() { return seedStr; },
+  get alt() { return Math.round((cam.dist - 1) * 6371); },
+  get clock() { return $("timeV").textContent; },
+  get over() { // [lat, lon] in degrees of the ground point under the camera
+    const l = subCameraLocal();
+    return [+(Math.asin(clamp(l[1], -1, 1)) * 57.2958).toFixed(1), +(Math.atan2(l[2], l[0]) * 57.2958).toFixed(1)];
+  },
+  flyTo(latDeg, lonDeg, altKm) {
+    flyTo(lonDeg * Math.PI / 180 - state.spin, latDeg * Math.PI / 180, altKm !== undefined ? 1 + altKm / 6371 : undefined);
+    cam.follow = { lon: lonDeg * Math.PI / 180, lat: latDeg * Math.PI / 180 };
+  },
+  lookAtSun() {
+    let want = Math.atan2(sun.dir[2], sun.dir[0]) + Math.PI;
+    let dl = ((want - cam.lonT + Math.PI) % TAU + TAU) % TAU - Math.PI;
+    cam.lonT += dl;
+    cam.latT = clamp(-Math.asin(clamp(sun.dir[1], -1, 1)), -1.45, 1.45);
+    cam.vlon = 0; cam.vlat = 0;
+  }
+};
+
+/* context loss */
+canvas.addEventListener("webglcontextlost", e => { e.preventDefault(); toast("graphics context lost — reload the page to fly again"); });
+})();
+</script>
+</body>
+</html>

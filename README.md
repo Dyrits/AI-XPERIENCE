@@ -43,6 +43,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Palimpsest](https://dyrits.github.io/AI-XPERIENCE/pages/palimpsest.html) | Canvas 2D, ink recognition + time scrubbing | Space Bunny | 1 + 2 | 96 KB |
 | [Rewind](https://dyrits.github.io/AI-XPERIENCE/pages/rewind.html) | DOM + SVG, deckbuilder roguelike | Claude Opus 5.5 | 1 | 130 KB |
 | [Beatloom](https://dyrits.github.io/AI-XPERIENCE/pages/beatloom.html) | DOM + Canvas 2D, generative rhythm loom | Claude Sonnet 5 | 1 | 36 KB |
+| [Living Atlas](https://dyrits.github.io/AI-XPERIENCE/pages/living-atlas.html) | WebGL raymarched planet, Web Audio | GLM-5.3 | 1 | 89 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -106,6 +107,8 @@ Includes optional synthesized sound, pause, timeline scrubbing, keyboard frame s
 
 **Beatloom.** A step sequencer that weaves its own portrait. Six synthesized instruments — kick, snare, hat, pluck, bass and chime — sit on six concentric rings around the loom's centre; toggle steps to build a sixteen-step loop, all tuned to one pentatonic key so nothing you play can sound wrong. Every beat that fires draws a glowing thread onto a tapestry that never clears, and kick and snare hits act as hubs that pull a faint chord toward whatever else just played, so a plain rhythm slowly grows into a crossing, spirograph-like web. Every full loop pushes the whole ring band one notch further from the centre, like a rug built up row by row, until it settles into a mandala that keeps quietly brightening the longer the loom runs. Includes swing, four dye palettes, musically-weighted randomize, a PNG export of the tapestry, per-track mute, local saves, optional synthesized sound, keyboard shortcuts and reduced-motion support.
 
+**Living Atlas.** A procedural planet you can fly over, from deep space down to an orbital sweep fifteen hundred kilometres above the ground, drawn by a single raymarching shader. Every world grows from a shareable seed in the URL — continents, mountain ranges, rivers, forests, deserts, ice caps and city lights on the night side — and the noise is built so the JavaScript that draws the survey chart, simulates the weather and writes the field notes is bit-identical to the GPU version. Drag to orbit with inertia, scroll to descend into an orbital skim above the cloud deck, drag the sun itself to move day and night, and watch sunsets, aurora over the poles, storm cells that form and die, rain, and lightning answered by thunder delayed by its distance. Clicking any point of ground opens a field note with an invented name, climate, wildlife and history; a cinematic tour flies the whole world hands-free; ambient sound and generative music are synthesized live and follow altitude, hour and weather. A deep-time slider scrubs ±180 million years of tectonic drift and erosion on the chart, and one hidden seed is not like the others.
+
 ## Correction rounds
 
 Most pieces needed none. The ones that did:
@@ -137,6 +140,7 @@ AI-XPERIENCE/
     ├── foldwake.html
     ├── last-orders.html
     ├── lifeline.html
+    ├── living-atlas.html
     ├── loaded.html
     ├── longhand.html
     ├── mercurial.html
