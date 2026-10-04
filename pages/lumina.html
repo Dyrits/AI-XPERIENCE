@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumina</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0f;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    cursor: none;
+  }
+  canvas {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+  .cursor {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 1000;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+  }
+  .cursor.hover {
+    width: 40px;
+    height: 40px;
+  }
+  .title {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Georgia', serif;
+    font-size: 14px;
+    letter-spacing: 8px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    pointer-events: none;
+    z-index: 100;
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="cursor" id="cursor"></div>
+<div class="title">Lumina</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const cursor = document.getElementById('cursor');
+
+let W, H;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const mouse = { x: W/2, y: H/2, px: W/2, py: H/2, vx: 0, vy: 0, active: false };
+window.addEventListener('mousemove', e => {
+  mouse.px = mouse.x;
+  mouse.py = mouse.y;
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+  mouse.vx = mouse.x - mouse.px;
+  mouse.vy = mouse.y - mouse.py;
+  mouse.active = true;
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top = e.clientY + 'px';
+});
+window.addEventListener('mouseleave', () => { mouse.active = false; });
+
+class Particle {
+  constructor() {
+    this.reset();
+  }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.ox = this.x;
+    this.oy = this.y;
+    this.size = Math.random() * 2 + 0.5;
+    this.baseSize = this.size;
+    this.hue = Math.random() * 60 + 200;
+    this.sat = Math.random() * 40 + 60;
+    this.light = Math.random() * 30 + 50;
+    this.life = Math.random() * 200 + 100;
+    this.maxLife = this.life;
+    this.angle = Math.random() * Math.PI * 2;
+    this.speed = Math.random() * 0.5 + 0.1;
+    this.orbitRadius = Math.random() * 80 + 20;
+    this.orbitSpeed = Math.random() * 0.02 + 0.005;
+    this.pulseOffset = Math.random() * Math.PI * 2;
+    this.trail = [];
+    this.maxTrail = Math.floor(Math.random() * 15 + 5);
+  }
+  update(time) {
+    this.life--;
+    if (this.life <= 0) this.reset();
+
+    this.angle += this.orbitSpeed;
+    const targetX = this.ox + Math.cos(this.angle) * this.orbitRadius;
+    const targetY = this.oy + Math.sin(this.angle) * this.orbitRadius;
+
+    this.x += (targetX - this.x) * 0.02;
+    this.y += (targetY - this.y) * 0.02;
+
+    if (mouse.active) {
+      const dx = this.x - mouse.x;
+      const dy = this.y - mouse.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const maxDist = 200;
+
+      if (dist < maxDist) {
+        const force = (1 - dist / maxDist) * 3;
+        const angle = Math.atan2(dy, dx);
+        this.x += Math.cos(angle) * force;
+        this.y += Math.sin(angle) * force;
+        this.size = this.baseSize * (1 + (1 - dist/maxDist) * 2);
+      } else {
+        this.size += (this.baseSize - this.size) * 0.1;
+      }
+    } else {
+      this.size += (this.baseSize - this.size) * 0.1;
+    }
+
+    this.trail.push({ x: this.x, y: this.y });
+    if (this.trail.length > this.maxTrail) this.trail.shift();
+
+    const lifeRatio = this.life / this.maxLife;
+    const pulse = Math.sin(time * 0.003 + this.pulseOffset) * 0.3 + 0.7;
+    this.alpha = lifeRatio * pulse;
+  }
+  draw() {
+    if (this.trail.length < 2) return;
+
+    ctx.beginPath();
+    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+    for (let i = 1; i < this.trail.length; i++) {
+      const t = this.trail[i];
+      ctx.lineTo(t.x, t.y);
+    }
+    ctx.strokeStyle = `hsla(${this.hue}, ${this.sat}%, ${this.light}%, ${this.alpha * 0.3})`;
+    ctx.lineWidth = this.size * 0.5;
+    ctx.stroke();
+
+    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 3);
+    gradient.addColorStop(0, `hsla(${this.hue}, ${this.sat}%, ${this.light + 20}%, ${this.alpha})`);
+    gradient.addColorStop(0.5, `hsla(${this.hue}, ${this.sat}%, ${this.light}%, ${this.alpha * 0.5})`);
+    gradient.addColorStop(1, `hsla(${this.hue}, ${this.sat}%, ${this.light}%, 0)`);
+
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${this.hue}, ${this.sat}%, ${this.light + 30}%, ${this.alpha})`;
+    ctx.fill();
+  }
+}
+
+class Connection {
+  constructor(p1, p2) {
+    this.p1 = p1;
+    this.p2 = p2;
+  }
+  draw() {
+    const dx = this.p1.x - this.p2.x;
+    const dy = this.p1.y - this.p2.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const maxDist = 120;
+
+    if (dist < maxDist) {
+      const alpha = (1 - dist / maxDist) * 0.15;
+      ctx.beginPath();
+      ctx.moveTo(this.p1.x, this.p1.y);
+      ctx.lineTo(this.p2.x, this.p2.y);
+      ctx.strokeStyle = `hsla(220, 80%, 70%, ${alpha})`;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
+  }
+}
+
+const particles = [];
+const count = Math.min(200, Math.floor(W * H / 8000));
+for (let i = 0; i < count; i++) {
+  particles.push(new Particle());
+}
+
+let time = 0;
+function animate() {
+  time++;
+  ctx.fillStyle = 'rgba(10, 10, 15, 0.15)';
+  ctx.fillRect(0, 0, W, H);
+
+  for (const p of particles) {
+    p.update(time);
+  }
+
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const c = new Connection(particles[i], particles[j]);
+      c.draw();
+    }
+  }
+
+  for (const p of particles) {
+    p.draw();
+  }
+
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html>

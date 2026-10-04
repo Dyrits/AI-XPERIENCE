@@ -421,7 +421,9 @@
     .specs div:nth-child(3) { padding-left: 0; border-left: 0; }
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01s !important; transition-duration: .01s !important; } }
-</style>
+  .art-lumina { background: radial-gradient(ellipse at 50% 45%, #1a1530 0%, #0a0a12 70%); }
+  .art-lumina svg { width: 100%; height: 100%; }
+  </style>
 </head>
 <body>
 
@@ -434,7 +436,7 @@
     <div class="meta">
       <span>Claude + Codex + GLM + DeepSeek</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">30 pieces</span>
+      <span class="live">32 pieces</span>
     </div>
   </header>
 
@@ -1941,10 +1943,84 @@
         <a class="open mono" href="pages/living-atlas.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+    <article class="card" data-src="pages/lumina.html" style="--accent: #a78bfa; animation-delay: 6.2s;">
+      <div class="preview">
+        <div class="art art-lumina">
+          <svg viewBox="0 0 640 400" aria-hidden="true">
+            <defs>
+              <radialGradient id="lu-glow" cx="0.5" cy="0.5" r="0.5">
+                <stop offset="0" stop-color="#a78bfa" stop-opacity="0.8"/>
+                <stop offset="1" stop-color="#a78bfa" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <g fill="#a78bfa">
+              <circle cx="120" cy="100" r="3" opacity="0.6">
+                <animate attributeName="r" values="2;4;2" dur="3s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="320" cy="200" r="4" opacity="0.8">
+                <animate attributeName="r" values="3;5;3" dur="2.5s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="520" cy="300" r="3" opacity="0.6">
+                <animate attributeName="r" values="2;4;2" dur="3.5s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="200" cy="320" r="2" opacity="0.5">
+                <animate attributeName="r" values="1.5;3;1.5" dur="2.8s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="440" cy="80" r="2" opacity="0.5">
+                <animate attributeName="r" values="1.5;3;1.5" dur="3.2s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="80" cy="240" r="2.5" opacity="0.55">
+                <animate attributeName="r" values="2;3.5;2" dur="2.7s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="560" cy="160" r="2.5" opacity="0.55">
+                <animate attributeName="r" values="2;3.5;2" dur="3.1s" repeatCount="indefinite"/>
+              </circle>
+            </g>
+            <g stroke="#a78bfa" stroke-opacity="0.15" stroke-width="0.5">
+              <line x1="120" y1="100" x2="320" y2="200">
+                <animate attributeName="stroke-opacity" values="0.1;0.25;0.1" dur="4s" repeatCount="indefinite"/>
+              </line>
+              <line x1="320" y1="200" x2="520" y2="300">
+                <animate attributeName="stroke-opacity" values="0.15;0.3;0.15" dur="3.5s" repeatCount="indefinite"/>
+              </line>
+              <line x1="200" y1="320" x2="320" y2="200">
+                <animate attributeName="stroke-opacity" values="0.1;0.2;0.1" dur="3.8s" repeatCount="indefinite"/>
+              </line>
+              <line x1="440" y1="80" x2="320" y2="200">
+                <animate attributeName="stroke-opacity" values="0.12;0.22;0.12" dur="4.2s" repeatCount="indefinite"/>
+              </line>
+              <line x1="80" y1="240" x2="200" y2="320">
+                <animate attributeName="stroke-opacity" values="0.08;0.18;0.08" dur="3.3s" repeatCount="indefinite"/>
+              </line>
+              <line x1="560" y1="160" x2="520" y2="300">
+                <animate attributeName="stroke-opacity" values="0.1;0.2;0.1" dur="3.6s" repeatCount="indefinite"/>
+              </line>
+            </g>
+            <circle cx="320" cy="200" r="30" fill="url(#lu-glow)" opacity="0.3">
+              <animate attributeName="r" values="25;35;25" dur="4s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.2;0.4;0.2" dur="4s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+        <span class="tag mono">Canvas 2D · Particle garden</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Lumina</h2><span class="num mono">Nº 32</span></div>
+        <p>An interactive particle garden that blooms and flows around your cursor. Hundreds of glowing particles orbit, pulse and trail through space, repelled by your presence and connected by faint threads when they drift close. Each particle lives its own life — born, pulsing, fading, reborn — creating an ever-shifting constellation of light.</p>
+        <div class="chips mono"><span>Particle system</span><span>Mouse interaction</span><span>Proximity links</span><span>Organic motion</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>LongCat 2.5</dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>4 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/lumina.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Built with Claude Opus 5.5, Claude Sonnet 5.5, Claude Sonnet 5, GPT-6 models, GPT-6 Astra, GLM-5.3, DeepSeek V4 Pro and Space Bunny.</span>
+    <span class="note">Built with Claude Opus 5.5, Claude Sonnet 5.5, Claude Sonnet 5, GPT-6 models, GPT-6 Astra, GLM-5.3, DeepSeek V4 Pro, Space Bunny and LongCat 2.5.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>
