@@ -2,6 +2,21 @@
 
 An experiment to see how far an AI model can go when asked to build an advanced, animated web page from a single prompt.
 
+## Table of contents
+
+- [About The Project](#about-the-project)
+- [Rules](#rules)
+- [Pages](#pages)
+- [Correction rounds](#correction-rounds)
+- [Viewing](#viewing)
+- [Structure](#structure)
+- [License](#license)
+- [Contact](#contact)
+
+## About The Project
+
+An experiment to see how far an AI model can go when asked to build an advanced, animated web page from a single prompt. Each page is one self-contained HTML file built by a single prompt (plus at most one correction round); the model picks the creative concept itself.
+
 ## Rules
 
 - One prompt to build the page. One follow-up prompt is allowed, for minor corrections only.
@@ -163,3 +178,11 @@ AI-XPERIENCE/
     ├── until-the-tide.html
     └── vesper.html
 ```
+
+## License
+
+No license file is present in this repository.
+
+## Contact
+
+Dyrits - https://github.com/Dyrits
