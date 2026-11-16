@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nocturne - a field of light</title>
+<style>
+  :root{
+    --bg:#0a0b10; --ink:#e9e4d8; --dim:rgba(233,228,216,.42);
+    --faint:rgba(233,228,216,.16); --line:rgba(233,228,216,.14);
+    --serif:Georgia,'Times New Roman',serif;
+    --sans:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  body.light{
+    --bg:#f2eee4; --ink:#17181f; --dim:rgba(23,24,31,.5);
+    --faint:rgba(23,24,31,.22); --line:rgba(23,24,31,.16);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--sans);
+    transition:background 1.1s ease, color 1.1s ease;
+    -webkit-user-select:none; user-select:none; cursor:crosshair;
+  }
+  canvas#field{position:fixed; inset:0; width:100%; height:100%; display:block}
+  .vignette{
+    position:fixed; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse at 50% 42%, transparent 55%, rgba(0,0,0,.34) 100%);
+    transition:opacity 1.1s ease;
+  }
+  body.light .vignette{background:radial-gradient(ellipse at 50% 42%, transparent 60%, rgba(23,24,31,.10) 100%)}
+  .grain{
+    position:fixed; inset:-50%; width:200%; height:200%; pointer-events:none; opacity:.05;
+    background-image:repeating-conic-gradient(rgba(255,255,255,.6) 0 .00006turn, transparent .00006turn .00012turn);
+    background-size:180px 180px; animation:grain 700ms steps(4) infinite;
+  }
+  body.light .grain{opacity:.04; background-image:repeating-conic-gradient(rgba(0,0,0,.6) 0 .00006turn, transparent .00006turn .00012turn)}
+  @keyframes grain{
+    0%{transform:translate(0,0)} 25%{transform:translate(-2%,1.4%)}
+    50%{transform:translate(1.6%,-1.2%)} 75%{transform:translate(-1%, -2%)} 100%{transform:translate(0,0)}
+  }
+  .ui{position:fixed; z-index:5; transition:opacity .8s ease}
+  body.idle .ui{opacity:0; pointer-events:none}
+  header.ui{top:clamp(20px,5vh,52px); left:clamp(20px,5vw,56px)}
+  h1{
+    font-family:var(--serif); font-weight:400; font-size:clamp(28px,4.6vw,52px);
+    letter-spacing:.42em; text-indent:.42em; white-space:nowrap;
+  }
+  h1 .ch{display:inline-block;
+    animation:rise 1.5s cubic-bezier(.16,1,.3,1) backwards; animation-delay:var(--d)}
+  @keyframes rise{from{opacity:0; transform:translateY(14px); filter:blur(6px)}}
+  .sub{
+    margin-top:14px; font-size:11px; letter-spacing:.32em; text-transform:uppercase;
+    color:var(--dim); animation:fadein 1.6s ease 1.6s backwards;
+  }
+  @keyframes fadein{from{opacity:0}}
+  .rule{margin-top:18px; height:1px; width:min(300px,42vw); background:var(--line);
+    animation:rule 1.8s cubic-bezier(.16,1,.3,1) .9s backwards}
+  @keyframes rule{from{width:0}}
+  .hint{
+    left:clamp(20px,5vw,56px); bottom:clamp(18px,4.5vh,44px);
+    font-size:10.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--dim);
+    animation:fadein 1.4s ease 2.4s backwards;
+  }
+  .hint b{color:var(--ink); font-weight:500}
+  .controls{
+    right:clamp(20px,5vw,56px); bottom:clamp(18px,4.5vh,44px);
+    display:flex; align-items:center; gap:14px;
+    animation:fadein 1.4s ease 2s backwards;
+  }
+  .swatches{display:flex; gap:9px}
+  .sw{
+    width:15px; height:15px; border-radius:50%; border:1px solid var(--faint);
+    cursor:pointer; padding:0; transition:transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s ease;
+  }
+  .sw:hover{transform:scale(1.25)}
+  .sw[aria-pressed="true"]{box-shadow:0 0 0 3px var(--faint); transform:scale(1.12)}
+  .btn{
+    background:none; border:1px solid var(--line); color:var(--dim);
+    font-family:var(--sans); font-size:10.5px; letter-spacing:.22em; text-transform:uppercase;
+    padding:8px 14px; border-radius:999px; cursor:pointer;
+    transition:color .3s ease, border-color .3s ease, background .3s ease;
+  }
+  .btn:hover{color:var(--ink); border-color:var(--faint)}
+  .sep{width:1px; height:18px; background:var(--line)}
+  .sig{
+    position:fixed; right:clamp(20px,5vw,56px); top:clamp(20px,5vh,52px); z-index:5;
+    font-family:var(--serif); font-style:italic; font-size:13px; color:var(--dim);
+    animation:fadein 1.6s ease 2.8s backwards; transition:opacity .8s ease;
+  }
+  body.idle .sig{opacity:0}
+  body.settled .ch{animation:none;opacity:1;transform:none;filter:none}
+  body.settled .sub,body.settled .hint,body.settled .controls,body.settled .sig{animation:none;opacity:1}
+  body.settled .rule{animation:none;width:min(300px,42vw)}
+  @media (max-width:560px){
+    h1{letter-spacing:.3em; text-indent:.3em}
+    .hint{display:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="field"></canvas>
+<div class="vignette"></div>
+<div class="grain"></div>
+<header class="ui">
+  <h1 id="title" aria-label="Nocturne"></h1>
+  <div class="rule"></div>
+  <p class="sub">A field of light &middot; move, click, breathe</p>
+</header>
+<p class="hint ui"><b>move</b> stir the field &nbsp;&middot;&nbsp; <b>click</b> burst &nbsp;&middot;&nbsp; <b>1 2 3</b> palette &nbsp;&middot;&nbsp; <b>space</b> still</p>
+<div class="controls ui">
+  <div class="swatches" id="swatches"></div>
+  <div class="sep"></div>
+  <button class="btn" id="still">still</button>
+</div>
+<p class="sig">nocturne n&ordm; 1 &mdash; for d.</p>
+<script>
+(() => {
+'use strict';
+const canvas = document.getElementById('field');
+const ctx = canvas.getContext('2d');
+const body = document.body;
+
+const PALETTES = [
+  { name:'Aurora', light:false, bg:'#0a0b10',
+    hues:[[168,.72,.62],[196,.8,.6],[258,.55,.68],[142,.5,.6],[220,.7,.66]],
+    swatch:'linear-gradient(135deg,#4de3c2,#7aa2ff 55%,#b48cff)' },
+  { name:'Ember', light:false, bg:'#0d0906',
+    hues:[[18,.85,.6],[36,.9,.58],[348,.7,.62],[8,.8,.55],[52,.85,.6]],
+    swatch:'linear-gradient(135deg,#ff9d5c,#ff5c7a 55%,#ffd27a)' },
+  { name:'Porcelain', light:true, bg:'#f2eee4',
+    hues:[[222,.35,.28],[200,.45,.32],[268,.3,.4],[190,.5,.3],[340,.3,.42]],
+    swatch:'linear-gradient(135deg,#f2eee4 40%,#3a4a8c)' },
+];
+
+const TAU = Math.PI * 2;
+const rand = (a,b) => a + Math.random()*(b-a);
+let W=0, H=0, DPR=1, CX=0, CY=0;
+
+// --- flow field: divergence-free stream function -> long silky streams ---
+const S1=.0021, S2=.0017, S3=.0011, S4=.00088;
+function streamVel(x, y, t, out){
+  const up = (x+y)*S3 + t*.5, dn = (x-y)*S4 - t*.3;
+  const cUp = Math.cos(up), sDn = Math.sin(dn);
+  out.x = -S2*Math.sin(y*S2 - t*.7) + S4*sDn + S3*cUp;
+  out.y = -(S1*Math.cos(x*S1 + t*.9) - S4*sDn + S3*cUp);
+}
+const FLOW_K = 620;
+const tmpV = {x:0, y:0};
+
+// --- particles ------------------------------------------------------------
+let particles = [];
+let palette = PALETTES[0];
+let paused = false;
+let t = 0, last = 0;
+
+function targetCount(){
+  const base = Math.min(1200, Math.round(W*H/1400));
+  return Math.max(180, base);
+}
+function spawn(p){
+  p.x = rand(0,W); p.y = rand(0,H);
+  p.vx = 0; p.vy = 0;
+  p.life = rand(120, 420);
+  p.speed = rand(.55, 1.7);
+  const c = palette.hues[(Math.random()*palette.hues.length)|0];
+  p.h = c[0] + rand(-8,8); p.s = c[1]; p.l = c[2] + rand(-.05,.05);
+  p.w = rand(.7, 2.0);
+  p.spark = Math.random() < .06;
+  return p;
+}
+function seed(){
+  const n = targetCount();
+  while (particles.length < n) particles.push(spawn({}));
+  particles.length = n;
+}
+
+// --- pointer ---------------------------------------------------------------
+const ptr = { x:-1e4, y:-1e4, px:-1e4, py:-1e4, down:false, active:false };
+let idleTimer = 0;
+function wake(){
+  body.classList.remove('idle');
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => body.classList.add('idle'), 2800);
+}
+addEventListener('pointermove', e => {
+  ptr.px = ptr.x; ptr.py = ptr.y;
+  ptr.x = e.clientX*DPR; ptr.y = e.clientY*DPR; ptr.active = true;
+  wake();
+}, {passive:true});
+addEventListener('pointerleave', () => { ptr.active = false; ptr.x = ptr.y = -1e4; });
+
+// bursts: expanding rings + impulse
+let rings = [];
+function burst(x, y){
+  rings.push({x:x*DPR, y:y*DPR, r:0, a:.5});
+  for (const p of particles){
+    const dx = p.x - x*DPR, dy = p.y - y*DPR;
+    const d2 = dx*dx + dy*dy, R = 340*DPR;
+    if (d2 < R*R){
+      const d = Math.sqrt(d2) || 1, f = (1 - d/R) * 9;
+      p.vx += dx/d*f; p.vy += dy/d*f;
+      p.life = Math.max(p.life, rand(80,200));
+    }
+  }
+}
+addEventListener('pointerdown', e => { ptr.down = true; burst(e.clientX, e.clientY); wake(); });
+addEventListener('pointerup', () => ptr.down = false);
+
+// --- render -----------------------------------------------------------------
+function bgFill(a){
+  if (palette.light){ ctx.fillStyle = 'rgba(242,238,228,'+a+')'; }
+  else { ctx.fillStyle = palette === PALETTES[1] ? 'rgba(13,9,6,'+a+')' : 'rgba(10,11,16,'+a+')'; }
+  ctx.fillRect(0,0,W,H);
+}
+function clearCanvas(){ bgFill(1); }
+
+function frame(now){
+  requestAnimationFrame(frame);
+  if (paused) { last = now; return; }
+  const dt = Math.min(50, now - last); last = now;
+  step(dt);
+}
+function step(dt){
+  t += dt * 0.00045;
+
+  // adapt: if frames run long, shed particles; if fast, allow regrow
+  adapt.acc += dt; adapt.n++;
+  if (adapt.n >= 40){
+    const avg = adapt.acc / adapt.n; adapt.acc = 0; adapt.n = 0;
+    if (avg > 26 && particles.length > 180) particles.length = Math.max(180, (particles.length*.85)|0);
+    else if (avg < 15 && particles.length < targetCount()) seed();
+  }
+
+  bgFill(palette.light ? 0.06 : 0.010); // trail fade: fast on light, lingering on dark
+  ctx.lineCap = 'round';
+  ctx.globalCompositeOperation = palette.light ? 'source-over' : 'lighter';
+
+  const swirl = ptr.down ? -1 : 1; // hold to reverse the stir
+  const K = FLOW_K * swirl;
+  for (const p of particles){
+    streamVel(p.x, p.y, t, tmpV);
+    p.vx += (tmpV.x*K*p.speed - p.vx) * .06;
+    p.vy += (tmpV.y*K*p.speed - p.vy) * .06;
+
+    if (ptr.active){
+      const dx = ptr.x - p.x, dy = ptr.y - p.y;
+      const d2 = dx*dx + dy*dy, R = 260*DPR;
+      if (d2 < R*R && d2 > 1){
+        const d = Math.sqrt(d2);
+        const f = (1 - d/R) * .5 * swirl;
+        p.vx += dx/d*f; p.vy += dy/d*f;
+        // slight orbital curl around the pointer
+        p.vx += -dy/d*f*.6; p.vy += dx/d*f*.6;
+      }
+    }
+
+    p.vx *= .985; p.vy *= .985;
+    const px = p.x, py = p.y;
+    p.x += p.vx; p.y += p.vy;
+    p.life--;
+
+    if (p.life <= 0 || p.x < -20 || p.x > W+20 || p.y < -20 || p.y > H+20){
+      if (particles.length <= targetCount()) spawn(p);
+      else { p.life = 0; }
+      if (p.life === 0){ p.dead = true; continue; }
+      continue;
+    }
+
+    const alpha = palette.light ? (p.spark ? .5 : .3) : (p.spark ? .65 : .38);
+    ctx.strokeStyle = 'hsla('+p.h+','+(p.s*100)+'%,'+(p.l*100)+'%,'+alpha+')';
+    ctx.lineWidth = (p.spark ? p.w*1.8 : p.w) * DPR;
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(p.x, p.y); ctx.stroke();
+  }
+  particles = particles.filter(p => !p.dead);
+
+  // rings
+  for (const r of rings){
+    r.r += dt * .8; r.a *= .92;
+    if (r.a < .01) continue;
+    ctx.strokeStyle = palette.light ? 'rgba(23,24,31,'+r.a+')' : 'rgba(233,228,216,'+r.a+')';
+    ctx.lineWidth = 1.2*DPR;
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, TAU); ctx.stroke();
+  }
+  rings = rings.filter(r => r.a >= .01);
+  ctx.globalCompositeOperation = 'source-over';
+}
+const adapt = { acc:0, n:0 };
+
+// --- static composition (reduced motion / "still" preview) -----------------
+function renderStill(){
+  clearCanvas();
+  const step = Math.max(26, Math.round(Math.min(W,H)/34));
+  ctx.lineCap = 'round';
+  for (let y = step/2; y < H; y += step){
+    for (let x = step/2; x < W; x += step){
+      streamVel(x, y, 4.2, tmpV);
+      const a = Math.atan2(tmpV.y, tmpV.x);
+      const len = step * .8;
+      const c = palette.hues[((x+y)/step | 0) % palette.hues.length];
+      ctx.strokeStyle = 'hsla('+c[0]+','+(c[1]*100)+'%,'+(c[2]*100)+'%,.55)';
+      ctx.lineWidth = 1.1*DPR;
+      ctx.beginPath();
+      ctx.moveTo(x - Math.cos(a)*len/2, y - Math.sin(a)*len/2);
+      ctx.lineTo(x + Math.cos(a)*len/2, y + Math.sin(a)*len/2);
+      ctx.stroke();
+    }
+  }
+}
+
+// --- sizing ------------------------------------------------------------------
+function resize(){
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = Math.round(innerWidth * DPR); H = Math.round(innerHeight * DPR);
+  CX = W/2; CY = H/2;
+  canvas.width = W; canvas.height = H;
+  if (paused || reduced) renderStill(); else clearCanvas();
+  seed();
+}
+addEventListener('resize', resize);
+
+// --- palette UI ----------------------------------------------------------------
+const swWrap = document.getElementById('swatches');
+PALETTES.forEach((pl, i) => {
+  const b = document.createElement('button');
+  b.className = 'sw'; b.style.background = pl.swatch;
+  b.title = pl.name; b.setAttribute('aria-label', pl.name + ' palette');
+  b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+  b.addEventListener('click', () => setPalette(i));
+  swWrap.appendChild(b);
+});
+function setPalette(i){
+  palette = PALETTES[i];
+  body.classList.toggle('light', palette.light);
+  [...swWrap.children].forEach((el, j) =>
+    el.setAttribute('aria-pressed', j === i ? 'true' : 'false'));
+  if (paused || reduced) renderStill(); else clearCanvas();
+  wake();
+}
+
+// --- still / motion -------------------------------------------------------------
+const stillBtn = document.getElementById('still');
+function setPaused(v){
+  paused = v;
+  stillBtn.textContent = v ? 'flow' : 'still';
+  if (v) renderStill();
+  wake();
+}
+stillBtn.addEventListener('click', () => setPaused(!paused));
+
+addEventListener('keydown', e => {
+  if (e.key === ' '){ e.preventDefault(); setPaused(!paused); }
+  else if (e.key >= '1' && e.key <= '3') setPalette(+e.key - 1);
+  else if (e.key.toLowerCase() === 'h') body.classList.toggle('idle');
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) last = performance.now();
+});
+
+// --- title letters ------------------------------------------------------------------
+const titleEl = document.getElementById('title');
+[...'NOCTURNE'].forEach((ch, i) => {
+  const s = document.createElement('span');
+  s.className = 'ch'; s.textContent = ch;
+  s.style.setProperty('--d', (0.25 + i*0.09) + 's');
+  titleEl.appendChild(s);
+});
+
+// --- boot -------------------------------------------------------------------------
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const hash = location.hash.toLowerCase();
+if (hash.includes('settled')) body.classList.add('settled');
+resize();
+if (hash.includes('porcelain')) setPalette(2);
+else if (hash.includes('ember')) setPalette(1);
+if (reduced || hash.includes('still')){ setPaused(true); }
+else { for (let i = 0; i < 260; i++) step(16.6); } // pre-warm: open mid-breath
+requestAnimationFrame(now => { last = now; requestAnimationFrame(frame); });
+wake();
+})();
+</script>
+</body>
+</html>

@@ -60,6 +60,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Beatloom](https://dyrits.github.io/AI-XPERIENCE/pages/beatloom.html) | DOM + Canvas 2D, generative rhythm loom | Claude Sonnet 5 | 1 | 36 KB |
 | [Living Atlas](https://dyrits.github.io/AI-XPERIENCE/pages/living-atlas.html) | WebGL raymarched planet, Web Audio | GLM-5.3 | 1 | 89 KB |
 | [Lumina](https://dyrits.github.io/AI-XPERIENCE/pages/lumina.html) | Canvas 2D, interactive particle garden | LongCat 2.5 | 1 | 4 KB |
+| [Nocturne](pages/nocturne.html) | Canvas 2D, interactive flow field | Instinct | 1 | 15 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -127,6 +128,8 @@ Includes optional synthesized sound, pause, timeline scrubbing, keyboard frame s
 
 **Lumina.** An interactive particle garden that blooms and flows around your cursor. Hundreds of glowing particles orbit, pulse and trail through space, repelled by your presence and connected by faint threads when they drift close. Each particle lives its own life — born, pulsing, fading, reborn — creating an ever-shifting constellation of light.
 
+**Nocturne.** A field of light in constant motion. Move the pointer to stir its currents, click or tap to send out a burst, and switch between three palettes. The still control freezes the field; keyboard shortcuts offer palettes (1/2/3), pause (Space), and a hidden-interface view (H). All CSS and JavaScript are inside the single HTML file, with no libraries or external assets.
+
 ## Correction rounds
 
 Most pieces needed none. The ones that did:
@@ -165,6 +168,7 @@ AI-XPERIENCE/
     ├── murmur.html
     ├── needle.html
     ├── night-atlas.html
+    ├── nocturne.html
     ├── nodal.html
     ├── palimpsest.html
     ├── paperborough.html
