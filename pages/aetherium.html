@@ -1,0 +1,3170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AETHERIUM — Kinetic Fluid Astrolabe</title>
+  <style>
+    :root {
+      --bg: #040508;
+      --glass: rgba(9, 12, 20, 0.56);
+      --glass-hover: rgba(20, 26, 42, 0.72);
+      --border: rgba(255, 255, 255, 0.11);
+      --border-strong: rgba(255, 255, 255, 0.22);
+      --text: rgba(244, 246, 252, 0.92);
+      --text-muted: rgba(210, 220, 240, 0.56);
+      --accent: #ebd2a4;
+      --accent-glow: rgba(235, 210, 164, 0.35);
+      --cyan: #7be8ff;
+      --font-display: "Didot", "Bodoni MT", "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", sans-serif;
+      --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, Monaco, monospace;
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    /* Stage layers */
+    #stage {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 50%, #0b0f1b 0%, #040508 72%);
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #fluid-canvas {
+      z-index: 1;
+    }
+
+    #overlay-canvas {
+      z-index: 2;
+      pointer-events: auto;
+      cursor: crosshair;
+    }
+
+    #overlay-canvas.grab {
+      cursor: grab;
+    }
+
+    #overlay-canvas.grabbing {
+      cursor: grabbing;
+    }
+
+    /* Subtle atmospheric glass frame */
+    .vignette-frame {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      box-shadow: inset 0 0 120px rgba(2, 3, 7, 0.72);
+    }
+
+    /* Intro Choreography Overlay */
+    .intro-veil {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      transition: opacity 1.4s var(--ease-out-expo), transform 1.4s var(--ease-out-expo);
+    }
+
+    .intro-veil.hidden {
+      opacity: 0;
+      transform: translateY(-22px) scale(1.03);
+    }
+
+    .intro-title {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: clamp(2.4rem, 7vw, 5.2rem);
+      letter-spacing: 0.42em;
+      padding-left: 0.42em;
+      color: rgba(255, 250, 240, 0.96);
+      text-shadow:
+        0 0 38px rgba(235, 210, 164, 0.35),
+        0 0 80px rgba(123, 232, 255, 0.18);
+      animation: introTitleReveal 2.2s var(--ease-out-expo) both;
+    }
+
+    .intro-rule {
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(235, 210, 164, 0.7), transparent);
+      animation: introRuleReveal 1.8s 0.25s var(--ease-out-expo) both;
+    }
+
+    .intro-sub {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.36em;
+      padding-left: 0.36em;
+      text-transform: uppercase;
+      color: rgba(235, 210, 164, 0.78);
+      animation: introSubReveal 1.8s 0.4s var(--ease-out-expo) both;
+    }
+
+    @keyframes introTitleReveal {
+      0% {
+        opacity: 0;
+        letter-spacing: 0.64em;
+        filter: blur(10px);
+        transform: translateY(12px);
+      }
+      100% {
+        opacity: 1;
+        letter-spacing: 0.42em;
+        filter: blur(0);
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes introRuleReveal {
+      0% {
+        opacity: 0;
+        transform: scaleX(0);
+      }
+      100% {
+        opacity: 1;
+        transform: scaleX(1);
+      }
+    }
+
+    @keyframes introSubReveal {
+      0% {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* HUD Container */
+    .hud {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      transition: opacity 0.6s var(--ease-out-expo);
+    }
+
+    body.zen-mode .hud {
+      opacity: 0;
+    }
+
+    body.zen-mode .hud * {
+      pointer-events: none !important;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      position: absolute;
+      top: 22px;
+      left: 26px;
+      right: 26px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 1s var(--ease-out-expo), transform 1s var(--ease-out-expo);
+    }
+
+    .brand.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .brand-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-display);
+      font-size: 1.18rem;
+      letter-spacing: 0.28em;
+      color: rgba(255, 250, 240, 0.94);
+    }
+
+    .brand-sigil {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      opacity: 0.85;
+      animation: slowSpin 28s linear infinite;
+    }
+
+    @keyframes slowSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .brand-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.64rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding-left: 28px;
+    }
+
+    .brand-realm {
+      color: var(--accent);
+      transition: color 0.4s ease;
+    }
+
+    /* Top-right telemetry & quick buttons */
+    .top-actions {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .telemetry-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .flux-wave {
+      width: 34px;
+      height: 16px;
+      display: block;
+    }
+
+    .telemetry-val {
+      color: var(--text);
+      min-width: 34px;
+      text-align: right;
+    }
+
+    .telemetry-sep {
+      width: 1px;
+      height: 12px;
+      background: var(--border);
+    }
+
+    .icon-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 36px;
+      min-width: 36px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--glass);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+      transition: background 0.22s ease, border-color 0.22s ease, transform 0.18s var(--ease-out-expo), color 0.22s ease, box-shadow 0.25s ease;
+    }
+
+    .icon-btn:hover {
+      background: var(--glass-hover);
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.95);
+    }
+
+    .icon-btn.active {
+      border-color: rgba(235, 210, 164, 0.52);
+      color: var(--accent);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 0 18px rgba(235, 210, 164, 0.18);
+    }
+
+    .icon-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Audio icon + equalizer micro animation */
+    .audio-icon-muted {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .eq-bars {
+      display: none;
+      align-items: flex-end;
+      gap: 2px;
+      height: 12px;
+      width: 14px;
+      justify-content: center;
+    }
+
+    .icon-btn.active .audio-icon-muted {
+      display: none;
+    }
+
+    .icon-btn.active .eq-bars {
+      display: inline-flex;
+    }
+
+    .eq-bars span {
+      display: block;
+      width: 2px;
+      height: 4px;
+      border-radius: 2px;
+      background: currentColor;
+    }
+
+    .icon-btn.active .eq-bars span:nth-child(1) { animation: eqBounce 0.72s ease-in-out infinite alternate; }
+    .icon-btn.active .eq-bars span:nth-child(2) { animation: eqBounce 0.54s 0.15s ease-in-out infinite alternate; }
+    .icon-btn.active .eq-bars span:nth-child(3) { animation: eqBounce 0.85s 0.05s ease-in-out infinite alternate; }
+    .icon-btn.active .eq-bars span:nth-child(4) { animation: eqBounce 0.62s 0.22s ease-in-out infinite alternate; }
+
+    @keyframes eqBounce {
+      0% { height: 3px; }
+      100% { height: 12px; }
+    }
+
+    /* Tooltip on hover */
+    [data-tip] {
+      position: relative;
+    }
+
+    [data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      padding: 5px 9px;
+      border-radius: 7px;
+      background: rgba(8, 10, 18, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: rgba(244, 246, 252, 0.92);
+      font-family: var(--font-mono);
+      font-size: 0.64rem;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s ease, transform 0.18s var(--ease-out-expo);
+      z-index: 30;
+    }
+
+    .top-actions [data-tip]::after {
+      bottom: auto;
+      top: calc(100% + 10px);
+      transform: translateX(-50%) translateY(-4px);
+    }
+
+    [data-tip]:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Bottom Dock */
+    .dock-wrap {
+      position: absolute;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      max-width: calc(100vw - 24px);
+    }
+
+    .hint-pill {
+      pointer-events: none;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(8, 11, 20, 0.48);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.09em;
+      color: rgba(226, 232, 246, 0.72);
+      transition: opacity 0.8s ease, transform 0.8s var(--ease-out-expo);
+      white-space: nowrap;
+    }
+
+    .hint-pill.faded {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    .dock {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(22px) saturate(165%);
+      -webkit-backdrop-filter: blur(22px) saturate(165%);
+      box-shadow:
+        0 18px 48px rgba(0, 0, 0, 0.52),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      overflow-x: auto;
+      scrollbar-width: none;
+      max-width: 100%;
+    }
+
+    .dock::-webkit-scrollbar {
+      display: none;
+    }
+
+    .dock-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .dock-divider {
+      width: 1px;
+      height: 22px;
+      background: var(--border);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .tool-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.76rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.22s var(--ease-out-expo);
+    }
+
+    .tool-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .tool-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .tool-btn.active {
+      color: #fff8eb;
+      background: rgba(235, 210, 164, 0.16);
+      border-color: rgba(235, 210, 164, 0.42);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 0 16px rgba(235, 210, 164, 0.16);
+    }
+
+    .tool-btn.compact {
+      padding: 0 10px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+    }
+
+    /* Palette Orbs */
+    .realm-orb {
+      position: relative;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255, 255, 255, 0.22);
+      cursor: pointer;
+      padding: 0;
+      transition: transform 0.24s var(--ease-out-expo), border-color 0.24s ease, box-shadow 0.24s ease;
+      flex-shrink: 0;
+    }
+
+    .realm-orb:hover {
+      transform: scale(1.16);
+      border-color: rgba(255, 255, 255, 0.65);
+    }
+
+    .realm-orb.active {
+      transform: scale(1.14);
+      border-color: #fff;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.14), 0 0 16px var(--orb-glow);
+    }
+
+    .realm-orb[data-realm="opaline"] {
+      background: conic-gradient(from 40deg, #2d3e8f, #7be8ff, #f1d3a2, #9b6dff, #2d3e8f);
+      --orb-glow: rgba(123, 232, 255, 0.5);
+    }
+
+    .realm-orb[data-realm="solaris"] {
+      background: conic-gradient(from 40deg, #ff4522, #ffae34, #fff0b8, #9c27b0, #ff4522);
+      --orb-glow: rgba(255, 162, 56, 0.55);
+    }
+
+    .realm-orb[data-realm="abyssal"] {
+      background: conic-gradient(from 40deg, #0b2266, #00f5d4, #4895ef, #ff4d8d, #0b2266);
+      --orb-glow: rgba(0, 245, 212, 0.5);
+    }
+
+    .realm-orb[data-realm="chromatic"] {
+      background: conic-gradient(from 0deg, #ff5f6d, #ffc371, #38ef7d, #4facfe, #c471ed, #ff5f6d);
+      --orb-glow: rgba(196, 113, 237, 0.55);
+    }
+
+    /* Zen Restore Pill */
+    .zen-restore {
+      position: fixed;
+      top: 20px;
+      right: 22px;
+      z-index: 15;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    body.zen-mode .zen-restore {
+      opacity: 0.42;
+      pointer-events: auto;
+    }
+
+    body.zen-mode .zen-restore:hover {
+      opacity: 1;
+    }
+
+    /* Status Toast */
+    .toast {
+      position: fixed;
+      top: 72px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      z-index: 25;
+      pointer-events: none;
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: rgba(10, 14, 24, 0.76);
+      border: 1px solid rgba(235, 210, 164, 0.3);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0;
+      transition: opacity 0.35s ease, transform 0.35s var(--ease-out-expo);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 780px) {
+      .top-bar {
+        top: 14px;
+        left: 14px;
+        right: 14px;
+      }
+
+      .telemetry-pill {
+        display: none;
+      }
+
+      .brand-name {
+        font-size: 0.98rem;
+        letter-spacing: 0.22em;
+      }
+
+      .brand-meta {
+        padding-left: 26px;
+        font-size: 0.58rem;
+        white-space: nowrap;
+      }
+
+      .brand-meta-extra {
+        display: none;
+      }
+
+      .dock {
+        gap: 3px;
+        padding: 5px 8px;
+      }
+
+      .dock-group {
+        gap: 2px;
+      }
+
+      .dock-divider {
+        margin: 0 2px;
+        height: 18px;
+      }
+
+      .tool-btn span.label {
+        display: none;
+      }
+
+      .tool-btn {
+        height: 30px;
+        padding: 0 7px;
+      }
+
+      .tool-btn.compact {
+        padding: 0 7px;
+      }
+
+      .realm-orb {
+        width: 20px;
+        height: 20px;
+      }
+
+      .hint-pill {
+        font-size: 0.58rem;
+        max-width: calc(100vw - 28px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .dock-wrap {
+        bottom: 14px;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .dock {
+        gap: 2px;
+        padding: 4px 6px;
+      }
+
+      .tool-btn, .tool-btn.compact {
+        height: 28px;
+        padding: 0 5px;
+        font-size: 0.64rem;
+      }
+
+      .realm-orb {
+        width: 18px;
+        height: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="fluid-canvas"></canvas>
+    <canvas id="overlay-canvas"></canvas>
+    <div class="vignette-frame"></div>
+  </div>
+
+  <!-- Opening Choreography Title -->
+  <div class="intro-veil" id="intro-veil" aria-hidden="true">
+    <div class="intro-title">AETHERIUM</div>
+    <div class="intro-rule"></div>
+    <div class="intro-sub">Kinetic Fluid Astrolabe</div>
+  </div>
+
+  <!-- Transient status toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Zen mode restore button -->
+  <button class="icon-btn zen-restore" id="zen-restore-btn" title="Show interface (H)">
+    <svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+    <span>HUD</span>
+  </button>
+
+  <!-- Main HUD -->
+  <div class="hud" id="hud">
+    <header class="top-bar">
+      <div class="brand" id="brand">
+        <div class="brand-name">
+          <svg class="brand-sigil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+            <circle cx="12" cy="12" r="9.5" stroke-opacity="0.55" stroke-dasharray="3 2.5"/>
+            <circle cx="12" cy="12" r="5" stroke-opacity="0.9"/>
+            <line x1="12" y1="1" x2="12" y2="5" stroke-opacity="0.8"/>
+            <line x1="12" y1="19" x2="12" y2="23" stroke-opacity="0.8"/>
+            <line x1="1" y1="12" x2="5" y2="12" stroke-opacity="0.8"/>
+            <line x1="19" y1="12" x2="23" y2="12" stroke-opacity="0.8"/>
+            <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/>
+          </svg>
+          <span>AETHERIUM</span>
+        </div>
+        <div class="brand-meta">
+          <span class="brand-realm" id="realm-label">OPALINE</span>
+          <span class="brand-meta-extra">·</span>
+          <span class="brand-meta-extra" id="engine-label">WEBGL2 FLUID</span>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div class="telemetry-pill" aria-label="Kinetic telemetry">
+          <svg class="flux-wave" id="flux-wave" viewBox="0 0 34 16">
+            <path id="flux-path" d="M 0 8 L 34 8" fill="none" stroke="rgba(235,210,164,0.85)" stroke-width="1.35" stroke-linecap="round"/>
+          </svg>
+          <span>FLUX</span>
+          <span class="telemetry-val" id="flux-val">0.00</span>
+          <span class="telemetry-sep"></span>
+          <span>NODES</span>
+          <span class="telemetry-val" id="nodes-val">3</span>
+        </div>
+
+        <button class="icon-btn" id="audio-btn" data-tip="Harmonic Synth (S)" aria-label="Toggle Harmonic Audio">
+          <span class="audio-icon-muted" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7" stroke-opacity="0.75"/><path d="M18.8 5.8a9 9 0 0 1 0 12.4" stroke-opacity="0.4"/></svg>
+          </span>
+          <span class="eq-bars" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </span>
+        </button>
+
+        <button class="icon-btn" id="pause-btn" data-tip="Pause / Resume (P)" aria-label="Pause or Resume">
+          <svg id="pause-icon" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+        </button>
+
+        <button class="icon-btn" id="snap-btn" data-tip="Capture PNG" aria-label="Capture Snapshot">
+          <svg viewBox="0 0 24 24"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h2l1.4-2h4.2l1.4 2h2A2.5 2.5 0 0 1 20 8.5v9A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-9Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        </button>
+
+        <button class="icon-btn" id="zen-btn" data-tip="Zen Mode (H)" aria-label="Hide HUD">
+          <svg viewBox="0 0 24 24"><path d="M9.9 4.2A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-3.2 4.4M6.6 6.6A18.3 18.3 0 0 0 2 12s3.5 8 10 8a10.4 10.4 0 0 0 5.4-1.5"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="dock-wrap">
+      <div class="hint-pill" id="hint-pill">
+        Drag to sculpt light · Hold for singularity · Double-click nodes to burst · Space to bloom
+      </div>
+
+      <nav class="dock" aria-label="Instrument Controls">
+        <!-- Tools -->
+        <div class="dock-group" role="group" aria-label="Sculpt Tools">
+          <button class="tool-btn active" data-tool="flow" data-tip="Sculpt & Singularity (1)">
+            <svg viewBox="0 0 24 24"><path d="M3 12c3-5 6-5 9 0s6 5 9 0"/><path d="M3 17c3-5 6-5 9 0s6 5 9 0" stroke-opacity="0.5"/></svg>
+            <span class="label">Flow</span>
+          </button>
+          <button class="tool-btn" data-tool="vortex" data-tip="Place Vortex Dynamo (2)">
+            <svg viewBox="0 0 24 24"><path d="M12 12a2 2 0 1 0 2-2 4 4 0 1 0-4 4 7 7 0 1 0 7-7 10 10 0 0 0-9.6 7"/></svg>
+            <span class="label">Vortex</span>
+          </button>
+          <button class="tool-btn" data-tool="prism" data-tip="Place Light Prism (3)">
+            <svg viewBox="0 0 24 24"><polygon points="12 3 21 19 3 19"/><line x1="12" y1="3" x2="12" y2="19" stroke-opacity="0.45"/></svg>
+            <span class="label">Prism</span>
+          </button>
+          <button class="tool-btn" data-tool="attractor" data-tip="Place Gravity Lens (4)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(30 12 12)" stroke-opacity="0.55"/></svg>
+            <span class="label">Lens</span>
+          </button>
+        </div>
+
+        <div class="dock-divider"></div>
+
+        <!-- Palettes -->
+        <div class="dock-group" role="group" aria-label="Color Realms">
+          <button class="realm-orb active" data-realm="opaline" data-tip="Opaline (C)" aria-label="Opaline Realm"></button>
+          <button class="realm-orb" data-realm="solaris" data-tip="Solaris (C)" aria-label="Solaris Realm"></button>
+          <button class="realm-orb" data-realm="abyssal" data-tip="Abyssal (C)" aria-label="Abyssal Realm"></button>
+          <button class="realm-orb" data-realm="chromatic" data-tip="Chromatic (C)" aria-label="Chromatic Realm"></button>
+        </div>
+
+        <div class="dock-divider"></div>
+
+        <!-- Symmetry, Orbit, Bloom, Reset -->
+        <div class="dock-group">
+          <button class="tool-btn compact" id="symmetry-btn" data-tip="Kaleidoscope Mirror (M)">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 20.6 7 20.6 17 12 22 3.4 17 3.4 7"/><circle cx="12" cy="12" r="2.2"/></svg>
+            <span id="symmetry-label">1×</span>
+          </button>
+
+          <button class="tool-btn compact active" id="orbit-btn" data-tip="Auto-Orbit Choreography (O)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5" stroke-dasharray="4 3"/><circle cx="19.5" cy="12" r="2" fill="currentColor" stroke="none"/></svg>
+            <span class="label">Orbit</span>
+          </button>
+
+          <button class="tool-btn compact" id="bloom-btn" data-tip="Harmonic Bloom (Space)">
+            <svg viewBox="0 0 24 24"><path d="M12 2v5M12 17v5M2 12h5M17 12h5M4.9 4.9l3.5 3.5M15.6 15.6l3.5 3.5M19.1 4.9l-3.5 3.5M8.4 15.6l-3.5 3.5"/></svg>
+            <span class="label">Bloom</span>
+          </button>
+
+          <button class="tool-btn compact" id="reset-btn" data-tip="Clear Canvas (R)" aria-label="Clear Canvas">
+            <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          </button>
+        </div>
+      </nav>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    /* =========================================================================
+       1. REALM PALETTES & MUSICAL SCALES
+       ========================================================================= */
+    const REALMS = {
+      opaline: {
+        name: 'OPALINE',
+        accent: '#ebd2a4',
+        bgTint: [0.016, 0.022, 0.042],
+        specularity: 1.05,
+        iridescence: 0.42,
+        dispersion: 1.15,
+        colors: [
+          [0.34, 0.72, 1.00], // Ice Cyan
+          [0.95, 0.80, 0.52], // Champagne Gold
+          [0.54, 0.36, 1.00], // Royal Amethyst
+          [0.22, 0.92, 0.86], // Seafoam Opal
+          [0.98, 0.62, 0.78]  // Rose Pearl
+        ],
+        // D Lydian Pentatonic frequencies (Hz)
+        drone: [73.42, 110.0, 164.81, 220.0],
+        scale: [293.66, 329.63, 369.99, 440.0, 554.37, 587.33, 659.25, 739.99, 880.0, 1108.73]
+      },
+      solaris: {
+        name: 'SOLARIS',
+        accent: '#ffb85c',
+        bgTint: [0.036, 0.012, 0.018],
+        specularity: 0.92,
+        iridescence: 0.24,
+        dispersion: 1.35,
+        colors: [
+          [1.00, 0.42, 0.14], // Solar Flare
+          [1.00, 0.78, 0.26], // Molten Gold
+          [0.88, 0.18, 0.44], // Crimson Corona
+          [0.64, 0.24, 0.98], // Ultraviolet Arc
+          [1.00, 0.92, 0.64]  // Photosphere White-Gold
+        ],
+        drone: [65.41, 98.0, 146.83, 196.0],
+        scale: [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 880.0]
+      },
+      abyssal: {
+        name: 'ABYSSAL',
+        accent: '#54f0db',
+        bgTint: [0.008, 0.022, 0.046],
+        specularity: 1.15,
+        iridescence: 0.36,
+        dispersion: 1.05,
+        colors: [
+          [0.06, 0.96, 0.84], // Bioluminescent Teal
+          [0.16, 0.56, 1.00], // Deep Cerulean
+          [1.00, 0.26, 0.58], // Coral Jellyfish
+          [0.32, 0.28, 1.00], // Trench Indigo
+          [0.62, 1.00, 0.88]  // Sea-glass Mint
+        ],
+        drone: [61.74, 92.5, 138.59, 185.0],
+        scale: [246.94, 293.66, 329.63, 369.99, 440.0, 493.88, 587.33, 659.25, 739.99, 880.0]
+      },
+      chromatic: {
+        name: 'CHROMATIC',
+        accent: '#d8a6ff',
+        bgTint: [0.018, 0.016, 0.032],
+        specularity: 1.25,
+        iridescence: 0.72,
+        dispersion: 1.65,
+        colors: [
+          [1.00, 0.34, 0.48],
+          [1.00, 0.74, 0.28],
+          [0.24, 0.96, 0.62],
+          [0.28, 0.68, 1.00],
+          [0.78, 0.38, 1.00]
+        ],
+        drone: [82.41, 123.47, 185.0, 246.94],
+        scale: [329.63, 369.99, 415.30, 493.88, 554.37, 659.25, 739.99, 830.61, 987.77, 1108.73]
+      }
+    };
+
+    const REALM_ORDER = ['opaline', 'solaris', 'abyssal', 'chromatic'];
+    const SYMMETRIES = [1, 2, 4, 6];
+
+    /* =========================================================================
+       2. GLOBAL STATE
+       ========================================================================= */
+    const state = {
+      realmKey: 'opaline',
+      tool: 'flow',         // 'flow' | 'vortex' | 'prism' | 'attractor'
+      symmetryIdx: 0,       // index into SYMMETRIES
+      autoOrbit: true,
+      paused: false,
+      zenMode: false,
+      time: 0,
+      colorCursor: 0,
+      flux: 0,
+      fluxHistory: new Float32Array(28),
+      fluxIdx: 0,
+      astrolabeAngle: 0,
+      symmetryGuideAlpha: 0,
+      hasInteracted: false,
+      width: window.innerWidth,
+      height: window.innerHeight,
+      dpr: Math.min(window.devicePixelRatio || 1, 2)
+    };
+
+    function currentRealm() {
+      return REALMS[state.realmKey];
+    }
+
+    function nextRealmColor(offset = 0) {
+      const palette = currentRealm().colors;
+      const t = (state.colorCursor + offset) % palette.length;
+      const i0 = Math.floor(t);
+      const i1 = (i0 + 1) % palette.length;
+      const f = t - i0;
+      const c0 = palette[i0];
+      const c1 = palette[i1];
+      return [
+        c0[0] + (c1[0] - c0[0]) * f,
+        c0[1] + (c1[1] - c0[1]) * f,
+        c0[2] + (c1[2] - c0[2]) * f
+      ];
+    }
+
+    /* =========================================================================
+       3. PROCEDURAL WEB AUDIO SYNTHESIZER (GLASS HARMONICA + CATHEDRAL REVERB)
+       ========================================================================= */
+    class HarmonicAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = false;
+        this.masterGain = null;
+        this.reverbNode = null;
+        this.droneFilter = null;
+        this.droneOscs = [];
+        this.lastNoteTime = 0;
+      }
+
+      init() {
+        if (this.ctx) return;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        this.ctx = new AudioCtx();
+
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.value = 0.0001;
+
+        // Soft limiter / compressor to keep chords silky
+        const compressor = this.ctx.createDynamicsCompressor();
+        compressor.threshold.value = -16;
+        compressor.knee.value = 24;
+        compressor.ratio.value = 6;
+        compressor.attack.value = 0.008;
+        compressor.release.value = 0.25;
+
+        // Synthesize 2.8s lush stereo hall impulse response
+        const sr = this.ctx.sampleRate;
+        const length = Math.floor(sr * 2.8);
+        const impulse = this.ctx.createBuffer(2, length, sr);
+        for (let ch = 0; ch < 2; ch++) {
+          const data = impulse.getChannelData(ch);
+          let lp = 0;
+          for (let i = 0; i < length; i++) {
+            const decay = Math.pow(1 - i / length, 2.75);
+            const white = Math.random() * 2 - 1;
+            lp = lp * 0.72 + white * 0.28; // warm velvet tail
+            data[i] = lp * decay * 0.55;
+          }
+        }
+
+        this.reverbNode = this.ctx.createConvolver();
+        this.reverbNode.buffer = impulse;
+
+        const reverbGain = this.ctx.createGain();
+        reverbGain.gain.value = 0.58;
+
+        const dryGain = this.ctx.createGain();
+        dryGain.gain.value = 0.52;
+
+        this.bus = this.ctx.createGain();
+        this.bus.connect(dryGain);
+        this.bus.connect(this.reverbNode);
+        this.reverbNode.connect(reverbGain);
+        dryGain.connect(compressor);
+        reverbGain.connect(compressor);
+        compressor.connect(this.masterGain);
+        this.masterGain.connect(this.ctx.destination);
+
+        // Ambient breathing harmonic pad drone
+        this.droneFilter = this.ctx.createBiquadFilter();
+        this.droneFilter.type = 'lowpass';
+        this.droneFilter.frequency.value = 220;
+        this.droneFilter.Q.value = 1.4;
+
+        const droneGain = this.ctx.createGain();
+        droneGain.gain.value = 0.11;
+        this.droneFilter.connect(droneGain);
+        droneGain.connect(this.bus);
+
+        this._buildDrone();
+      }
+
+      _buildDrone() {
+        this.droneOscs.forEach(o => {
+          try { o.stop(); o.disconnect(); } catch (_) {}
+        });
+        this.droneOscs = [];
+        if (!this.ctx) return;
+        const freqs = currentRealm().drone;
+        freqs.forEach((f, idx) => {
+          const osc = this.ctx.createOscillator();
+          osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+          osc.frequency.value = f;
+          osc.detune.value = (idx - 1.5) * 4.5;
+          const g = this.ctx.createGain();
+          g.gain.value = idx === 0 ? 0.42 : 0.22;
+          osc.connect(g);
+          g.connect(this.droneFilter);
+          osc.start();
+          this.droneOscs.push(osc);
+        });
+      }
+
+      retuneForRealm() {
+        if (!this.ctx || !this.droneOscs.length) return;
+        const freqs = currentRealm().drone;
+        const now = this.ctx.currentTime;
+        this.droneOscs.forEach((osc, idx) => {
+          if (freqs[idx]) {
+            osc.frequency.setTargetAtTime(freqs[idx], now, 0.7);
+          }
+        });
+      }
+
+      toggle() {
+        this.init();
+        if (!this.ctx) return false;
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        this.enabled = !this.enabled;
+        const now = this.ctx.currentTime;
+        this.masterGain.gain.cancelScheduledValues(now);
+        this.masterGain.gain.setTargetAtTime(this.enabled ? 0.72 : 0.0001, now, 0.22);
+        if (this.enabled) {
+          this.playChordBloom(0.45);
+        }
+        return this.enabled;
+      }
+
+      updateFlux(flux) {
+        if (!this.enabled || !this.ctx || !this.droneFilter) return;
+        const target = 180 + Math.min(flux, 1.5) * 460;
+        this.droneFilter.frequency.setTargetAtTime(target, this.ctx.currentTime, 0.25);
+      }
+
+      playGlassNote(normY = 0.5, velocity = 0.35, panX = 0.5) {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        if (now - this.lastNoteTime < 0.095) return;
+        this.lastNoteTime = now;
+
+        const scale = currentRealm().scale;
+        const idx = Math.max(0, Math.min(scale.length - 1, Math.floor((1 - normY) * scale.length)));
+        const freq = scale[idx];
+
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        osc1.type = 'sine';
+        osc2.type = 'triangle';
+        osc1.frequency.value = freq;
+        osc2.frequency.value = freq * 2.002; // shimmering glass overtone
+
+        const env = this.ctx.createGain();
+        const amp = Math.min(0.22, 0.045 + velocity * 0.14);
+        env.gain.setValueAtTime(0.0001, now);
+        env.gain.exponentialRampToValueAtTime(amp, now + 0.025);
+        env.gain.exponentialRampToValueAtTime(0.0001, now + 1.65);
+
+        const overtoneGain = this.ctx.createGain();
+        overtoneGain.gain.value = 0.16;
+
+        let out = env;
+        if (this.ctx.createStereoPanner) {
+          const panner = this.ctx.createStereoPanner();
+          panner.pan.value = (panX - 0.5) * 1.4;
+          env.connect(panner);
+          out = panner;
+        }
+
+        osc1.connect(env);
+        osc2.connect(overtoneGain);
+        overtoneGain.connect(env);
+        out.connect(this.bus);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 1.75);
+        osc2.stop(now + 1.75);
+      }
+
+      playChordBloom(strength = 0.8) {
+        if (!this.enabled || !this.ctx) return;
+        const scale = currentRealm().scale;
+        const indices = [0, 2, 4, 6, 8];
+        indices.forEach((sIdx, i) => {
+          const now = this.ctx.currentTime + i * 0.055;
+          const freq = scale[sIdx % scale.length];
+          const osc = this.ctx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+
+          const env = this.ctx.createGain();
+          const peak = 0.11 * strength;
+          env.gain.setValueAtTime(0.0001, now);
+          env.gain.exponentialRampToValueAtTime(peak, now + 0.04);
+          env.gain.exponentialRampToValueAtTime(0.0001, now + 2.4);
+
+          osc.connect(env);
+          env.connect(this.bus);
+          osc.start(now);
+          osc.stop(now + 2.5);
+        });
+      }
+    }
+
+    const audio = new HarmonicAudioEngine();
+
+    /* =========================================================================
+       4. WEBGL2 NAVIER-STOKES PHOTONIC FLUID SOLVER (+ CANVAS2D FALLBACK)
+       ========================================================================= */
+    class WebGLFluidEngine {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.gl = null;
+        this.ready = false;
+        this.simW = 256;
+        this.simH = 256;
+        this.dyeW = 1024;
+        this.dyeH = 1024;
+        this.programs = {};
+        this.fbos = {};
+        this._init();
+      }
+
+      _init() {
+        const params = {
+          alpha: false,
+          depth: false,
+          stencil: false,
+          antialias: false,
+          preserveDrawingBuffer: true, // allows crisp PNG snapshot
+          powerPreference: 'high-performance'
+        };
+        const gl = this.canvas.getContext('webgl2', params);
+        if (!gl) return;
+        this.gl = gl;
+
+        const extFloat = gl.getExtension('EXT_color_buffer_float');
+        const extHalf = gl.getExtension('EXT_color_buffer_half_float');
+        gl.getExtension('OES_texture_float_linear');
+        gl.getExtension('OES_texture_half_float_linear');
+
+        if (!extFloat && !extHalf) {
+          // Probe RGBA16F anyway; some browsers expose it via core/implicit
+        }
+
+        const halfFloat = gl.HALF_FLOAT;
+        this.rgbaFormat = this._probeFormat(gl.RGBA16F, gl.RGBA, halfFloat);
+        if (!this.rgbaFormat) {
+          return; // fall back to Canvas 2D renderer
+        }
+        this.rgFormat = this._probeFormat(gl.RG16F, gl.RG, halfFloat) || this.rgbaFormat;
+        this.rFormat = this._probeFormat(gl.R16F, gl.RED, halfFloat) || this.rgbaFormat;
+
+        // Fullscreen quad geometry
+        this.quadVao = gl.createVertexArray();
+        gl.bindVertexArray(this.quadVao);
+        const vbo = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
+        const ebo = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 0, 2, 3]), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+        gl.bindVertexArray(null);
+
+        if (!this._compilePrograms()) return;
+
+        this.resize(state.width, state.height);
+        this.ready = true;
+      }
+
+      _probeFormat(internalFormat, format, type) {
+        const gl = this.gl;
+        const tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, 4, 4, 0, format, type, null);
+
+        const fbo = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+        const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.deleteFramebuffer(fbo);
+        gl.deleteTexture(tex);
+
+        if (status !== gl.FRAMEBUFFER_COMPLETE) return null;
+        return { internalFormat, format, type };
+      }
+
+      _compileShader(type, src) {
+        const gl = this.gl;
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, src);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          console.error('Shader error:', gl.getShaderInfoLog(shader));
+          return null;
+        }
+        return shader;
+      }
+
+      _createProgram(vertSrc, fragSrc) {
+        const gl = this.gl;
+        const vs = this._compileShader(gl.VERTEX_SHADER, vertSrc);
+        const fs = this._compileShader(gl.FRAGMENT_SHADER, fragSrc);
+        if (!vs || !fs) return null;
+        const program = gl.createProgram();
+        gl.attachShader(program, vs);
+        gl.attachShader(program, fs);
+        gl.bindAttribLocation(program, 0, 'aPosition');
+        gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+          console.error('Program link error:', gl.getProgramInfoLog(program));
+          return null;
+        }
+        const uniforms = {};
+        const count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+        for (let i = 0; i < count; i++) {
+          const info = gl.getActiveUniform(program, i);
+          uniforms[info.name] = gl.getUniformLocation(program, info.name);
+        }
+        return { program, uniforms };
+      }
+
+      _compilePrograms() {
+        const baseVert = `#version 300 es
+          precision highp float;
+          in vec2 aPosition;
+          out vec2 vUv;
+          out vec2 vL;
+          out vec2 vR;
+          out vec2 vT;
+          out vec2 vB;
+          uniform vec2 uTexelSize;
+          void main() {
+            vUv = aPosition * 0.5 + 0.5;
+            vL = vUv - vec2(uTexelSize.x, 0.0);
+            vR = vUv + vec2(uTexelSize.x, 0.0);
+            vT = vUv + vec2(0.0, uTexelSize.y);
+            vB = vUv - vec2(0.0, uTexelSize.y);
+            gl_Position = vec4(aPosition, 0.0, 1.0);
+          }
+        `;
+
+        const clearFrag = `#version 300 es
+          precision highp float;
+          in vec2 vUv;
+          out vec4 fragColor;
+          uniform sampler2D uTexture;
+          uniform float uValue;
+          void main() {
+            fragColor = uValue * texture(uTexture, vUv);
+          }
+        `;
+
+        const splatFrag = `#version 300 es
+          precision highp float;
+          in vec2 vUv;
+          out vec4 fragColor;
+          uniform sampler2D uTarget;
+          uniform float uAspectRatio;
+          uniform vec2 uPoint;
+          uniform vec3 uColor;
+          uniform float uRadius;
+          uniform float uSoftCap;
+          void main() {
+            vec2 p = vUv - uPoint;
+            p.x *= uAspectRatio;
+            float d = dot(p, p);
+            float w = exp(-d / max(uRadius, 1e-6));
+            vec3 base = texture(uTarget, vUv).xyz;
+            if (uSoftCap > 0.5) {
+              // Liquid-marbling pigment blend: vivid hues swirl over each other without white-out
+              float strength = clamp(length(uColor), 0.0, 1.5);
+              vec3 hue = uColor / max(strength, 1e-4);
+              float mixAmt = clamp(w * min(strength, 0.85) * 0.72, 0.0, 0.88);
+              vec3 pigment = mix(base, hue * min(strength, 1.05), mixAmt);
+              float lum = dot(base, vec3(0.333));
+              vec3 lift = uColor * w * 0.16 * exp(-lum * 2.4);
+              fragColor = vec4(clamp(pigment + lift, vec3(0.0), vec3(1.35)), 1.0);
+            } else {
+              fragColor = vec4(base + w * uColor, 1.0);
+            }
+          }
+        `;
+
+        const ringForceFrag = `#version 300 es
+          precision highp float;
+          in vec2 vUv;
+          out vec4 fragColor;
+          uniform sampler2D uTarget;
+          uniform float uAspectRatio;
+          uniform vec2 uPoint;
+          uniform float uRadius;
+          uniform float uStrength;
+          uniform float uSwirl;
+          void main() {
+            vec2 p = vUv - uPoint;
+            p.x *= uAspectRatio;
+            float dist = length(p) + 1e-4;
+            vec2 dir = p / dist;
+            vec2 tang = vec2(-dir.y, dir.x);
+            float falloff = exp(-pow(dist / max(uRadius, 1e-4), 2.0));
+            vec2 impulse = (dir * uStrength + tang * uSwirl) * falloff;
+            vec2 base = texture(uTarget, vUv).xy;
+            fragColor = vec4(base + impulse, 0.0, 1.0);
+          }
+        `;
+
+        const advectFrag = `#version 300 es
+          precision highp float;
+          in vec2 vUv;
+          out vec4 fragColor;
+          uniform sampler2D uVelocity;
+          uniform sampler2D uSource;
+          uniform vec2 uTexelSize;
+          uniform float uDt;
+          uniform float uDissipation;
+          void main() {
+            vec2 coord = vUv - uDt * texture(uVelocity, vUv).xy * uTexelSize;
+            vec4 result = texture(uSource, clamp(coord, vec2(0.001), vec2(0.999)));
+            float decay = 1.0 + uDissipation * uDt;
+            fragColor = result / decay;
+          }
+        `;
+
+        const divergenceFrag = `#version 300 es
+          precision highp float;
+          in vec2 vUv;
+          in vec2 vL;
+          in vec2 vR;
+          in vec2 vT;
+          in vec2 vB;
+          out vec4 fragColor;
+          uniform sampler2D uVelocity;
+          void main() {
+            float L = texture(uVelocity, vL).x;
+            float R = texture(uVelocity, vR).x;
+            float T = texture(uVelocity, vT).y;
+            float B = texture(uVelocity, vB).y;
+            vec2 C = texture(uVelocity, vUv).xy;
+            if (vL.x < 0.0) L = -C.x;
+            if (vR.x > 1.0) R = -C.x;
+            if (vT.y > 1.0) T = -C.y;
+            if (vB.y < 0.0) B = -C.y;
+            float div = 0.5 * (R - L + T - B);
+            fragColor = vec4(div, 0.0, 0.0, 1.0);
+          }
+        `;
+
+        const curlFrag = `#version 300 es
+          precision highp float;
+          in vec2 vUv;
+          in vec2 vL;
+          in vec2 vR;
+          in vec2 vT;
+          in vec2 vB;
+          out vec4 fragColor;
+          uniform sampler2D uVelocity;
+          void main() {
+            float L = texture(uVelocity, vL).y;
+            float R = texture(uVelocity, vR).y;
+            float T = texture(uVelocity, vT).x;
+            float B = texture(uVelocity, vB).x;
+            float vorticity = R - L - T + B;
+            fragColor = vec4(0.5 * vorticity, 0.0, 0.0, 1.0);
+          }
+        `;
+
+        const vorticityFrag = `#version 300 es
+          precision highp float;
+          in vec2 vUv;
+          in vec2 vL;
+          in vec2 vR;
+          in vec2 vT;
+          in vec2 vB;
+          out vec4 fragColor;
+          uniform sampler2D uVelocity;
+          uniform sampler2D uCurl;
+          uniform float uCurlStrength;
+          uniform float uDt;
+          void main() {
+            float L = texture(uCurl, vL).x;
+            float R = texture(uCurl, vR).x;
+            float T = texture(uCurl, vT).x;
+            float B = texture(uCurl, vB).x;
+            float C = texture(uCurl, vUv).x;
+            vec2 force = 0.5 * vec2(abs(T) - abs(B), abs(R) - abs(L));
+            force /= length(force) + 0.0001;
+            force *= uCurlStrength * C;
+            force.y *= -1.0;
+            vec2 vel = texture(uVelocity, vUv).xy;
+            vel += force * uDt;
+            vel = clamp(vel, vec2(-950.0), vec2(950.0));
+            fragColor = vec4(vel, 0.0, 1.0);
+          }
+        `;
+
+        const pressureFrag = `#version 300 es
+          precision highp float;
+          in vec2 vUv;
+          in vec2 vL;
+          in vec2 vR;
+          in vec2 vT;
+          in vec2 vB;
+          out vec4 fragColor;
+          uniform sampler2D uPressure;
+          uniform sampler2D uDivergence;
+          void main() {
+            float L = texture(uPressure, vL).x;
+            float R = texture(uPressure, vR).x;
+            float T = texture(uPressure, vT).x;
+            float B = texture(uPressure, vB).x;
+            float div = texture(uDivergence, vUv).x;
+            float p = (L + R + B + T - div) * 0.25;
+            fragColor = vec4(p, 0.0, 0.0, 1.0);
+          }
+        `;
+
+        const gradientSubtractFrag = `#version 300 es
+          precision highp float;
+          in vec2 vUv;
+          in vec2 vL;
+          in vec2 vR;
+          in vec2 vT;
+          in vec2 vB;
+          out vec4 fragColor;
+          uniform sampler2D uPressure;
+          uniform sampler2D uVelocity;
+          void main() {
+            float L = texture(uPressure, vL).x;
+            float R = texture(uPressure, vR).x;
+            float T = texture(uPressure, vT).x;
+            float B = texture(uPressure, vB).x;
+            vec2 vel = texture(uVelocity, vUv).xy;
+            vel -= vec2(R - L, T - B);
+            fragColor = vec4(vel, 0.0, 1.0);
+          }
+        `;
+
+        // Museum-grade optical display shader:
+        // Chromatic dispersion + 3D surface-normal Fresnel specular highlights + thin-film iridescence + ACES tone map
+        const displayFrag = `#version 300 es
+          precision highp float;
+          in vec2 vUv;
+          in vec2 vL;
+          in vec2 vR;
+          in vec2 vT;
+          in vec2 vB;
+          out vec4 fragColor;
+
+          uniform sampler2D uDye;
+          uniform sampler2D uVelocity;
+          uniform vec2 uTexelSize;
+          uniform vec3 uBgTint;
+          uniform float uSpecularity;
+          uniform float uIridescence;
+          uniform float uDispersion;
+          uniform float uTime;
+
+          vec3 acesToneMap(vec3 x) {
+            const float a = 2.51;
+            const float b = 0.03;
+            const float c = 2.43;
+            const float d = 0.59;
+            const float e = 0.14;
+            return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+          }
+
+          void main() {
+            vec3 cL = texture(uDye, vL).rgb;
+            vec3 cR = texture(uDye, vR).rgb;
+            vec3 cT = texture(uDye, vT).rgb;
+            vec3 cB = texture(uDye, vB).rgb;
+            vec3 cC = texture(uDye, vUv).rgb;
+
+            float lumL = dot(cL, vec3(0.299, 0.587, 0.114));
+            float lumR = dot(cR, vec3(0.299, 0.587, 0.114));
+            float lumT = dot(cT, vec3(0.299, 0.587, 0.114));
+            float lumB = dot(cB, vec3(0.299, 0.587, 0.114));
+            float lumC = dot(cC, vec3(0.299, 0.587, 0.114));
+
+            float dx = lumR - lumL;
+            float dy = lumT - lumB;
+            vec2 grad = vec2(dx, dy);
+
+            // Subtle optical chromatic dispersion along fluid ridges
+            vec2 dispOffset = grad * uTexelSize * 11.0 * uDispersion;
+            float rCh = texture(uDye, clamp(vUv + dispOffset, 0.001, 0.999)).r;
+            float gCh = cC.g;
+            float bCh = texture(uDye, clamp(vUv - dispOffset, 0.001, 0.999)).b;
+            vec3 dye = vec3(rCh, gCh, bCh);
+
+            // Soft wide bloom sample (4-tap diagonal)
+            vec2 d2 = uTexelSize * 3.5;
+            vec3 bloom = 0.25 * (
+              texture(uDye, clamp(vUv + vec2( d2.x,  d2.y), 0.001, 0.999)).rgb +
+              texture(uDye, clamp(vUv + vec2(-d2.x,  d2.y), 0.001, 0.999)).rgb +
+              texture(uDye, clamp(vUv + vec2( d2.x, -d2.y), 0.001, 0.999)).rgb +
+              texture(uDye, clamp(vUv + vec2(-d2.x, -d2.y), 0.001, 0.999)).rgb
+            );
+
+            // 3D height-field surface normal for liquid glass / silk sheen
+            vec3 normal = normalize(vec3(dx * 7.5, dy * 7.5, 0.24));
+            vec3 lightKey = normalize(vec3(0.45, 0.62, 0.78));
+            vec3 lightRim = normalize(vec3(-0.62, -0.45, 0.65));
+            vec3 viewDir = vec3(0.0, 0.0, 1.0);
+
+            vec3 halfKey = normalize(lightKey + viewDir);
+            vec3 halfRim = normalize(lightRim + viewDir);
+            float specKey = pow(max(dot(normal, halfKey), 0.0), 40.0);
+            float specRim = pow(max(dot(normal, halfRim), 0.0), 22.0);
+
+            float ridgeMask = smoothstep(0.02, 0.22, lumC);
+            float slope = clamp(length(grad) * 9.5, 0.0, 1.0);
+
+            // Thin-film iridescent pearl shimmer along ridges
+            float phase = lumC * 2.2 + slope * 1.6 + uTime * 0.14;
+            vec3 thinFilm = 0.5 + 0.5 * cos(6.28318 * (phase + vec3(0.0, 0.33, 0.67)));
+            vec3 specColor = mix(vec3(1.0, 0.94, 0.84), thinFilm, uIridescence);
+
+            // Velocity-driven subtle silk energy glow
+            vec2 vel = texture(uVelocity, vUv).xy;
+            float speedGlow = clamp(length(vel) * 0.0014, 0.0, 0.28);
+
+            // Deep obsidian cosmos backdrop with subtle ambient nebula
+            vec2 centered = vUv - 0.5;
+            float distSq = dot(centered, centered);
+            vec3 backdrop = uBgTint * (1.25 - distSq * 1.4);
+            backdrop += vec3(0.010, 0.015, 0.032) * exp(-distSq * 5.0);
+
+            // Rich jewel-like color composition (preserves deep velvet contrast)
+            vec3 richDye = pow(max(dye, vec3(0.0)), vec3(1.12));
+            vec3 col = backdrop + richDye * 1.04 + bloom * 0.20;
+            col += specColor * (specKey * 0.56 + specRim * 0.26) * uSpecularity * ridgeMask * slope;
+            col += richDye * speedGlow * 0.42;
+            col += thinFilm * slope * ridgeMask * uIridescence * 0.16;
+
+            // Gentle cinematic vignette
+            col *= clamp(1.06 - distSq * 0.65, 0.42, 1.0);
+
+            // ACES Filmic tone mapping + slight vibrance boost
+            col = acesToneMap(col * 0.98);
+            float luma = dot(col, vec3(0.299, 0.587, 0.114));
+            col = mix(vec3(luma), col, 1.18);
+            col = clamp(col, 0.0, 1.0);
+
+            // Micro-dither to prevent 8-bit dark banding
+            float dither = (fract(sin(dot(gl_FragCoord.xy + uTime, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0;
+            fragColor = vec4(col + dither, 1.0);
+          }
+        `;
+
+        this.programs.clear = this._createProgram(baseVert, clearFrag);
+        this.programs.splat = this._createProgram(baseVert, splatFrag);
+        this.programs.ringForce = this._createProgram(baseVert, ringForceFrag);
+        this.programs.advect = this._createProgram(baseVert, advectFrag);
+        this.programs.divergence = this._createProgram(baseVert, divergenceFrag);
+        this.programs.curl = this._createProgram(baseVert, curlFrag);
+        this.programs.vorticity = this._createProgram(baseVert, vorticityFrag);
+        this.programs.pressure = this._createProgram(baseVert, pressureFrag);
+        this.programs.gradientSubtract = this._createProgram(baseVert, gradientSubtractFrag);
+        this.programs.display = this._createProgram(baseVert, displayFrag);
+
+        return Object.values(this.programs).every(Boolean);
+      }
+
+      _createFBO(w, h, fmt, filter) {
+        const gl = this.gl;
+        const tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, fmt.internalFormat, w, h, 0, fmt.format, fmt.type, null);
+
+        const fbo = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+        gl.viewport(0, 0, w, h);
+        gl.clearColor(0, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        return {
+          texture: tex,
+          fbo,
+          width: w,
+          height: h,
+          texelSizeX: 1 / w,
+          texelSizeY: 1 / h,
+          attach(unit) {
+            gl.activeTexture(gl.TEXTURE0 + unit);
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            return unit;
+          }
+        };
+      }
+
+      _createDoubleFBO(w, h, fmt, filter) {
+        let fbo1 = this._createFBO(w, h, fmt, filter);
+        let fbo2 = this._createFBO(w, h, fmt, filter);
+        return {
+          width: w,
+          height: h,
+          texelSizeX: fbo1.texelSizeX,
+          texelSizeY: fbo1.texelSizeY,
+          get read() { return fbo1; },
+          get write() { return fbo2; },
+          swap() {
+            const tmp = fbo1;
+            fbo1 = fbo2;
+            fbo2 = tmp;
+          }
+        };
+      }
+
+      _destroyFBO(obj) {
+        if (!obj) return;
+        const gl = this.gl;
+        if (obj.read && obj.write) {
+          this._destroyFBO(obj.read);
+          this._destroyFBO(obj.write);
+          return;
+        }
+        if (obj.fbo) gl.deleteFramebuffer(obj.fbo);
+        if (obj.texture) gl.deleteTexture(obj.texture);
+      }
+
+      _calcRes(base) {
+        const aspect = this.canvas.width / Math.max(1, this.canvas.height);
+        if (aspect >= 1) {
+          return { w: Math.round(base * aspect), h: base };
+        }
+        return { w: base, h: Math.round(base / aspect) };
+      }
+
+      resize(width, height) {
+        if (!this.gl) return;
+        const gl = this.gl;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        this.canvas.width = Math.max(2, Math.floor(width * dpr));
+        this.canvas.height = Math.max(2, Math.floor(height * dpr));
+
+        const simDim = width < 700 ? 128 : 192;
+        const dyeDim = width < 700 ? 512 : 896;
+        const sim = this._calcRes(simDim);
+        const dye = this._calcRes(dyeDim);
+
+        this.simW = sim.w;
+        this.simH = sim.h;
+        this.dyeW = dye.w;
+        this.dyeH = dye.h;
+
+        Object.values(this.fbos).forEach(f => this._destroyFBO(f));
+
+        this.fbos.velocity = this._createDoubleFBO(sim.w, sim.h, this.rgFormat, gl.LINEAR);
+        this.fbos.dye = this._createDoubleFBO(dye.w, dye.h, this.rgbaFormat, gl.LINEAR);
+        this.fbos.divergence = this._createFBO(sim.w, sim.h, this.rFormat, gl.NEAREST);
+        this.fbos.curl = this._createFBO(sim.w, sim.h, this.rFormat, gl.NEAREST);
+        this.fbos.pressure = this._createDoubleFBO(sim.w, sim.h, this.rFormat, gl.NEAREST);
+      }
+
+      _blit(target) {
+        const gl = this.gl;
+        if (!target) {
+          gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        } else {
+          gl.viewport(0, 0, target.width, target.height);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo);
+        }
+        gl.bindVertexArray(this.quadVao);
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+      }
+
+      clear() {
+        if (!this.ready) return;
+        const gl = this.gl;
+        const p = this.programs.clear;
+        gl.useProgram(p.program);
+        gl.uniform1f(p.uniforms.uValue, 0.0);
+
+        [this.fbos.dye, this.fbos.velocity, this.fbos.pressure].forEach(pair => {
+          gl.uniform1i(p.uniforms.uTexture, pair.read.attach(0));
+          this._blit(pair.write);
+          pair.swap();
+        });
+      }
+
+      splat(nx, ny, vx, vy, color, radius = 0.0022) {
+        if (!this.ready) return;
+        const gl = this.gl;
+        const p = this.programs.splat;
+        const aspect = this.canvas.width / Math.max(1, this.canvas.height);
+        const uvY = 1.0 - ny; // WebGL Y is bottom-up
+
+        gl.useProgram(p.program);
+        gl.uniform1f(p.uniforms.uAspectRatio, aspect);
+        gl.uniform2f(p.uniforms.uPoint, nx, uvY);
+        gl.uniform1f(p.uniforms.uRadius, radius);
+
+        // Velocity splat
+        gl.uniform1i(p.uniforms.uTarget, this.fbos.velocity.read.attach(0));
+        gl.uniform3f(p.uniforms.uColor, vx, -vy, 0.0);
+        gl.uniform1f(p.uniforms.uSoftCap, 0.0);
+        this._blit(this.fbos.velocity.write);
+        this.fbos.velocity.swap();
+
+        // Dye splat
+        if (color) {
+          gl.uniform1i(p.uniforms.uTarget, this.fbos.dye.read.attach(0));
+          gl.uniform3f(p.uniforms.uColor, color[0], color[1], color[2]);
+          gl.uniform1f(p.uniforms.uSoftCap, 1.0);
+          this._blit(this.fbos.dye.write);
+          this.fbos.dye.swap();
+        }
+      }
+
+      applyRingForce(nx, ny, radius, radialStrength, swirlStrength) {
+        if (!this.ready) return;
+        const gl = this.gl;
+        const p = this.programs.ringForce;
+        const aspect = this.canvas.width / Math.max(1, this.canvas.height);
+        gl.useProgram(p.program);
+        gl.uniform1i(p.uniforms.uTarget, this.fbos.velocity.read.attach(0));
+        gl.uniform1f(p.uniforms.uAspectRatio, aspect);
+        gl.uniform2f(p.uniforms.uPoint, nx, 1.0 - ny);
+        gl.uniform1f(p.uniforms.uRadius, radius);
+        gl.uniform1f(p.uniforms.uStrength, radialStrength);
+        gl.uniform1f(p.uniforms.uSwirl, swirlStrength);
+        this._blit(this.fbos.velocity.write);
+        this.fbos.velocity.swap();
+      }
+
+      step(dt) {
+        if (!this.ready) return;
+        const gl = this.gl;
+        const { velocity, dye, divergence, curl, pressure } = this.fbos;
+
+        // 1. Curl
+        let p = this.programs.curl;
+        gl.useProgram(p.program);
+        gl.uniform2f(p.uniforms.uTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+        gl.uniform1i(p.uniforms.uVelocity, velocity.read.attach(0));
+        this._blit(curl);
+
+        // 2. Vorticity Confinement (keeps silky curls crisp!)
+        p = this.programs.vorticity;
+        gl.useProgram(p.program);
+        gl.uniform2f(p.uniforms.uTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+        gl.uniform1i(p.uniforms.uVelocity, velocity.read.attach(0));
+        gl.uniform1i(p.uniforms.uCurl, curl.attach(1));
+        gl.uniform1f(p.uniforms.uCurlStrength, 28.0);
+        gl.uniform1f(p.uniforms.uDt, dt);
+        this._blit(velocity.write);
+        velocity.swap();
+
+        // 3. Divergence
+        p = this.programs.divergence;
+        gl.useProgram(p.program);
+        gl.uniform2f(p.uniforms.uTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+        gl.uniform1i(p.uniforms.uVelocity, velocity.read.attach(0));
+        this._blit(divergence);
+
+        // 4. Warm-start Pressure clear
+        p = this.programs.clear;
+        gl.useProgram(p.program);
+        gl.uniform1i(p.uniforms.uTexture, pressure.read.attach(0));
+        gl.uniform1f(p.uniforms.uValue, 0.82);
+        this._blit(pressure.write);
+        pressure.swap();
+
+        // 5. Pressure Jacobi solver
+        p = this.programs.pressure;
+        gl.useProgram(p.program);
+        gl.uniform2f(p.uniforms.uTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+        gl.uniform1i(p.uniforms.uDivergence, divergence.attach(0));
+        for (let i = 0; i < 20; i++) {
+          gl.uniform1i(p.uniforms.uPressure, pressure.read.attach(1));
+          this._blit(pressure.write);
+          pressure.swap();
+        }
+
+        // 6. Gradient subtract (enforce incompressibility)
+        p = this.programs.gradientSubtract;
+        gl.useProgram(p.program);
+        gl.uniform2f(p.uniforms.uTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+        gl.uniform1i(p.uniforms.uPressure, pressure.read.attach(0));
+        gl.uniform1i(p.uniforms.uVelocity, velocity.read.attach(1));
+        this._blit(velocity.write);
+        velocity.swap();
+
+        // 7. Advect Velocity
+        p = this.programs.advect;
+        gl.useProgram(p.program);
+        gl.uniform2f(p.uniforms.uTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+        gl.uniform1i(p.uniforms.uVelocity, velocity.read.attach(0));
+        gl.uniform1i(p.uniforms.uSource, velocity.read.attach(0));
+        gl.uniform1f(p.uniforms.uDt, dt);
+        gl.uniform1f(p.uniforms.uDissipation, 0.34);
+        this._blit(velocity.write);
+        velocity.swap();
+
+        // 8. Advect Dye (graceful fade into obsidian negative space)
+        gl.uniform2f(p.uniforms.uTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+        gl.uniform1i(p.uniforms.uVelocity, velocity.read.attach(0));
+        gl.uniform1i(p.uniforms.uSource, dye.read.attach(1));
+        gl.uniform1f(p.uniforms.uDt, dt);
+        gl.uniform1f(p.uniforms.uDissipation, 1.38);
+        this._blit(dye.write);
+        dye.swap();
+      }
+
+      render() {
+        if (!this.ready) return;
+        const gl = this.gl;
+        const realm = currentRealm();
+        const p = this.programs.display;
+        gl.useProgram(p.program);
+        gl.uniform2f(p.uniforms.uTexelSize, 1.0 / this.canvas.width, 1.0 / this.canvas.height);
+        gl.uniform1i(p.uniforms.uDye, this.fbos.dye.read.attach(0));
+        gl.uniform1i(p.uniforms.uVelocity, this.fbos.velocity.read.attach(1));
+        gl.uniform3f(p.uniforms.uBgTint, realm.bgTint[0], realm.bgTint[1], realm.bgTint[2]);
+        gl.uniform1f(p.uniforms.uSpecularity, realm.specularity);
+        gl.uniform1f(p.uniforms.uIridescence, realm.iridescence);
+        gl.uniform1f(p.uniforms.uDispersion, realm.dispersion);
+        gl.uniform1f(p.uniforms.uTime, state.time);
+        this._blit(null);
+      }
+    }
+
+    /* =========================================================================
+       5. FALLBACK 2D PHOTONIC RIBBON ENGINE (IF WEBGL2 HALF-FLOAT UNAVAILABLE)
+       ========================================================================= */
+    class FallbackFluidEngine {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.ready = true;
+        this.blobs = [];
+        this.resize(state.width, state.height);
+      }
+
+      resize(w, h) {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        this.canvas.width = Math.floor(w * dpr);
+        this.canvas.height = Math.floor(h * dpr);
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        this.ctx.fillStyle = '#040508';
+        this.ctx.fillRect(0, 0, w, h);
+      }
+
+      clear() {
+        this.blobs = [];
+        this.ctx.fillStyle = '#040508';
+        this.ctx.fillRect(0, 0, state.width, state.height);
+      }
+
+      splat(nx, ny, vx, vy, color, radius = 0.0022) {
+        if (!color) return;
+        this.blobs.push({
+          x: nx * state.width,
+          y: ny * state.height,
+          vx: vx * 0.06,
+          vy: vy * 0.06,
+          r: Math.max(18, Math.sqrt(radius) * Math.min(state.width, state.height) * 0.9),
+          color,
+          life: 1.0
+        });
+        if (this.blobs.length > 260) this.blobs.shift();
+      }
+
+      applyRingForce(nx, ny, radius, radialStrength, swirlStrength) {
+        const cx = nx * state.width;
+        const cy = ny * state.height;
+        const rad = radius * Math.min(state.width, state.height);
+        for (const b of this.blobs) {
+          const dx = b.x - cx;
+          const dy = b.y - cy;
+          const dist = Math.hypot(dx, dy) + 1;
+          if (dist < rad * 2.5) {
+            const f = Math.exp(-(dist * dist) / (rad * rad)) * 0.04;
+            b.vx += ((dx / dist) * radialStrength + (-dy / dist) * swirlStrength) * f;
+            b.vy += ((dy / dist) * radialStrength + (dx / dist) * swirlStrength) * f;
+          }
+        }
+      }
+
+      step(dt) {
+        for (let i = this.blobs.length - 1; i >= 0; i--) {
+          const b = this.blobs[i];
+          b.x += b.vx * dt * 60;
+          b.y += b.vy * dt * 60;
+          b.vx *= 0.96;
+          b.vy *= 0.96;
+          b.r *= 1.006;
+          b.life -= dt * 0.72;
+          if (b.life <= 0) this.blobs.splice(i, 1);
+        }
+      }
+
+      render() {
+        const ctx = this.ctx;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'rgba(4, 6, 12, 0.09)';
+        ctx.fillRect(0, 0, state.width, state.height);
+
+        ctx.globalCompositeOperation = 'lighter';
+        for (const b of this.blobs) {
+          const a = Math.max(0, b.life * 0.24);
+          const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+          const r = Math.min(255, Math.round(b.color[0] * 255));
+          const gr = Math.min(255, Math.round(b.color[1] * 255));
+          const bl = Math.min(255, Math.round(b.color[2] * 255));
+          g.addColorStop(0, `rgba(${r},${gr},${bl},${a})`);
+          g.addColorStop(1, `rgba(${r},${gr},${bl},0)`);
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    }
+
+    /* =========================================================================
+       6. SYMMETRY HELPER (KALEIDOSCOPE MIRRORING)
+       ========================================================================= */
+    function emitSymmetric(nx, ny, vx, vy, color, radius) {
+      const sym = SYMMETRIES[state.symmetryIdx];
+      if (sym === 1) {
+        fluid.splat(nx, ny, vx, vy, color, radius);
+        return;
+      }
+      const dx = nx - 0.5;
+      const dy = ny - 0.5;
+      const aspect = state.width / Math.max(1, state.height);
+      const ax = dx * aspect;
+      const ay = dy;
+
+      for (let i = 0; i < sym; i++) {
+        const angle = (i / sym) * Math.PI * 2;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        const rx = (ax * cos - ay * sin) / aspect + 0.5;
+        const ry = (ax * sin + ay * cos) + 0.5;
+        const rvx = vx * cos - vy * sin;
+        const rvy = vx * sin + vy * cos;
+        fluid.splat(rx, ry, rvx, rvy, color, radius);
+      }
+    }
+
+    /* =========================================================================
+       7. HARMONIC NODES (VORTEX DYNAMOS, LIGHT PRISMS, GRAVITY LENSES)
+       ========================================================================= */
+    let nodeIdSeq = 1;
+    const nodes = [];
+
+    function createNode(type, nx, ny, opts = {}) {
+      if (nodes.length >= 12) {
+        nodes.shift();
+      }
+      const id = nodeIdSeq++;
+      const spin = opts.spin ?? (id % 2 === 0 ? 1 : -1);
+      const node = {
+        id,
+        type, // 'vortex' | 'prism' | 'attractor'
+        x: nx,
+        y: ny,
+        originX: nx,
+        originY: ny,
+        orbitAngle: opts.orbitAngle ?? Math.random() * Math.PI * 2,
+        orbitRx: opts.orbitRx ?? (0.07 + Math.random() * 0.14),
+        orbitRy: opts.orbitRy ?? (0.06 + Math.random() * 0.12),
+        orbitSpeed: opts.orbitSpeed ?? ((0.22 + Math.random() * 0.2) * spin),
+        spin,
+        phase: Math.random() * Math.PI * 2,
+        colorOffset: (id * 1.15) % 5,
+        age: 0,
+        pulse: 1.0,
+        dragging: false
+      };
+      nodes.push(node);
+      updateNodeCountUI();
+      return node;
+    }
+
+    function seedInitialChoreography() {
+      nodes.length = 0;
+      // Twin counter-rotating vortices + central breathing prism
+      createNode('vortex', 0.34, 0.48, {
+        spin: 1,
+        orbitAngle: 0,
+        orbitRx: 0.18,
+        orbitRy: 0.14,
+        orbitSpeed: 0.32
+      });
+      createNode('vortex', 0.66, 0.52, {
+        spin: -1,
+        orbitAngle: Math.PI,
+        orbitRx: 0.18,
+        orbitRy: 0.14,
+        orbitSpeed: 0.32
+      });
+      createNode('attractor', 0.50, 0.50, {
+        spin: 1,
+        orbitAngle: Math.PI * 0.5,
+        orbitRx: 0.05,
+        orbitRy: 0.04,
+        orbitSpeed: -0.24
+      });
+      updateNodeCountUI();
+    }
+
+    function triggerHarmonicBloom(cx = 0.5, cy = 0.5, petals = 6, power = 1.0) {
+      const aspect = state.width / Math.max(1, state.height);
+      const baseAngle = state.time * 0.6;
+
+      // Radial shockwave velocity in fluid
+      fluid.applyRingForce(cx, cy, 0.22, 130 * power, 48 * power);
+
+      // Symmetrical flower of luminous dye jets
+      for (let i = 0; i < petals; i++) {
+        const a = baseAngle + (i / petals) * Math.PI * 2;
+        const r = 0.042;
+        const px = cx + (Math.cos(a) * r) / aspect;
+        const py = cy + Math.sin(a) * r;
+        const vx = Math.cos(a + 0.38) * 340 * power;
+        const vy = Math.sin(a + 0.38) * 340 * power;
+        const col = nextRealmColor(i * 0.85);
+        fluid.splat(px, py, vx, vy, [col[0] * 0.92, col[1] * 0.92, col[2] * 0.92], 0.0014);
+      }
+
+      // Shockwave ring visual & particle push
+      shockwaves.push({
+        x: cx * state.width,
+        y: cy * state.height,
+        r: 8,
+        maxR: Math.min(state.width, state.height) * (0.34 + 0.14 * power),
+        alpha: 0.92,
+        color: currentRealm().accent
+      });
+
+      const sx = cx * state.width;
+      const sy = cy * state.height;
+      for (const p of particles) {
+        const dx = p.x - sx;
+        const dy = p.y - sy;
+        const d = Math.hypot(dx, dy) + 12;
+        if (d < 420) {
+          const impulse = (1 - d / 420) * 11 * power;
+          p.vx += (dx / d) * impulse + (-dy / d) * impulse * 0.35;
+          p.vy += (dy / d) * impulse + (dx / d) * impulse * 0.35;
+        }
+      }
+
+      state.flux = Math.min(2.0, state.flux + 0.95 * power);
+      audio.playChordBloom(power);
+    }
+
+    function updateNodes(dt) {
+      const aspect = state.width / Math.max(1, state.height);
+
+      for (const n of nodes) {
+        n.age += dt;
+        n.phase += dt * (n.type === 'vortex' ? 2.4 : 1.5);
+        n.pulse = Math.max(0, n.pulse - dt * 1.4);
+
+        if (state.autoOrbit && !n.dragging) {
+          n.orbitAngle += n.orbitSpeed * dt;
+          const targetX = 0.5 + Math.cos(n.orbitAngle) * n.orbitRx;
+          const targetY = 0.5 + Math.sin(n.orbitAngle * 1.5) * n.orbitRy;
+          n.x += (targetX - n.x) * Math.min(1, dt * 2.2);
+          n.y += (targetY - n.y) * Math.min(1, dt * 2.2);
+        }
+
+        const scaleIn = Math.min(1, n.age / 0.65);
+        const col = nextRealmColor(n.colorOffset + state.time * 0.18);
+
+        if (n.type === 'vortex') {
+          // Continuous twin-arm spinning fluid vortex (delicate silk filaments)
+          fluid.applyRingForce(n.x, n.y, 0.11, -3.2 * scaleIn, 24.0 * n.spin * scaleIn);
+          for (let arm = 0; arm < 2; arm++) {
+            const a = n.phase * n.spin + arm * Math.PI;
+            const armR = 0.022;
+            const px = n.x + (Math.cos(a) * armR) / aspect;
+            const py = n.y + Math.sin(a) * armR;
+            const tvx = -Math.sin(a) * 68 * n.spin * scaleIn;
+            const tvy = Math.cos(a) * 68 * n.spin * scaleIn;
+            const dyeScale = 0.56 * scaleIn;
+            fluid.splat(px, py, tvx, tvy, [col[0] * dyeScale, col[1] * dyeScale, col[2] * dyeScale], 0.00024);
+          }
+          state.flux = Math.min(2.0, state.flux + 0.006);
+        } else if (n.type === 'prism') {
+          // Breathing luminous emitter fountain
+          const breath = 0.5 + 0.5 * Math.sin(n.phase * 1.6);
+          const a = n.phase * 0.9 * n.spin;
+          const speed = (52 + breath * 95) * scaleIn;
+          const vx = Math.cos(a) * speed;
+          const vy = Math.sin(a) * speed;
+          const dyeScale = (0.52 + breath * 0.35) * scaleIn;
+          fluid.splat(n.x, n.y, vx, vy, [col[0] * dyeScale, col[1] * dyeScale, col[2] * dyeScale], 0.00032);
+          if (breath > 0.96 && n.pulse < 0.15) {
+            n.pulse = 0.85;
+            fluid.applyRingForce(n.x, n.y, 0.09, 28, 12 * n.spin);
+          }
+          state.flux = Math.min(2.0, state.flux + 0.005);
+        } else if (n.type === 'attractor') {
+          // Gravitational lens: pulls surrounding streams into gentle orbital ribbons
+          fluid.applyRingForce(n.x, n.y, 0.16, -15.0 * scaleIn, 16.5 * n.spin * scaleIn);
+          const a = n.phase * 1.3;
+          const r = 0.036;
+          const px = n.x + (Math.cos(a) * r) / aspect;
+          const py = n.y + Math.sin(a) * r;
+          const dyeScale = 0.42 * scaleIn;
+          fluid.splat(px, py, -Math.sin(a) * 38, Math.cos(a) * 38, [col[0] * dyeScale, col[1] * dyeScale, col[2] * dyeScale], 0.00018);
+          state.flux = Math.min(2.0, state.flux + 0.004);
+        }
+      }
+    }
+
+    /* =========================================================================
+       8. LAYER 2: PHOTONIC STARDUST & HOROLOGICAL ASTROLABE OVERLAY
+       ========================================================================= */
+    const overlayCanvas = document.getElementById('overlay-canvas');
+    const octx = overlayCanvas.getContext('2d');
+    const particles = [];
+    const shockwaves = [];
+
+    function initParticles() {
+      particles.length = 0;
+      const count = state.width < 700 ? 220 : 460;
+      for (let i = 0; i < count; i++) {
+        const x = Math.random() * state.width;
+        const y = Math.random() * state.height;
+        particles.push({
+          x, y,
+          px: x, py: y,
+          vx: (Math.random() - 0.5) * 0.6,
+          vy: (Math.random() - 0.5) * 0.6,
+          size: 0.7 + Math.random() * 1.65,
+          alpha: 0.25 + Math.random() * 0.65,
+          colorIdx: Math.floor(Math.random() * 5),
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    // Active pointer tracking (supports multi-touch + singularity charge + node dragging)
+    const pointers = new Map();
+    const singularity = {
+      active: false,
+      x: 0.5,
+      y: 0.5,
+      charge: 0,
+      pointerId: null
+    };
+    let draggedNode = null;
+    let hoveredNode = null;
+
+    function findNodeAt(px, py, hitRadius = 28) {
+      let best = null;
+      let bestDist = hitRadius;
+      for (const n of nodes) {
+        const nx = n.x * state.width;
+        const ny = n.y * state.height;
+        const d = Math.hypot(px - nx, py - ny);
+        if (d < bestDist) {
+          bestDist = d;
+          best = n;
+        }
+      }
+      return best;
+    }
+
+    function updateParticles(dt) {
+      const w = state.width;
+      const h = state.height;
+      const t = state.time;
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.px = p.x;
+        p.py = p.y;
+
+        // Smooth organic curl-like background breeze
+        const nx = p.x / w;
+        const ny = p.y / h;
+        const angle = Math.sin(nx * 5.2 + t * 0.35) * Math.cos(ny * 5.2 - t * 0.28) * Math.PI * 2;
+        p.vx += Math.cos(angle) * 0.08;
+        p.vy += Math.sin(angle) * 0.08;
+
+        // Forces from active harmonic nodes
+        for (let j = 0; j < nodes.length; j++) {
+          const n = nodes[j];
+          const gx = n.x * w;
+          const gy = n.y * h;
+          const dx = gx - p.x;
+          const dy = gy - p.y;
+          const distSq = dx * dx + dy * dy + 900;
+          const dist = Math.sqrt(distSq);
+          if (dist < 320) {
+            const falloff = 1 - dist / 320;
+            const ux = dx / dist;
+            const uy = dy / dist;
+            if (n.type === 'vortex') {
+              p.vx += (-uy * n.spin * 0.52 + ux * 0.06) * falloff;
+              p.vy += ( ux * n.spin * 0.52 + uy * 0.06) * falloff;
+            } else if (n.type === 'attractor') {
+              p.vx += (ux * 0.42 - uy * n.spin * 0.36) * falloff;
+              p.vy += (uy * 0.42 + ux * n.spin * 0.36) * falloff;
+            } else if (n.type === 'prism') {
+              p.vx -= ux * 0.26 * falloff;
+              p.vy -= uy * 0.26 * falloff;
+            }
+          }
+        }
+
+        // Singularity gravitational accretion pull
+        if (singularity.active) {
+          const sx = singularity.x * w;
+          const sy = singularity.y * h;
+          const dx = sx - p.x;
+          const dy = sy - p.y;
+          const dist = Math.hypot(dx, dy) + 18;
+          if (dist < 420) {
+            const pull = (1 - dist / 420) * (0.65 + singularity.charge * 1.15);
+            const ux = dx / dist;
+            const uy = dy / dist;
+            p.vx += (ux * 0.72 - uy * 0.85) * pull;
+            p.vy += (uy * 0.72 + ux * 0.85) * pull;
+          }
+        }
+
+        // Pointer wakes
+        pointers.forEach(ptr => {
+          if (!ptr.down && Math.hypot(ptr.dx, ptr.dy) < 0.0005) return;
+          const sx = ptr.x * w;
+          const sy = ptr.y * h;
+          const dx = p.x - sx;
+          const dy = p.y - sy;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 130) {
+            const f = (1 - dist / 130) * 0.32;
+            p.vx += ptr.dx * w * f * 0.28;
+            p.vy += ptr.dy * h * f * 0.28;
+          }
+        });
+
+        p.vx *= 0.945;
+        p.vy *= 0.945;
+
+        // Clamp max speed for crisp streaks
+        const spd = Math.hypot(p.vx, p.vy);
+        if (spd > 13) {
+          p.vx = (p.vx / spd) * 13;
+          p.vy = (p.vy / spd) * 13;
+        }
+
+        p.x += p.vx * (dt * 60);
+        p.y += p.vy * (dt * 60);
+
+        // Soft wrap around viewport edges
+        if (p.x < -10) { p.x = w + 10; p.px = p.x; }
+        else if (p.x > w + 10) { p.x = -10; p.px = p.x; }
+        if (p.y < -10) { p.y = h + 10; p.py = p.y; }
+        else if (p.y > h + 10) { p.y = -10; p.py = p.y; }
+      }
+
+      // Update shockwave rings
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        const sw = shockwaves[i];
+        sw.r += (sw.maxR - sw.r) * Math.min(1, dt * 6.5) + dt * 45;
+        sw.alpha -= dt * 1.18;
+        if (sw.alpha <= 0.01) shockwaves.splice(i, 1);
+      }
+    }
+
+    function drawAstrolabeFrame(ctx, w, h) {
+      const cx = w * 0.5;
+      const cy = h * 0.5;
+      const minDim = Math.min(w, h);
+      const R1 = minDim * 0.43;
+      const R2 = minDim * 0.34;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      // Subtle rotating outer celestial graduation ring
+      ctx.save();
+      ctx.rotate(state.astrolabeAngle);
+      ctx.strokeStyle = 'rgba(235, 210, 164, 0.065)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(0, 0, R1, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 72 degree ticks
+      ctx.beginPath();
+      for (let i = 0; i < 72; i++) {
+        const a = (i / 72) * Math.PI * 2;
+        const major = i % 9 === 0;
+        const inner = major ? R1 - 9 : R1 - 4;
+        ctx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner);
+        ctx.lineTo(Math.cos(a) * R1, Math.sin(a) * R1);
+      }
+      ctx.strokeStyle = 'rgba(235, 210, 164, 0.11)';
+      ctx.stroke();
+      ctx.restore();
+
+      // Counter-rotating dashed inner harmonic ring
+      ctx.save();
+      ctx.rotate(-state.astrolabeAngle * 1.45);
+      ctx.strokeStyle = 'rgba(140, 215, 255, 0.055)';
+      ctx.setLineDash([4, 10]);
+      ctx.beginPath();
+      ctx.arc(0, 0, R2, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // Symmetry guide axes (fade in briefly when symmetry changes)
+      if (state.symmetryGuideAlpha > 0.005) {
+        const sym = SYMMETRIES[state.symmetryIdx];
+        if (sym > 1) {
+          ctx.strokeStyle = `rgba(235, 210, 164, ${state.symmetryGuideAlpha * 0.24})`;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([6, 8]);
+          for (let i = 0; i < sym; i++) {
+            const a = (i / sym) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(a) * minDim * 0.65, Math.sin(a) * minDim * 0.65);
+            ctx.stroke();
+          }
+          ctx.setLineDash([]);
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function drawOverlay() {
+      const w = state.width;
+      const h = state.height;
+      const ctx = octx;
+      const realm = currentRealm();
+
+      ctx.clearRect(0, 0, w, h);
+
+      // 1. Astrolabe hairline geometry
+      drawAstrolabeFrame(ctx, w, h);
+
+      // 2. Photonic Stardust & Constellation Filaments
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+
+      // Delicate constellation links around active nodes & singularity
+      const anchorPoints = nodes.map(n => ({ x: n.x * w, y: n.y * h }));
+      if (singularity.active) {
+        anchorPoints.push({ x: singularity.x * w, y: singularity.y * h });
+      }
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const col = realm.colors[p.colorIdx % realm.colors.length];
+        const r = Math.min(255, Math.round(col[0] * 255));
+        const g = Math.min(255, Math.round(col[1] * 255));
+        const b = Math.min(255, Math.round(col[2] * 255));
+        const twinkle = 0.65 + 0.35 * Math.sin(state.time * 2.6 + p.phase);
+        const speed = Math.hypot(p.x - p.px, p.y - p.py);
+        const alpha = Math.min(0.95, p.alpha * twinkle * (0.55 + Math.min(speed * 0.14, 0.55)));
+
+        // Motion trail
+        if (speed > 0.6) {
+          ctx.strokeStyle = `rgba(${r},${g},${b},${alpha * 0.65})`;
+          ctx.lineWidth = p.size * 0.85;
+          ctx.beginPath();
+          ctx.moveTo(p.px, p.py);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+        }
+
+        // Luminous core
+        ctx.fillStyle = `rgba(${Math.min(255, r + 60)},${Math.min(255, g + 60)},${Math.min(255, b + 60)},${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 0.72, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Delicate constellation web near active anchors
+        if (i % 3 === 0) {
+          for (let a = 0; a < anchorPoints.length; a++) {
+            const ap = anchorPoints[a];
+            const d = Math.hypot(p.x - ap.x, p.y - ap.y);
+            if (d < 84) {
+              const linkAlpha = (1 - d / 84) * 0.22;
+              ctx.strokeStyle = `rgba(${r},${g},${b},${linkAlpha})`;
+              ctx.lineWidth = 0.7;
+              ctx.beginPath();
+              ctx.moveTo(p.x, p.y);
+              ctx.lineTo(ap.x, ap.y);
+              ctx.stroke();
+            }
+          }
+        }
+      }
+
+      // 3. Shockwave Rings
+      for (const sw of shockwaves) {
+        ctx.strokeStyle = `rgba(255, 245, 224, ${sw.alpha * 0.45})`;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = `rgba(123, 232, 255, ${sw.alpha * 0.22})`;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.r * 0.86, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+
+      // 4. Precision Horological Node Glyphs
+      for (const n of nodes) {
+        const nx = n.x * w;
+        const ny = n.y * h;
+        const isHovered = hoveredNode === n || draggedNode === n;
+        const pop = Math.min(1, n.age / 0.45);
+        const easePop = 1 - Math.pow(1 - pop, 3);
+        const col = nextRealmColor(n.colorOffset + state.time * 0.18);
+        const cr = Math.round(col[0] * 255);
+        const cg = Math.round(col[1] * 255);
+        const cb = Math.round(col[2] * 255);
+
+        ctx.save();
+        ctx.translate(nx, ny);
+        ctx.scale(easePop, easePop);
+
+        // Soft luminous aura
+        const aura = ctx.createRadialGradient(0, 0, 2, 0, 0, isHovered ? 38 : 26);
+        aura.addColorStop(0, `rgba(${cr},${cg},${cb},${isHovered ? 0.34 : 0.18})`);
+        aura.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+        ctx.fillStyle = aura;
+        ctx.beginPath();
+        ctx.arc(0, 0, isHovered ? 38 : 26, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (n.type === 'vortex') {
+          ctx.save();
+          ctx.rotate(n.phase * n.spin * 0.8);
+          ctx.strokeStyle = `rgba(255, 248, 234, ${isHovered ? 0.85 : 0.42})`;
+          ctx.lineWidth = isHovered ? 1.4 : 1;
+          ctx.setLineDash([7, 6]);
+          ctx.beginPath();
+          ctx.arc(0, 0, 15, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Twin spiral blades
+          ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.85)`;
+          ctx.lineWidth = 1.2;
+          for (let s = 0; s < 2; s++) {
+            const start = s * Math.PI;
+            ctx.beginPath();
+            ctx.arc(0, 0, 8.5, start, start + 1.3);
+            ctx.stroke();
+          }
+          ctx.restore();
+        } else if (n.type === 'prism') {
+          ctx.save();
+          ctx.rotate(n.phase * 0.35);
+          const s = 12 + Math.sin(n.phase * 2.0) * 2.2;
+          ctx.strokeStyle = `rgba(255, 248, 234, ${isHovered ? 0.9 : 0.5})`;
+          ctx.lineWidth = 1.15;
+          ctx.beginPath();
+          for (let k = 0; k < 3; k++) {
+            const a = (k / 3) * Math.PI * 2 - Math.PI / 2;
+            const vx = Math.cos(a) * s;
+            const vy = Math.sin(a) * s;
+            if (k === 0) ctx.moveTo(vx, vy);
+            else ctx.lineTo(vx, vy);
+          }
+          ctx.closePath();
+          ctx.stroke();
+
+          if (n.pulse > 0.02) {
+            ctx.strokeStyle = `rgba(${cr},${cg},${cb},${n.pulse * 0.65})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, 14 + (1 - n.pulse) * 26, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.restore();
+        } else if (n.type === 'attractor') {
+          ctx.save();
+          ctx.strokeStyle = `rgba(255, 248, 234, ${isHovered ? 0.85 : 0.44})`;
+          ctx.lineWidth = 1;
+          ctx.rotate(n.phase * 0.28);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 18, 7.5, 0.5, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.65)`;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 18, 7.5, -0.5, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Core jewel dot
+        ctx.fillStyle = '#fff9ee';
+        ctx.beginPath();
+        ctx.arc(0, 0, isHovered ? 3.2 : 2.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hover ring
+        if (isHovered) {
+          ctx.strokeStyle = 'rgba(235, 210, 164, 0.72)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(0, 0, 24, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      // 5. Singularity Charge Reticle (when holding Flow tool)
+      if (singularity.active && singularity.charge > 0.04) {
+        const sx = singularity.x * w;
+        const sy = singularity.y * h;
+        const c = singularity.charge;
+        const rad = 18 + c * 46;
+
+        ctx.save();
+        ctx.translate(sx, sy);
+
+        // Glowing core
+        const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rad * 1.4);
+        g.addColorStop(0, `rgba(255, 250, 236, ${0.42 * c})`);
+        g.addColorStop(0.45, `rgba(123, 232, 255, ${0.22 * c})`);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(0, 0, rad * 1.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Charge progress arc
+        ctx.strokeStyle = 'rgba(235, 210, 164, 0.85)';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(0, 0, rad, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, c));
+        ctx.stroke();
+
+        // Rotating inner aperture ticks
+        ctx.rotate(state.time * 2.8);
+        ctx.strokeStyle = 'rgba(123, 232, 255, 0.65)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * (rad * 0.55), Math.sin(a) * (rad * 0.55));
+          ctx.lineTo(Math.cos(a) * (rad * 0.78), Math.sin(a) * (rad * 0.78));
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+    }
+
+    /* =========================================================================
+       9. INITIALIZE ENGINES
+       ========================================================================= */
+    const fluidCanvas = document.getElementById('fluid-canvas');
+    let fluid = new WebGLFluidEngine(fluidCanvas);
+    if (!fluid.ready) {
+      fluid = new FallbackFluidEngine(fluidCanvas);
+      document.getElementById('engine-label').textContent = '2D PHOTONIC';
+    }
+
+    function resizeAll() {
+      state.width = window.innerWidth;
+      state.height = window.innerHeight;
+      state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      fluid.resize(state.width, state.height);
+
+      overlayCanvas.width = Math.floor(state.width * state.dpr);
+      overlayCanvas.height = Math.floor(state.height * state.dpr);
+      octx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+
+      if (particles.length === 0) initParticles();
+    }
+
+    window.addEventListener('resize', resizeAll);
+    resizeAll();
+
+    /* =========================================================================
+       10. INTERACTION HANDLING (POINTER, MULTI-TOUCH, DRAG NODES, SINGULARITY)
+       ========================================================================= */
+    function markInteracted() {
+      if (state.hasInteracted) return;
+      state.hasInteracted = true;
+      setTimeout(() => {
+        document.getElementById('hint-pill').classList.add('faded');
+      }, 2600);
+    }
+
+    function getNormPos(e) {
+      return {
+        x: Math.max(0, Math.min(1, e.clientX / Math.max(1, state.width))),
+        y: Math.max(0, Math.min(1, e.clientY / Math.max(1, state.height)))
+      };
+    }
+
+    overlayCanvas.addEventListener('pointerdown', (e) => {
+      if (e.button === 2) return; // handled by contextmenu
+      markInteracted();
+      overlayCanvas.setPointerCapture(e.pointerId);
+
+      const pos = getNormPos(e);
+      const hit = findNodeAt(e.clientX, e.clientY, 30);
+
+      // Dragging an existing node always takes precedence
+      if (hit) {
+        draggedNode = hit;
+        hit.dragging = true;
+        overlayCanvas.classList.add('grabbing');
+        return;
+      }
+
+      // Placing a new node when a node tool is active
+      if (state.tool !== 'flow') {
+        const node = createNode(state.tool, pos.x, pos.y);
+        node.pulse = 1.0;
+        const col = nextRealmColor(node.colorOffset);
+        emitSymmetric(pos.x, pos.y, 0, 0, [col[0] * 1.4, col[1] * 1.4, col[2] * 1.4], 0.004);
+        fluid.applyRingForce(pos.x, pos.y, 0.12, 48, 36 * node.spin);
+        audio.playGlassNote(pos.y, 0.85, pos.x);
+        showToast(`${state.tool.toUpperCase()} PLACED`);
+        return;
+      }
+
+      // Flow mode: track pointer & initiate singularity charge
+      pointers.set(e.pointerId, {
+        x: pos.x,
+        y: pos.y,
+        dx: 0,
+        dy: 0,
+        down: true,
+        moved: 0,
+        colorOffset: Math.random() * 5
+      });
+
+      if (!singularity.active) {
+        singularity.active = true;
+        singularity.pointerId = e.pointerId;
+        singularity.x = pos.x;
+        singularity.y = pos.y;
+        singularity.charge = 0.02;
+      }
+    });
+
+    overlayCanvas.addEventListener('pointermove', (e) => {
+      const pos = getNormPos(e);
+
+      if (draggedNode) {
+        const dx = pos.x - draggedNode.x;
+        const dy = pos.y - draggedNode.y;
+        draggedNode.x = pos.x;
+        draggedNode.y = pos.y;
+        draggedNode.originX = pos.x;
+        draggedNode.originY = pos.y;
+        const col = nextRealmColor(draggedNode.colorOffset);
+        fluid.splat(pos.x, pos.y, dx * 2600, dy * 2600, [col[0] * 0.7, col[1] * 0.7, col[2] * 0.7], 0.0022);
+        return;
+      }
+
+      // Hover detection for grab cursor
+      const hit = findNodeAt(e.clientX, e.clientY, 28);
+      hoveredNode = hit;
+      overlayCanvas.classList.toggle('grab', Boolean(hit));
+
+      const ptr = pointers.get(e.pointerId);
+      if (ptr && ptr.down) {
+        const dx = pos.x - ptr.x;
+        const dy = pos.y - ptr.y;
+        ptr.dx = dx;
+        ptr.dy = dy;
+        ptr.x = pos.x;
+        ptr.y = pos.y;
+        ptr.moved += Math.hypot(dx, dy);
+
+        // If dragging quickly, reduce singularity charge and sculpt fluid ribbons
+        const dist = Math.hypot(dx, dy);
+        if (singularity.active && singularity.pointerId === e.pointerId) {
+          singularity.x = pos.x;
+          singularity.y = pos.y;
+          if (dist > 0.012) {
+            singularity.charge = Math.max(0, singularity.charge - dist * 1.4);
+          }
+        }
+
+        if (dist > 0.0005) {
+          const speed = Math.min(dist * 75, 2.2);
+          const col = nextRealmColor(ptr.colorOffset);
+          const gain = 0.72 + speed * 0.22;
+          emitSymmetric(
+            pos.x, pos.y,
+            dx * 4200, dy * 4200,
+            [col[0] * gain, col[1] * gain, col[2] * gain],
+            0.00085 + speed * 0.00035
+          );
+          state.colorCursor = (state.colorCursor + dist * 1.8) % 5;
+          state.flux = Math.min(2.0, state.flux + dist * 6.5);
+
+          if (dist > 0.018) {
+            audio.playGlassNote(pos.y, Math.min(1, dist * 22), pos.x);
+          }
+        }
+      } else {
+        // Gentle hover silk wake even without pressing mouse button!
+        const hoverPtr = pointers.get('hover') || { x: pos.x, y: pos.y, dx: 0, dy: 0, down: false };
+        const dx = pos.x - hoverPtr.x;
+        const dy = pos.y - hoverPtr.y;
+        hoverPtr.dx = dx;
+        hoverPtr.dy = dy;
+        hoverPtr.x = pos.x;
+        hoverPtr.y = pos.y;
+        pointers.set('hover', hoverPtr);
+
+        const dist = Math.hypot(dx, dy);
+        if (dist > 0.0012 && dist < 0.25) {
+          const col = nextRealmColor(0);
+          emitSymmetric(
+            pos.x, pos.y,
+            dx * 2100, dy * 2100,
+            [col[0] * 0.55, col[1] * 0.55, col[2] * 0.55],
+            0.00055
+          );
+          state.colorCursor = (state.colorCursor + dist * 0.9) % 5;
+          state.flux = Math.min(2.0, state.flux + dist * 2.8);
+        }
+      }
+    });
+
+    function releasePointer(e) {
+      if (draggedNode) {
+        draggedNode.dragging = false;
+        draggedNode = null;
+        overlayCanvas.classList.remove('grabbing');
+      }
+
+      if (singularity.active && singularity.pointerId === e.pointerId) {
+        if (singularity.charge > 0.24) {
+          const power = 0.65 + singularity.charge * 0.9;
+          triggerHarmonicBloom(singularity.x, singularity.y, 6, power);
+        }
+        singularity.active = false;
+        singularity.charge = 0;
+        singularity.pointerId = null;
+      }
+
+      pointers.delete(e.pointerId);
+    }
+
+    overlayCanvas.addEventListener('pointerup', releasePointer);
+    overlayCanvas.addEventListener('pointercancel', releasePointer);
+
+    function removeNodeWithBurst(node) {
+      const idx = nodes.indexOf(node);
+      if (idx === -1) return;
+      nodes.splice(idx, 1);
+      if (hoveredNode === node) hoveredNode = null;
+      if (draggedNode === node) draggedNode = null;
+      triggerHarmonicBloom(node.x, node.y, 5, 0.72);
+      updateNodeCountUI();
+      showToast('NODE DISSOLVED');
+    }
+
+    overlayCanvas.addEventListener('dblclick', (e) => {
+      const hit = findNodeAt(e.clientX, e.clientY, 32);
+      if (hit) {
+        removeNodeWithBurst(hit);
+      } else {
+        const pos = getNormPos(e);
+        triggerHarmonicBloom(pos.x, pos.y, 6, 0.95);
+      }
+    });
+
+    overlayCanvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const hit = findNodeAt(e.clientX, e.clientY, 32);
+      if (hit) {
+        removeNodeWithBurst(hit);
+      }
+    });
+
+    /* =========================================================================
+       11. UI CONTROLS, TOASTS & KEYBOARD SHORTCUTS
+       ========================================================================= */
+    const toastEl = document.getElementById('toast');
+    let toastTimer = null;
+
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1500);
+    }
+
+    function updateNodeCountUI() {
+      document.getElementById('nodes-val').textContent = String(nodes.length);
+    }
+
+    function setTool(tool) {
+      state.tool = tool;
+      document.querySelectorAll('[data-tool]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tool === tool);
+      });
+    }
+
+    function setRealm(key, silent = false) {
+      if (!REALMS[key]) return;
+      state.realmKey = key;
+      const realm = REALMS[key];
+      document.documentElement.style.setProperty('--accent', realm.accent);
+      document.getElementById('realm-label').textContent = realm.name;
+      document.querySelectorAll('.realm-orb').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.realm === key);
+      });
+      audio.retuneForRealm();
+      if (!silent) {
+        triggerHarmonicBloom(0.5, 0.5, 5, 0.75);
+        showToast(`REALM · ${realm.name}`);
+      }
+    }
+
+    function cycleSymmetry() {
+      state.symmetryIdx = (state.symmetryIdx + 1) % SYMMETRIES.length;
+      const sym = SYMMETRIES[state.symmetryIdx];
+      document.getElementById('symmetry-label').textContent = `${sym}×`;
+      document.getElementById('symmetry-btn').classList.toggle('active', sym > 1);
+      state.symmetryGuideAlpha = 1.0;
+      showToast(sym === 1 ? 'SYMMETRY OFF' : `KALEIDOSCOPE ${sym}×`);
+    }
+
+    function toggleOrbit() {
+      state.autoOrbit = !state.autoOrbit;
+      document.getElementById('orbit-btn').classList.toggle('active', state.autoOrbit);
+      showToast(state.autoOrbit ? 'AUTO-ORBIT ON' : 'NODES ANCHORED');
+    }
+
+    function togglePause() {
+      state.paused = !state.paused;
+      const btn = document.getElementById('pause-btn');
+      btn.classList.toggle('active', state.paused);
+      document.getElementById('pause-icon').innerHTML = state.paused
+        ? '<polygon points="7 5 19 12 7 19" fill="currentColor" stroke="none"/>'
+        : '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>';
+      showToast(state.paused ? 'PAUSED' : 'RESUMED');
+    }
+
+    function toggleZen() {
+      state.zenMode = !state.zenMode;
+      document.body.classList.toggle('zen-mode', state.zenMode);
+    }
+
+    function captureSnapshot() {
+      const out = document.createElement('canvas');
+      out.width = fluidCanvas.width;
+      out.height = fluidCanvas.height;
+      const c = out.getContext('2d');
+      c.drawImage(fluidCanvas, 0, 0, out.width, out.height);
+      c.drawImage(overlayCanvas, 0, 0, out.width, out.height);
+      const link = document.createElement('a');
+      link.download = `aetherium-${state.realmKey}-${Date.now()}.png`;
+      link.href = out.toDataURL('image/png');
+      link.click();
+      showToast('SNAPSHOT SAVED');
+    }
+
+    // Bind buttons
+    document.querySelectorAll('[data-tool]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        markInteracted();
+        setTool(btn.dataset.tool);
+      });
+    });
+
+    document.querySelectorAll('.realm-orb').forEach(btn => {
+      btn.addEventListener('click', () => {
+        markInteracted();
+        setRealm(btn.dataset.realm);
+      });
+    });
+
+    document.getElementById('symmetry-btn').addEventListener('click', () => {
+      markInteracted();
+      cycleSymmetry();
+    });
+
+    document.getElementById('orbit-btn').addEventListener('click', () => {
+      markInteracted();
+      toggleOrbit();
+    });
+
+    document.getElementById('bloom-btn').addEventListener('click', () => {
+      markInteracted();
+      triggerHarmonicBloom(0.5, 0.5, 6, 1.05);
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      markInteracted();
+      fluid.clear();
+      seedInitialChoreography();
+      triggerHarmonicBloom(0.5, 0.5, 5, 0.85);
+      showToast('CANVAS RESET');
+    });
+
+    document.getElementById('audio-btn').addEventListener('click', () => {
+      markInteracted();
+      const on = audio.toggle();
+      document.getElementById('audio-btn').classList.toggle('active', on);
+      showToast(on ? 'HARMONIC SYNTH ON' : 'AUDIO MUTED');
+    });
+
+    document.getElementById('pause-btn').addEventListener('click', togglePause);
+    document.getElementById('snap-btn').addEventListener('click', captureSnapshot);
+    document.getElementById('zen-btn').addEventListener('click', toggleZen);
+    document.getElementById('zen-restore-btn').addEventListener('click', toggleZen);
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k === ' ') {
+        e.preventDefault();
+        markInteracted();
+        triggerHarmonicBloom(0.5, 0.5, 6, 1.05);
+      } else if (k === '1') setTool('flow');
+      else if (k === '2') setTool('vortex');
+      else if (k === '3') setTool('prism');
+      else if (k === '4') setTool('attractor');
+      else if (k === 'm') cycleSymmetry();
+      else if (k === 'o') toggleOrbit();
+      else if (k === 'p') togglePause();
+      else if (k === 'h') toggleZen();
+      else if (k === 's') {
+        const on = audio.toggle();
+        document.getElementById('audio-btn').classList.toggle('active', on);
+        showToast(on ? 'HARMONIC SYNTH ON' : 'AUDIO MUTED');
+      } else if (k === 'c') {
+        const nextIdx = (REALM_ORDER.indexOf(state.realmKey) + 1) % REALM_ORDER.length;
+        setRealm(REALM_ORDER[nextIdx]);
+      } else if (k === 'r') {
+        fluid.clear();
+        seedInitialChoreography();
+        triggerHarmonicBloom(0.5, 0.5, 5, 0.85);
+        showToast('CANVAS RESET');
+      }
+    });
+
+    /* =========================================================================
+       12. TELEMETRY WAVEFORM UPDATER
+       ========================================================================= */
+    const fluxPathEl = document.getElementById('flux-path');
+    const fluxValEl = document.getElementById('flux-val');
+    let lastTelemetryTime = 0;
+
+    function updateTelemetry(now) {
+      if (now - lastTelemetryTime < 75) return;
+      lastTelemetryTime = now;
+
+      state.fluxHistory[state.fluxIdx] = state.flux;
+      state.fluxIdx = (state.fluxIdx + 1) % state.fluxHistory.length;
+
+      let d = '';
+      const len = state.fluxHistory.length;
+      for (let i = 0; i < len; i++) {
+        const idx = (state.fluxIdx + i) % len;
+        const val = Math.min(1.5, state.fluxHistory[idx]);
+        const x = (i / (len - 1)) * 34;
+        const amp = Math.sin(state.time * 8 + i * 0.9) * val * 4.2;
+        const y = 8 - amp;
+        d += (i === 0 ? 'M ' : ' L ') + x.toFixed(1) + ' ' + y.toFixed(1);
+      }
+      fluxPathEl.setAttribute('d', d);
+      fluxValEl.textContent = state.flux.toFixed(2);
+    }
+
+    /* =========================================================================
+       13. MAIN ANIMATION LOOP & OPENING CHOREOGRAPHY
+       ========================================================================= */
+    seedInitialChoreography();
+
+    // Opening visual bloom right away so frame 1 is alive
+    setTimeout(() => triggerHarmonicBloom(0.5, 0.5, 6, 1.0), 120);
+    setTimeout(() => {
+      document.getElementById('intro-veil').classList.add('hidden');
+      document.getElementById('brand').classList.add('visible');
+    }, 2350);
+    setTimeout(() => {
+      if (!state.hasInteracted) {
+        document.getElementById('hint-pill').classList.add('faded');
+      }
+    }, 9500);
+
+    let lastTime = performance.now();
+
+    function frame(now) {
+      requestAnimationFrame(frame);
+      const dt = Math.min((now - lastTime) / 1000, 0.033);
+      lastTime = now;
+
+      if (!state.paused) {
+        state.time += dt;
+        state.colorCursor = (state.colorCursor + dt * 0.14) % 5;
+        state.astrolabeAngle += dt * (0.045 + Math.min(state.flux, 1.5) * 0.09);
+
+        if (state.symmetryGuideAlpha > 0) {
+          state.symmetryGuideAlpha = Math.max(0, state.symmetryGuideAlpha - dt * 0.55);
+        }
+
+        // Active Singularity gravity well while holding pointer
+        if (singularity.active) {
+          singularity.charge = Math.min(1.0, singularity.charge + dt * 0.92);
+          const pull = 36 + singularity.charge * 110;
+          const swirl = 42 + singularity.charge * 130;
+          fluid.applyRingForce(singularity.x, singularity.y, 0.16 + singularity.charge * 0.06, -pull, swirl);
+          const col = nextRealmColor(0.5);
+          const cGain = 0.55 + singularity.charge * 0.35;
+          const a = state.time * 5.2;
+          const r = 0.025 + (1 - singularity.charge) * 0.03;
+          const aspect = state.width / Math.max(1, state.height);
+          fluid.splat(
+            singularity.x + (Math.cos(a) * r) / aspect,
+            singularity.y + Math.sin(a) * r,
+            -Math.sin(a) * 120,
+            Math.cos(a) * 120,
+            [col[0] * cGain, col[1] * cGain, col[2] * cGain],
+            0.00036
+          );
+          state.flux = Math.min(2.0, state.flux + dt * 0.65);
+        }
+
+        updateNodes(dt);
+        fluid.step(dt);
+        updateParticles(dt);
+
+        state.flux *= Math.pow(0.42, dt);
+        audio.updateFlux(state.flux);
+      }
+
+      fluid.render();
+      drawOverlay();
+      updateTelemetry(now);
+    }
+
+    requestAnimationFrame(frame);
+  })();
+  </script>
+</body>
+</html>

@@ -61,6 +61,7 @@ An experiment to see how far an AI model can go when asked to build an advanced,
 | [Living Atlas](https://dyrits.github.io/AI-XPERIENCE/pages/living-atlas.html) | WebGL raymarched planet, Web Audio | GLM-5.3 | 1 | 89 KB |
 | [Lumina](https://dyrits.github.io/AI-XPERIENCE/pages/lumina.html) | Canvas 2D, interactive particle garden | LongCat 2.5 | 1 | 4 KB |
 | [Nocturne](pages/nocturne.html) | Canvas 2D, interactive flow field | Instinct | 1 | 15 KB |
+| [Aetherium](https://dyrits.github.io/AI-XPERIENCE/pages/aetherium.html) | WebGL2 Navier-Stokes fluid + Canvas 2D, Web Audio | Gemini 4 Neon | 1 | 105 KB |
 
 **Abyss.** Scrolling takes you down from the ocean surface to 4000 m. Glowing plankton drift on a flow field and react to the cursor, and jellyfish with physically simulated tentacles swim through the dark. Clicking sends out a ring of light.
 
@@ -130,6 +131,8 @@ Includes optional synthesized sound, pause, timeline scrubbing, keyboard frame s
 
 **Nocturne.** A field of light in constant motion. Move the pointer to stir its currents, click or tap to send out a burst, and switch between three palettes. The still control freezes the field; keyboard shortcuts offer palettes (1/2/3), pause (Space), and a hidden-interface view (H). All CSS and JavaScript are inside the single HTML file, with no libraries or external assets.
 
+**Aetherium.** A kinetic fluid astrolabe combining a real-time WebGL2 Navier-Stokes fluid solver (with automatic 2D fallback), 3D height-field specular and iridescent marbling, a horological astrolabe frame and photonic stardust particles. Three orbiting harmonic nodes continuously sculpt luminous currents across deep obsidian space. Drag to paint silk streams, hold to charge a gravitational singularity and release a harmonic shockwave bloom, place and drag Vortex, Prism and Gravity Lens nodes, switch between four visual realms (Opaline, Solaris, Abyssal and Chromatic) and four kaleidoscope symmetry modes (1×, 2×, 4× and 6×), capture PNG snapshots, or enable the procedural Web Audio glass-harmonica synthesizer with synthesized hall reverb. All HTML, CSS and JavaScript live in a single self-contained file with zero external dependencies.
+
 ## Correction rounds
 
 Most pieces needed none. The ones that did:
@@ -150,6 +153,7 @@ AI-XPERIENCE/
 ├── README.md
 └── pages/
     ├── abyss.html
+    ├── aetherium.html
     ├── beatloom.html
     ├── carbon-copy.html
     ├── drizzle.html

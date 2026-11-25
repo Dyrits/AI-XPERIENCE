@@ -423,6 +423,13 @@
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01s !important; transition-duration: .01s !important; } }
   .art-lumina { background: radial-gradient(ellipse at 50% 45%, #1a1530 0%, #0a0a12 70%); }
   .art-lumina svg { width: 100%; height: 100%; }
+  .art-aetherium { background: radial-gradient(ellipse at 50% 50%, #0d1628 0%, #040508 76%); }
+  .art-aetherium svg { width: 100%; height: 100%; }
+  .art-aetherium .ae-ring-outer { transform-origin: 320px 200px; animation: aespin 34s linear infinite; }
+  .art-aetherium .ae-ring-inner { transform-origin: 320px 200px; animation: aespin 24s linear infinite reverse; }
+  .art-aetherium .ae-swirl { animation: aebreathe 6s ease-in-out infinite alternate; transform-origin: 320px 200px; }
+  @keyframes aespin { to { transform: rotate(360deg); } }
+  @keyframes aebreathe { 0% { opacity: .72; transform: scale(.97) rotate(-2deg); } 100% { opacity: 1; transform: scale(1.03) rotate(2deg); } }
   </style>
 </head>
 <body>
@@ -434,9 +441,9 @@
   <header class="top mono">
     <div class="logo">AI-<em>X</em>PERIENCE</div>
     <div class="meta">
-      <span>Claude + Codex + GLM + DeepSeek</span>
+      <span>Claude + Codex + GLM + DeepSeek + Gemini</span>
       <span>Vol. 01 · 2026</span>
-      <span class="live">33 pieces</span>
+      <span class="live">34 pieces</span>
     </div>
   </header>
 
@@ -2035,10 +2042,70 @@
         <a class="open mono" href="pages/nocturne.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
       </div>
     </article>
+    <article class="card" data-src="pages/aetherium.html" style="--accent: #ebd2a4; animation-delay: 6.6s;">
+      <div class="preview">
+        <div class="art art-aetherium">
+          <svg viewBox="0 0 640 400" aria-hidden="true">
+            <defs>
+              <radialGradient id="ae-cyan" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#5ce1e6" stop-opacity=".68"/>
+                <stop offset="55%" stop-color="#2c7da0" stop-opacity=".24"/>
+                <stop offset="100%" stop-color="#040508" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="ae-violet" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#a77dff" stop-opacity=".62"/>
+                <stop offset="55%" stop-color="#4b2e83" stop-opacity=".22"/>
+                <stop offset="100%" stop-color="#040508" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="ae-gold" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ebd2a4" stop-opacity=".52"/>
+                <stop offset="60%" stop-color="#b68a4c" stop-opacity=".14"/>
+                <stop offset="100%" stop-color="#040508" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <g class="ae-swirl">
+              <ellipse cx="242" cy="235" rx="165" ry="125" fill="url(#ae-cyan)" transform="rotate(-18 242 235)"/>
+              <ellipse cx="404" cy="182" rx="158" ry="118" fill="url(#ae-violet)" transform="rotate(24 404 182)"/>
+              <ellipse cx="328" cy="166" rx="108" ry="86" fill="url(#ae-gold)"/>
+              <path d="M126 258 C186 156 266 138 320 200 C374 262 454 244 514 142" fill="none" stroke="#7be8ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/>
+              <path d="M148 164 C216 264 282 276 320 200 C358 124 424 136 492 236" fill="none" stroke="#ebd2a4" stroke-opacity=".48" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M188 308 C246 218 394 182 452 92" fill="none" stroke="#b98cff" stroke-opacity=".42" stroke-width="1.4" stroke-linecap="round"/>
+            </g>
+            <g class="ae-ring-outer" fill="none" stroke="#ebd2a4">
+              <circle cx="320" cy="200" r="146" stroke-opacity=".22" stroke-width="1"/>
+              <circle cx="320" cy="200" r="142" stroke-opacity=".34" stroke-width="4" stroke-dasharray="1.5 11"/>
+            </g>
+            <circle class="ae-ring-inner" cx="320" cy="200" r="108" fill="none" stroke="#7be8ff" stroke-opacity=".22" stroke-width="1" stroke-dasharray="5 9"/>
+            <g fill="none">
+              <circle cx="240" cy="212" r="15" stroke="#fff8eb" stroke-opacity=".55" stroke-dasharray="6 5"/>
+              <circle cx="240" cy="212" r="2.5" fill="#fff8eb"/>
+              <circle cx="402" cy="188" r="15" stroke="#fff8eb" stroke-opacity=".55" stroke-dasharray="6 5"/>
+              <circle cx="402" cy="188" r="2.5" fill="#fff8eb"/>
+              <ellipse cx="320" cy="200" rx="20" ry="8" stroke="#ebd2a4" stroke-opacity=".68" transform="rotate(28 320 200)"/>
+              <ellipse cx="320" cy="200" rx="20" ry="8" stroke="#7be8ff" stroke-opacity=".65" transform="rotate(-28 320 200)"/>
+              <circle cx="320" cy="200" r="2.8" fill="#fff8eb"/>
+            </g>
+          </svg>
+        </div>
+        <span class="tag mono">WebGL2 · Fluid astrolabe</span>
+        <span class="tag hover-hint mono">Hover · live</span>
+      </div>
+      <div class="body">
+        <div class="title-row"><h2>Aetherium</h2><span class="num mono">Nº 34</span></div>
+        <p>A kinetic fluid astrolabe driven by a real-time WebGL2 Navier-Stokes fluid solver, 3D specular liquid-marble shading and an orbiting stardust overlay. Drag to sculpt silk currents, hold to charge a singularity and detonate a bloom, place interactive Vortex, Prism and Lens nodes, switch four visual realms and 1×–6× kaleidoscope symmetry, or enable the procedural glass-harmonica synth.</p>
+        <div class="chips mono"><span>Navier-Stokes fluid</span><span>Harmonic nodes</span><span>Kaleidoscope</span><span>Web Audio</span><span>PNG export</span></div>
+        <dl class="specs mono">
+          <div><dt>Model</dt><dd>Gemini 4 Neon</dd></div>
+          <div><dt>Prompts</dt><dd>1</dd></div>
+          <div><dt>Size</dt><dd>105 <small>KB</small></dd></div>
+        </dl>
+        <a class="open mono" href="pages/aetherium.html" target="_blank" rel="noopener"><span>Open in new tab</span><span class="arrow">↗</span></a>
+      </div>
+    </article>
   </section>
 
   <footer class="mono">
-    <span class="note">Built with Claude Opus 5.5, Claude Sonnet 5.5, Claude Sonnet 5, GPT-6 models, GPT-6 Astra, GLM-5.3, DeepSeek V4 Pro, Space Bunny, LongCat 2.5 and Instinct.</span>
+    <span class="note">Built with Claude Opus 5.5, Claude Sonnet 5.5, Claude Sonnet 5, GPT-6 models, GPT-6 Astra, GLM-5.3, DeepSeek V4 Pro, Space Bunny, LongCat 2.5, Instinct and Gemini 4 Neon.</span>
     <span>AI-XPERIENCE · Vol. 01</span>
   </footer>
 </main>
